@@ -26,6 +26,14 @@
         "domain": {
           "type": "string",
           "description": "Geographic domain (e.g. North Sea - Baltic Sea)."
+        },
+        "contact": {
+          "type": "string",
+          "description": "Person responsible for this dataset."
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of the dataset contents and purpose."
         }
       }
     },
@@ -51,7 +59,6 @@
       "additionalProperties": {
         "type": "object",
         "required": ["name", "dir"],
-        "additionalProperties": false,
         "properties": {
           "name": {
             "type": "string",

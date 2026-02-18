@@ -1,0 +1,251 @@
+dataset:
+  name: "CMIP6 EC-Earth3 Simulations"
+  path: "/net/isilon/ifs/arch/home/shuting/ecearth3_exp"
+  model: "EC-Earth3"
+  domain: "Global"
+  contact: "Shuting Yang <sy@dmi.dk>"
+  description: "Raw model outputs of various CMIP6 experiments using climate model EC-Earth3 with multiple configurations (EC-Earth3, EC-Earth3-veg)."
+
+stac:
+  institution: "Danish Meteorological Institute (DMI)"
+  purpose: "CMIP6 climate simulations with EC-Earth3"
+
+products:
+  # ── EC-Earth3 DECK ──────────────────────────────────────────────
+  dpiC:
+    name: "piControl (1000 years)"
+    dir: "dpiC"
+    category: "DECK"
+    model_component: "EC-Earth3"
+    experiment_id: "piControl"
+    realization: "r5i1p1f1"
+    modules: "output/ifs (001-999), output/nemo (001-999), post"
+    type: "raw output"
+
+  dA4x:
+    name: "Abrupt 4xCO2"
+    dir: "dA4x"
+    category: "DECK"
+    model_component: "EC-Earth3"
+    experiment_id: "abrupt-4xCO2"
+    realization: "r5i1p1f1"
+    modules: "output/ifs (001-160), output/nemo (001-160)"
+    type: "raw output"
+
+  d1pc:
+    name: "1% per year CO2"
+    dir: "d1pc"
+    category: "DECK"
+    model_component: "EC-Earth3"
+    experiment_id: "1pctCO2"
+    realization: "r5i1p1f1"
+    modules: "output/ifs (001-165), output/nemo (001-165)"
+    type: "raw output"
+
+  # ── EC-Earth3 Historical ────────────────────────────────────────
+  dhi1:
+    name: "Historical (r5)"
+    dir: "dhi1"
+    category: "CMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "historical"
+    realization: "r5i1p1f1"
+    modules: "output/ifs (001-165), output/nemo (001-165), post, ForRCM, save_ic"
+    type: "raw output"
+    notes: "save_ic: initial conditions for DCPP (19511101-20141101)"
+
+  dhi2:
+    name: "Historical (r8)"
+    dir: "dhi2"
+    category: "CMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "historical"
+    realization: "r8i1p1f1"
+    modules: "output/ifs (001-165), output/nemo (001-165)"
+    type: "raw output"
+
+  # ── EC-Earth3 ScenarioMIP ───────────────────────────────────────
+  ds51:
+    name: "SSP5-8.5 (r5)"
+    dir: "ds51"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "ssp585"
+    realization: "r5i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), post, ForRCM"
+    type: "raw output"
+
+  ds52:
+    name: "SSP5-8.5 (r8)"
+    dir: "ds52"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "ssp585"
+    realization: "r8i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), post"
+    type: "raw output"
+
+  ds31:
+    name: "SSP3-7.0 (r5)"
+    dir: "ds31"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "ssp370"
+    realization: "r5i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), post, ForRCM"
+    type: "raw output"
+
+  ds32:
+    name: "SSP3-7.0 (r8)"
+    dir: "ds32"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "ssp370"
+    realization: "r8i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), post"
+    type: "raw output"
+
+  ds21:
+    name: "SSP2-4.5 (r5)"
+    dir: "ds21"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "ssp245"
+    realization: "r5i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), post, ForRCM, save_ic"
+    type: "raw output"
+    notes: "save_ic: initial conditions for DCPP (20151101-20291101)"
+
+  ds22:
+    name: "SSP2-4.5 (r8)"
+    dir: "ds22"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "ssp245"
+    realization: "r8i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), post"
+    type: "raw output"
+
+  ds11:
+    name: "SSP1-2.6 (r5)"
+    dir: "ds11"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "ssp126"
+    realization: "r5i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), post, ForRCM"
+    type: "raw output"
+
+  ds12:
+    name: "SSP1-2.6 (r8)"
+    dir: "ds12"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "ssp126"
+    realization: "r8i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), post"
+    type: "raw output"
+
+  ds01:
+    name: "SSP1-1.9 (r5)"
+    dir: "ds01"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3"
+    experiment_id: "ssp119"
+    realization: "r5i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), ForRCM"
+    type: "raw output"
+
+  # ── EC-Earth3 DCPP ──────────────────────────────────────────────
+  dcpp_r1_r5:
+    name: "DCPP Hindcasts (r1-r5)"
+    dir: "nyyR"
+    category: "DCPP"
+    model_component: "EC-Earth3"
+    experiment_id: "dcppA-hindcast"
+    realization: "r1i2p1f1 ... r5i2p1f1"
+    modules: "output/ifs (001-011), output/nemo (001-011), post"
+    type: "raw output"
+    notes: "Dirs named nyyR: yy=60..21 (start year), R=0..4 (r1-r5). ~310 directories."
+
+  dcpp_r11_r15:
+    name: "DCPP Hindcasts (r11-r15)"
+    dir: "dyyR"
+    category: "DCPP"
+    model_component: "EC-Earth3"
+    experiment_id: "dcppA-hindcast"
+    realization: "r11i2p1f1 ... r15i2p1f1"
+    modules: "output/ifs (001-011), output/nemo (001-011), post"
+    type: "raw output"
+    notes: "Dirs named dyyR: yy=60..21 (start year), R=0..4 (r11-r15). ~310 directories."
+
+  # ── EC-Earth3-veg ───────────────────────────────────────────────
+  dvhi:
+    name: "Historical (veg)"
+    dir: "dvhi"
+    category: "CMIP"
+    model_component: "EC-Earth3-veg"
+    experiment_id: "historical"
+    realization: "r13i1p1f1"
+    modules: "output/ifs (001-165), output/nemo (001-165), output/lpjg (001-165), post"
+    type: "raw output"
+
+  dvs5:
+    name: "SSP5-8.5 extended (veg)"
+    dir: "dvs5"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3-veg"
+    experiment_id: "ssp585-ext"
+    realization: "r13i1p1f1"
+    modules: "output/ifs (001-286), output/nemo (001-086), output/lpjg (001-286)"
+    type: "raw output"
+
+  dvs3:
+    name: "SSP3-7.0 (veg)"
+    dir: "dvs3"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3-veg"
+    experiment_id: "ssp370"
+    realization: "r13i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), output/lpjg (001-086)"
+    type: "raw output"
+
+  dvs2:
+    name: "SSP2-4.5 (veg)"
+    dir: "dvs2"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3-veg"
+    experiment_id: "ssp245"
+    realization: "r13i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), output/lpjg (001-086)"
+    type: "raw output"
+
+  dvs1:
+    name: "SSP1-2.6 (veg)"
+    dir: "dvs1"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3-veg"
+    experiment_id: "ssp126"
+    realization: "r13i1p1f1"
+    modules: "output/ifs (001-086), output/nemo (001-086), output/lpjg (001-086)"
+    type: "raw output"
+
+  dvpi:
+    name: "piControl (veg)"
+    dir: "dvpi"
+    category: "DECK"
+    model_component: "EC-Earth3-veg"
+    experiment_id: "piControl"
+    modules: "output/ifs (001-363), output/nemo (001-363), output/lpjg (001-363), post"
+    type: "raw output"
+
+  dv10:
+    name: "500yr fixed forcing from 2100 (veg)"
+    dir: "dv10"
+    category: "ScenarioMIP"
+    model_component: "EC-Earth3-veg"
+    experiment_id: "ssp585-fixed2100"
+    realization: "r13i1p1f1"
+    modules: "output/ifs (001-500), output/nemo (001-500), output/lpjg (001-500), post"
+    type: "raw output"
+    notes: "Continues from dvs5 with forcing fixed at 2100 ssp5-8.5 levels"

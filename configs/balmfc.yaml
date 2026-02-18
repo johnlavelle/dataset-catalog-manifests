@@ -3,6 +3,8 @@ dataset:
   path: "/net/isilon/ifs/arch/home/iri/BALMFC/Nemo4.0/BALMFCMYP2022_univariateSST"
   model: "NEMO-SI3-PDAF-ERGOM"
   domain: "North Sea - Baltic Sea"
+  contact: "Ida Margrethe Ringgaard <iri@dmi.dk>"
+  description: "Copernicus Marine Service Baltic Sea Ocean Reanalysis (Multiyear Product) using NEMO 4.0 with ERGOM biogeochemistry, SI3 sea ice, and PDAF data assimilation. Period 1993-2024."
 
 stac:
   institution: "Danish Meteorological Institute (DMI)"
