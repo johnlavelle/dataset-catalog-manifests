@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Validate all dataset config YAML files against the JSON Schema.
+"""Validate all dataset manifest YAML files against the JSON Schema.
 
 Runs as part of GitLab CI to catch errors before merge.
-Can also be run locally: python scripts/validate_configs.py
+Can also be run locally: python scripts/validate_manifests.py
 """
 
 import glob
@@ -14,8 +14,8 @@ import jsonschema
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCHEMA_PATH = REPO_ROOT / "schemas" / "dataset_config.schema.json"
-CONFIGS_GLOB = str(REPO_ROOT / "configs" / "*.yaml")
+SCHEMA_PATH = REPO_ROOT / "schemas" / "dataset_manifest.schema.json"
+MANIFESTS_GLOB = str(REPO_ROOT / "manifests" / "*.yaml")
 
 
 def load_schema():
@@ -23,28 +23,28 @@ def load_schema():
         return json.load(f)
 
 
-def validate_config(path, schema):
-    """Validate a single config file. Returns list of error strings."""
+def validate_manifest(path, schema):
+    """Validate a single manifest file. Returns list of error strings."""
     errors = []
 
     # Load YAML
     try:
         with open(path) as f:
-            config = yaml.safe_load(f)
+            manifest = yaml.safe_load(f)
     except yaml.YAMLError as e:
         return [f"YAML parse error: {e}"]
 
-    if config is None:
+    if manifest is None:
         return ["File is empty"]
 
     # JSON Schema validation
     try:
-        jsonschema.validate(instance=config, schema=schema)
+        jsonschema.validate(instance=manifest, schema=schema)
     except jsonschema.ValidationError as e:
         errors.append(f"Schema: {e.message} (at {'.'.join(str(p) for p in e.absolute_path)})" if e.absolute_path else f"Schema: {e.message}")
 
     # Extra checks on products
-    products = config.get("products", {})
+    products = manifest.get("products", {})
 
     # Check for duplicate dir values
     dirs = []
@@ -64,16 +64,16 @@ def validate_config(path, schema):
 
 def main():
     schema = load_schema()
-    config_files = sorted(glob.glob(CONFIGS_GLOB))
+    manifest_files = sorted(glob.glob(MANIFESTS_GLOB))
 
-    if not config_files:
-        print("No config files found in configs/")
+    if not manifest_files:
+        print("No manifest files found in manifests/")
         sys.exit(1)
 
     all_ok = True
-    for path in config_files:
+    for path in manifest_files:
         name = Path(path).name
-        errors = validate_config(path, schema)
+        errors = validate_manifest(path, schema)
         if errors:
             print(f"FAIL  {name}")
             for err in errors:
@@ -85,7 +85,7 @@ def main():
     if not all_ok:
         sys.exit(1)
 
-    print(f"\nAll {len(config_files)} config(s) valid.")
+    print(f"\nAll {len(manifest_files)} manifest(s) valid.")
 
 
 if __name__ == "__main__":

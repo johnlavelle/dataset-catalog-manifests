@@ -1,12 +1,12 @@
-# Dataset Catalog Configs
+# Dataset Catalog Manifests
 
-Dataset configuration files for the [DMI data archiving tools](https://gitlab.dmi.dk/jola/data-archiving-info). Each YAML config describes a dataset and its products — what data exists and where it lives.
+Dataset manifest files for the [DMI data archiving tools](https://gitlab.dmi.dk/jola/data-archiving-info). Each YAML manifest describes a dataset and its products — what data exists and where it lives.
 
-Dataset owners submit configs here via merge requests — no need to modify the tooling repo.
+Dataset owners submit manifests here via merge requests — no need to modify the tooling repo.
 
 ## Adding a New Dataset
 
-1. Copy an existing config (e.g. `configs/balmfc.yaml`) or start from the minimal example below
+1. Copy an existing manifest (e.g. `manifests/balmfc.yaml`) or start from the minimal example below
 2. Edit the fields for your dataset
 3. Run validation locally (see below)
 4. Submit a merge request
@@ -17,6 +17,7 @@ Dataset owners submit configs here via merge requests — no need to modify the 
 dataset:
   name: "My Dataset"
   path: "/path/to/dataset"
+  contact: "Name <email@dmi.dk>"
 
 products:
   daily_temperature:
@@ -25,9 +26,9 @@ products:
     category: "Physics"
 ```
 
-## Config Format
+## Manifest Format
 
-See [`schemas/dataset_config.schema.json`](schemas/dataset_config.schema.json) for the full specification.
+See [`schemas/dataset_manifest.schema.json`](schemas/dataset_manifest.schema.json) for the full specification.
 
 ### Required Fields
 
@@ -43,6 +44,8 @@ See [`schemas/dataset_config.schema.json`](schemas/dataset_config.schema.json) f
 |-------|-------------|
 | `dataset.model` | Model system name (e.g. "NEMO", "WAM") |
 | `dataset.domain` | Geographic domain (e.g. "North Sea - Baltic Sea") |
+| `dataset.contact` | Person responsible (e.g. "Name \<email@dmi.dk\>") |
+| `dataset.description` | Brief description of the dataset contents and purpose |
 | `stac` | STAC catalog metadata: `institution`, `purpose`, `dois`, etc. |
 
 ### Products
@@ -56,13 +59,15 @@ Each entry in `products` has:
 - **`type`** — Product type (e.g. "final product", "original output", "intermediate file").
 - **`notes`** — Additional notes.
 
+Additional fields are allowed — different datasets may need domain-specific metadata (e.g. CMIP6 manifests use `experiment_id`, `realization`, `modules`).
+
 Each product lives in its own subdirectory. The directory is the product identifier — no file patterns or regex needed.
 
 ## Local Validation
 
 ```bash
 pip install -r requirements.txt
-python scripts/validate_configs.py
+python scripts/validate_manifests.py
 ```
 
 This runs the same checks as the CI pipeline: schema validation and duplicate directory detection.

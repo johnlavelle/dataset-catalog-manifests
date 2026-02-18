@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Dataset Catalog Config",
+  "title": "Dataset Manifest",
   "description": "Manifest describing a dataset's identity, products, and catalog metadata.",
   "type": "object",
   "required": ["dataset", "products"],

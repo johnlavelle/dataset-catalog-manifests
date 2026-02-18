@@ -3,10 +3,10 @@ validate:
   before_script:
     - pip install -r requirements.txt
   script:
-    - python scripts/validate_configs.py
+    - python scripts/validate_manifests.py
   rules:
     - changes:
-        - configs/*.yaml
-        - configs/*.yml
+        - manifests/*.yaml
+        - manifests/*.yml
         - schemas/*.json
-        - scripts/validate_configs.py
+        - scripts/validate_manifests.py
