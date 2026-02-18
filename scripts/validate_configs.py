@@ -7,7 +7,6 @@ Can also be run locally: python scripts/validate_configs.py
 
 import glob
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -27,7 +26,6 @@ def load_schema():
 def validate_config(path, schema):
     """Validate a single config file. Returns list of error strings."""
     errors = []
-    name = Path(path).name
 
     # Load YAML
     try:
@@ -45,38 +43,21 @@ def validate_config(path, schema):
     except jsonschema.ValidationError as e:
         errors.append(f"Schema: {e.message} (at {'.'.join(str(p) for p in e.absolute_path)})" if e.absolute_path else f"Schema: {e.message}")
 
-    # Extra checks on file_patterns
-    patterns = config.get("file_patterns", [])
-    labels = []
-    for i, pat in enumerate(patterns):
-        label = pat.get("label", f"<index {i}>")
-        regex = pat.get("regex")
+    # Extra checks on products
+    products = config.get("products", {})
 
-        # Check regex compiles
-        if regex:
-            try:
-                re.compile(regex)
-            except re.error as e:
-                errors.append(f"Pattern '{label}': invalid regex: {e}")
+    # Check for duplicate dir values
+    dirs = []
+    for key, product in products.items():
+        d = product.get("dir")
+        if d:
+            dirs.append((key, d))
 
-        # Collect labels for duplicate check
-        if "label" in pat:
-            labels.append(pat["label"])
-
-    # Check for duplicate labels
-    seen = set()
-    for label in labels:
-        if label in seen:
-            errors.append(f"Duplicate label: '{label}'")
-        seen.add(label)
-
-    # Check stac.products keys reference existing labels
-    stac_products = config.get("stac", {}).get("products", {})
-    if stac_products:
-        label_set = set(labels)
-        for key in stac_products:
-            if key not in label_set:
-                errors.append(f"stac.products key '{key}' is not a file_patterns label")
+    seen_dirs = {}
+    for key, d in dirs:
+        if d in seen_dirs:
+            errors.append(f"Duplicate dir '{d}' in products '{seen_dirs[d]}' and '{key}'")
+        seen_dirs[d] = key
 
     return errors
 

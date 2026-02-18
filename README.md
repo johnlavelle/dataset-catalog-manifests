@@ -1,6 +1,6 @@
 # Dataset Catalog Configs
 
-Dataset configuration files for the [DMI data archiving tools](https://gitlab.dmi.dk/jola/data-archiving-info). Each YAML config describes a dataset's file patterns, metadata, and catalog settings.
+Dataset configuration files for the [DMI data archiving tools](https://gitlab.dmi.dk/jola/data-archiving-info). Each YAML config describes a dataset and its products — what data exists and where it lives.
 
 Dataset owners submit configs here via merge requests — no need to modify the tooling repo.
 
@@ -18,9 +18,10 @@ dataset:
   name: "My Dataset"
   path: "/path/to/dataset"
 
-file_patterns:
-  - regex: 'output_(\d{8})\.nc$'
-    label: "output_YYYYMMDD.nc"
+products:
+  daily_temperature:
+    name: "Daily Temperature"
+    dir: "daily_temperature"
     category: "Physics"
 ```
 
@@ -34,24 +35,29 @@ See [`schemas/dataset_config.schema.json`](schemas/dataset_config.schema.json) f
 |-------|-------------|
 | `dataset.name` | Human-readable dataset name |
 | `dataset.path` | Absolute path to the dataset on the filesystem |
-| `file_patterns` | List of `{regex, label, category}` dicts defining file groups |
+| `products` | Map of product key to metadata — each product has a `name` and `dir` |
 
-### Optional Sections
+### Optional Fields
 
-| Section | Description |
-|---------|-------------|
+| Field | Description |
+|-------|-------------|
 | `dataset.model` | Model system name (e.g. "NEMO", "WAM") |
 | `dataset.domain` | Geographic domain (e.g. "North Sea - Baltic Sea") |
-| `stac` | STAC catalog metadata: `institution`, `purpose`, `products`, `dois`, etc. |
+| `stac` | STAC catalog metadata: `institution`, `purpose`, `dois`, etc. |
 
-### File Patterns
+### Products
 
-Each entry in `file_patterns` has:
-- **`regex`** — Python regex matching filenames. Date groups use `(\d{8})` for YYYYMMDD.
-- **`label`** — Human-readable label with dates replaced by `YYYYMMDD`.
+Each entry in `products` has:
+- **`name`** (required) — Human-readable product name.
+- **`dir`** (required) — Subdirectory under `dataset.path` containing this product's files.
 - **`category`** — Grouping category (e.g. "Physics", "Biogeochemistry", "Ice").
+- **`model_component`** — Model component (e.g. "NEMO", "ERGOM", "SI3").
+- **`domain`** — Geographic domain for this product.
+- **`type`** — Product type (e.g. "final product", "original output", "intermediate file").
+- **`compression_precision`** — Compression and precision details.
+- **`notes`** — Additional notes.
 
-Order matters: more specific patterns must come before generic catch-alls.
+Each product lives in its own subdirectory. The directory is the product identifier — no file patterns or regex needed.
 
 ## Local Validation
 
@@ -60,4 +66,4 @@ pip install -r requirements.txt
 python scripts/validate_configs.py
 ```
 
-This runs the same checks as the CI pipeline: schema validation, regex compilation, duplicate detection, and cross-reference checks.
+This runs the same checks as the CI pipeline: schema validation and duplicate directory detection.

@@ -4,395 +4,258 @@ dataset:
   model: "NEMO-SI3-PDAF-ERGOM"
   domain: "North Sea - Baltic Sea"
 
-file_patterns:
-  # Assimilation files
-  - regex: 'assim_background_increments_(\d{8})\.nc$'
-    label: "assim_background_increments_YYYYMMDD.nc"
-    category: "Assimilation"
-
-  # BAL (Baltic) ERGOM BGC files
-  - regex: 'BAL-ERGOM_BGC-DailyMeans-(\d{8})_JAMBAY\.nc$'
-    label: "BAL-ERGOM_BGC-DailyMeans-YYYYMMDD_JAMBAY.nc"
-    category: "Biogeochemistry"
-  - regex: 'BAL-ERGOM_BGC-DailyMeans-(\d{8})\.nc$'
-    label: "BAL-ERGOM_BGC-DailyMeans-YYYYMMDD.nc"
-    category: "Biogeochemistry"
-  - regex: 'BAL-MYP-ERGOM_BGC-DailyMeans-(\d{8})_JAMBAY\.nc$'
-    label: "BAL-MYP-ERGOM_BGC-DailyMeans-YYYYMMDD_JAMBAY.nc"
-    category: "Biogeochemistry"
-
-  # BAL NEMO PHY files - MYP hourly
-  - regex: 'BAL-MYP-NEMO_PHY-HourlyMeans-(\d{8})_only_PS_PT\.nc$'
-    label: "BAL-MYP-NEMO_PHY-HourlyMeans-YYYYMMDD_only_PS_PT.nc"
-    category: "Physics"
-  - regex: 'BAL-MYP-NEMO_PHY-HourlyMeans-(\d{8})_PS_PT\.nc$'
-    label: "BAL-MYP-NEMO_PHY-HourlyMeans-YYYYMMDD_PS_PT.nc"
-    category: "Physics"
-  - regex: 'BAL-MYP-NEMO_PHY-HourlyMeans-(\d{8})_SA_CT\.nc$'
-    label: "BAL-MYP-NEMO_PHY-HourlyMeans-YYYYMMDD_SA_CT.nc"
-    category: "Physics"
-
-  # BAL NEMO PHY files - daily (specific suffixes first)
-  - regex: 'BAL-NEMO_PHY-DailyMeans-(\d{8})_PS_PT\.nc$'
-    label: "BAL-NEMO_PHY-DailyMeans-YYYYMMDD_PS_PT.nc"
-    category: "Physics"
-  - regex: 'BAL-NEMO_PHY-DailyMeans-(\d{8})_SA_CT\.nc$'
-    label: "BAL-NEMO_PHY-DailyMeans-YYYYMMDD_SA_CT.nc"
-    category: "Physics"
-  - regex: 'BAL-NEMO_PHY-DailyMeans-(\d{8})\.nc$'
-    label: "BAL-NEMO_PHY-DailyMeans-YYYYMMDD.nc"
-    category: "Physics"
-
-  # Ensemble mean forecast
-  - regex: 'ens_mean_fct_3d_(\d{8})\.nc$'
-    label: "ens_mean_fct_3d_YYYYMMDD.nc"
-    category: "Assimilation"
-
-  # NORDIC files - ERGOM
-  - regex: 'NORDIC_12h_ERGOM_T_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_12h_ERGOM_T_YYYYMMDD-YYYYMMDD.nc"
-    category: "Biogeochemistry"
-  - regex: 'NORDIC_1d_ERGOM_T_3D_(\d{8})-(\d{8})_JAMBAY\.nc$'
-    label: "NORDIC_1d_ERGOM_T_3D_YYYYMMDD-YYYYMMDD_JAMBAY.nc"
-    category: "Biogeochemistry"
-  - regex: 'NORDIC_1d_ERGOM_T_3D_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1d_ERGOM_T_3D_YYYYMMDD-YYYYMMDD.nc"
-    category: "Biogeochemistry"
-  - regex: 'NORDIC_NOON_ERGOM_T_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_NOON_ERGOM_T_YYYYMMDD-YYYYMMDD.nc"
-    category: "Biogeochemistry"
-
-  # NORDIC files - grid T/U/V daily
-  - regex: 'NORDIC_1d_grid_T_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1d_grid_T_YYYYMMDD-YYYYMMDD.nc"
-    category: "Physics"
-  - regex: 'NORDIC_1d_grid_U_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1d_grid_U_YYYYMMDD-YYYYMMDD.nc"
-    category: "Physics"
-  - regex: 'NORDIC_1d_grid_V_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1d_grid_V_YYYYMMDD-YYYYMMDD.nc"
-    category: "Physics"
-
-  # NORDIC files - ice
-  - regex: 'NORDIC_1d_icedrift_grid_T_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1d_icedrift_grid_T_YYYYMMDD-YYYYMMDD.nc"
-    category: "Ice"
-  - regex: 'NORDIC_1d_ice_grid_T_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1d_ice_grid_T_YYYYMMDD-YYYYMMDD.nc"
-    category: "Ice"
-  - regex: 'NORDIC_(\d{8})_restart_ice_out\.nc$'
-    label: "NORDIC_YYYYMMDD_restart_ice_out.nc"
-    category: "Ice"
-
-  # NORDIC files - hourly grid
-  - regex: 'NORDIC_1h_grid_T_(\d{8})-(\d{8})_TS\.nc$'
-    label: "NORDIC_1h_grid_T_YYYYMMDD-YYYYMMDD_TS.nc"
-    category: "Physics"
-  - regex: 'NORDIC_1h_grid_T_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1h_grid_T_YYYYMMDD-YYYYMMDD.nc"
-    category: "Physics"
-  - regex: 'NORDIC_1h_grid_U_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1h_grid_U_YYYYMMDD-YYYYMMDD.nc"
-    category: "Physics"
-  - regex: 'NORDIC_1h_grid_V_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1h_grid_V_YYYYMMDD-YYYYMMDD.nc"
-    category: "Physics"
-
-  # NORDIC files - hourly surface/sealevel
-  - regex: 'NORDIC_1h_SURF_grid_T_(\d{8})-(\d{8})_sla\.nc$'
-    label: "NORDIC_1h_SURF_grid_T_YYYYMMDD-YYYYMMDD_sla.nc"
-    category: "Physics"
-  - regex: 'NORDIC_1h_SURF_grid_T_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1h_SURF_grid_T_YYYYMMDD-YYYYMMDD.nc"
-    category: "Physics"
-  - regex: 'NORDIC_1h_sealevel_(\d{8})-(\d{8})\.nc$'
-    label: "NORDIC_1h_sealevel_YYYYMMDD-YYYYMMDD.nc"
-    category: "Physics"
-
-  # NS (North Sea) ERGOM BGC files
-  - regex: 'NS-ERGOM_BGC-DailyMeans-(\d{8})_JAMBAY\.nc$'
-    label: "NS-ERGOM_BGC-DailyMeans-YYYYMMDD_JAMBAY.nc"
-    category: "Biogeochemistry"
-  - regex: 'NS-ERGOM_BGC-DailyMeans-(\d{8})\.nc$'
-    label: "NS-ERGOM_BGC-DailyMeans-YYYYMMDD.nc"
-    category: "Biogeochemistry"
-  - regex: 'NS-MYP-ERGOM_BGC-DailyMeans-(\d{8})_JAMBAY\.nc$'
-    label: "NS-MYP-ERGOM_BGC-DailyMeans-YYYYMMDD_JAMBAY.nc"
-    category: "Biogeochemistry"
-
-  # NS NEMO PHY files - MYP hourly
-  - regex: 'NS-MYP-NEMO_PHY-HourlyMeans-(\d{8})_only_PS_PT\.nc$'
-    label: "NS-MYP-NEMO_PHY-HourlyMeans-YYYYMMDD_only_PS_PT.nc"
-    category: "Physics"
-  - regex: 'NS-MYP-NEMO_PHY-HourlyMeans-(\d{8})_only_SA_CT\.nc$'
-    label: "NS-MYP-NEMO_PHY-HourlyMeans-YYYYMMDD_only_SA_CT.nc"
-    category: "Physics"
-  - regex: 'NS-MYP-NEMO_PHY-HourlyMeans-(\d{8})_PS_PT\.nc$'
-    label: "NS-MYP-NEMO_PHY-HourlyMeans-YYYYMMDD_PS_PT.nc"
-    category: "Physics"
-  - regex: 'NS-MYP-NEMO_PHY-HourlyMeans-(\d{8})_SA_CT\.nc$'
-    label: "NS-MYP-NEMO_PHY-HourlyMeans-YYYYMMDD_SA_CT.nc"
-    category: "Physics"
-
-  # NS NEMO PHY files - daily (specific suffixes first)
-  - regex: 'NS-NEMO_PHY-DailyMeans-(\d{8})_PS_PT\.nc$'
-    label: "NS-NEMO_PHY-DailyMeans-YYYYMMDD_PS_PT.nc"
-    category: "Physics"
-  - regex: 'NS-NEMO_PHY-DailyMeans-(\d{8})_SA_CT\.nc$'
-    label: "NS-NEMO_PHY-DailyMeans-YYYYMMDD_SA_CT.nc"
-    category: "Physics"
-  - regex: 'NS-NEMO_PHY-DailyMeans-(\d{8})\.nc$'
-    label: "NS-NEMO_PHY-DailyMeans-YYYYMMDD.nc"
-    category: "Physics"
-
-  # Observation files
-  - regex: 'obs_SST_super_capped_(\d{8})\.nc$'
-    label: "obs_SST_super_capped_YYYYMMDD.nc"
-    category: "Observations"
-
-  # Station files
-  - regex: 'station_BIO-PROF_EXTRA_Arkona_(\d{8})\.nc$'
-    label: "station_BIO-PROF_EXTRA_Arkona_YYYYMMDD.nc"
-    category: "Stations"
-  - regex: 'station_PHY-SURF_Ratan_(\d{8})\.nc$'
-    label: "station_PHY-SURF_Ratan_YYYYMMDD.nc"
-    category: "Stations"
-  - regex: 'station_(.+)_(\d{8})\.nc$'
-    label: "station_*_YYYYMMDD.nc"
-    category: "Stations"
-
-  # Profile observations
-  - regex: 'prof_obs_(\d{8})\.dat$'
-    label: "prof_obs_YYYYMMDD.dat"
-    category: "Observations"
-
-  # Test/misc files (catch-all patterns)
-  - regex: '^test.*\.nc$'
-    label: "test*.nc"
-    category: "Test/misc"
-  - regex: '^diff.*\.nc$'
-    label: "diff*.nc"
-    category: "Test/misc"
-  - regex: '^dep\.nc$'
-    label: "dep.nc"
-    category: "Test/misc"
-  - regex: 'NemoNordic_Aarhus.*\.nc$'
-    label: "NemoNordic_Aarhus*.nc"
-    category: "Test/misc"
-  - regex: 'product_Aarhus.*\.nc$'
-    label: "product_Aarhus*.nc"
-    category: "Test/misc"
-
-  # JAMBAY tar archives
-  - regex: 'JAMBAY_BGC_DailyMeans_(\d{8})\.tar\.gz$'
-    label: "JAMBAY_BGC_DailyMeans_YYYYMMDD.tar.gz"
-    category: "Biogeochemistry"
-
 stac:
   institution: "Danish Meteorological Institute (DMI)"
   purpose: "Copernicus Marine Service - Baltic Sea Ocean Reanalysis (Multiyear)"
   model_system: "NEMO 4.0 + ERGOM + SI3 + PDAF"
   cmems_product_code: "BALTICSEA_MULTIYEAR_PHY_003_011"
   period: "1993-01-01 to 2024-05-22"
-
   dois:
     BALTICSEA_MULTIYEAR_PHY_003_011: "10.48670/moi-00013"
     BALTICSEA_MULTIYEAR_BGC_003_012: "10.48670/moi-00012"
 
-  products:
-    # Assimilation
-    "assim_background_increments_YYYYMMDD.nc":
-      name: "Assimilation Background Increments"
-      model_component: "PDAF"
-      domain: "Baltic"
-      type: "production file"
-      notes: "Data assimilation fields"
+products:
+  # Assimilation
+  assim_background_increments:
+    name: "Assimilation Background Increments"
+    dir: "assim_background_increments"
+    category: "Assimilation"
+    model_component: "PDAF"
+    domain: "Baltic"
+    type: "production file"
+    notes: "Data assimilation fields"
 
-    "ens_mean_fct_3d_YYYYMMDD.nc":
-      name: "Ensemble Mean Forecast 3D"
-      model_component: "NEMO"
-      domain: "Baltic"
-      type: "production file"
-      notes: "Ensemble mean forecast fields"
+  ens_mean_fct_3d:
+    name: "Ensemble Mean Forecast 3D"
+    dir: "ens_mean_fct_3d"
+    category: "Assimilation"
+    model_component: "NEMO"
+    domain: "Baltic"
+    type: "production file"
+    notes: "Ensemble mean forecast fields"
 
-    # Observations
-    "obs_SST_super_capped_YYYYMMDD.nc":
-      name: "SST Observations (Capped)"
-      model_component: "Observations"
-      domain: "Baltic+Nordic"
-      type: "production file"
-      notes: "Super-observation SST data"
+  # Observations
+  obs_SST_super_capped:
+    name: "SST Observations (Capped)"
+    dir: "obs_SST_super_capped"
+    category: "Observations"
+    model_component: "Observations"
+    domain: "Baltic+Nordic"
+    type: "production file"
+    notes: "Super-observation SST data"
 
-    # Baltic ERGOM BGC
-    "BAL-ERGOM_BGC-DailyMeans-YYYYMMDD.nc":
-      name: "Baltic Biogeochemistry Daily"
-      model_component: "ERGOM"
-      domain: "Baltic"
-      type: "final product"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "Chl, nutrients, oxygen, pH"
+  # Baltic ERGOM BGC
+  BAL-ERGOM_BGC-DailyMeans:
+    name: "Baltic Biogeochemistry Daily"
+    dir: "BAL-ERGOM_BGC-DailyMeans"
+    category: "Biogeochemistry"
+    model_component: "ERGOM"
+    domain: "Baltic"
+    type: "final product"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "Chl, nutrients, oxygen, pH"
 
-    "BAL-ERGOM_BGC-DailyMeans-YYYYMMDD_JAMBAY.nc":
-      name: "Baltic BGC Daily (JAMBAY)"
-      model_component: "ERGOM"
-      domain: "Baltic"
-      type: "project file"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "Extended plankton variables"
+  BAL-ERGOM_BGC-DailyMeans_JAMBAY:
+    name: "Baltic BGC Daily (JAMBAY)"
+    dir: "BAL-ERGOM_BGC-DailyMeans_JAMBAY"
+    category: "Biogeochemistry"
+    model_component: "ERGOM"
+    domain: "Baltic"
+    type: "project file"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "Extended plankton variables"
 
-    "BAL-MYP-ERGOM_BGC-DailyMeans-YYYYMMDD_JAMBAY.nc":
-      name: "Baltic MYP BGC (JAMBAY)"
-      model_component: "ERGOM"
-      domain: "Baltic"
-      type: "project file"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "MYP extended variables"
+  BAL-MYP-ERGOM_BGC-DailyMeans_JAMBAY:
+    name: "Baltic MYP BGC (JAMBAY)"
+    dir: "BAL-MYP-ERGOM_BGC-DailyMeans_JAMBAY"
+    category: "Biogeochemistry"
+    model_component: "ERGOM"
+    domain: "Baltic"
+    type: "project file"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "MYP extended variables"
 
-    "JAMBAY_BGC_DailyMeans_YYYYMMDD.tar.gz":
-      name: "JAMBAY BGC Archive"
-      model_component: "ERGOM"
-      domain: "Baltic"
-      type: "project archive"
-      notes: "Compressed JAMBAY outputs"
+  JAMBAY_BGC_DailyMeans:
+    name: "JAMBAY BGC Archive"
+    dir: "JAMBAY_BGC_DailyMeans"
+    category: "Biogeochemistry"
+    model_component: "ERGOM"
+    domain: "Baltic"
+    type: "project archive"
+    notes: "Compressed JAMBAY outputs"
 
-    # Baltic NEMO Physics
-    "BAL-NEMO_PHY-DailyMeans-YYYYMMDD_PS_PT.nc":
-      name: "Baltic Physics Daily (PS/PT)"
-      model_component: "NEMO"
-      domain: "Baltic"
-      type: "final product"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "Practical Salinity/Potential Temp"
+  # Baltic NEMO Physics
+  BAL-NEMO_PHY-DailyMeans_PS_PT:
+    name: "Baltic Physics Daily (PS/PT)"
+    dir: "BAL-NEMO_PHY-DailyMeans_PS_PT"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "Baltic"
+    type: "final product"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "Practical Salinity/Potential Temp"
 
-    "BAL-NEMO_PHY-DailyMeans-YYYYMMDD_SA_CT.nc":
-      name: "Baltic Physics Daily (SA/CT)"
-      model_component: "NEMO"
-      domain: "Baltic"
-      type: "intermediate file"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "Derived from PS/PT (TEOS-10)"
+  BAL-NEMO_PHY-DailyMeans_SA_CT:
+    name: "Baltic Physics Daily (SA/CT)"
+    dir: "BAL-NEMO_PHY-DailyMeans_SA_CT"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "Baltic"
+    type: "intermediate file"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "Derived from PS/PT (TEOS-10)"
 
-    "BAL-MYP-NEMO_PHY-HourlyMeans-YYYYMMDD_PS_PT.nc":
-      name: "Baltic Physics Hourly (PS/PT)"
-      model_component: "NEMO"
-      domain: "Baltic"
-      type: "final product"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "High-frequency physics (PS/PT)"
+  BAL-MYP-NEMO_PHY-HourlyMeans_PS_PT:
+    name: "Baltic Physics Hourly (PS/PT)"
+    dir: "BAL-MYP-NEMO_PHY-HourlyMeans_PS_PT"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "Baltic"
+    type: "final product"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "High-frequency physics (PS/PT)"
 
-    "BAL-MYP-NEMO_PHY-HourlyMeans-YYYYMMDD_SA_CT.nc":
-      name: "Baltic Physics Hourly (SA/CT)"
-      model_component: "NEMO"
-      domain: "Baltic"
-      type: "final product"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "High-frequency physics (SA/CT)"
+  BAL-MYP-NEMO_PHY-HourlyMeans_SA_CT:
+    name: "Baltic Physics Hourly (SA/CT)"
+    dir: "BAL-MYP-NEMO_PHY-HourlyMeans_SA_CT"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "Baltic"
+    type: "final product"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "High-frequency physics (SA/CT)"
 
-    "BAL-MYP-NEMO_PHY-HourlyMeans-YYYYMMDD_only_PS_PT.nc":
-      name: "Baltic Physics Hourly (PS/PT only)"
-      model_component: "NEMO"
-      domain: "Baltic"
-      type: "final product"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "Surface layer only"
+  BAL-MYP-NEMO_PHY-HourlyMeans_only_PS_PT:
+    name: "Baltic Physics Hourly (PS/PT only)"
+    dir: "BAL-MYP-NEMO_PHY-HourlyMeans_only_PS_PT"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "Baltic"
+    type: "final product"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "Surface layer only"
 
-    # NORDIC NEMO Physics
-    "NORDIC_1d_grid_T_YYYYMMDD-YYYYMMDD.nc":
-      name: "NORDIC Ocean Daily (T-grid)"
-      model_component: "NEMO"
-      domain: "Nordic+Baltic"
-      type: "original output"
-      compression_precision: "float32, chunked only"
-      notes: "Temperature and salinity on T-grid"
+  # NORDIC NEMO Physics
+  NORDIC_1d_grid_T:
+    name: "NORDIC Ocean Daily (T-grid)"
+    dir: "NORDIC_1d_grid_T"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "Nordic+Baltic"
+    type: "original output"
+    compression_precision: "float32, chunked only"
+    notes: "Temperature and salinity on T-grid"
 
-    "NORDIC_1d_grid_U_YYYYMMDD-YYYYMMDD.nc":
-      name: "NORDIC Ocean Daily (U-grid)"
-      model_component: "NEMO"
-      domain: "Nordic+Baltic"
-      type: "intermediate file"
-      compression_precision: "float32, chunked only"
-      notes: "Zonal velocity on U-grid"
+  NORDIC_1d_grid_U:
+    name: "NORDIC Ocean Daily (U-grid)"
+    dir: "NORDIC_1d_grid_U"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "Nordic+Baltic"
+    type: "intermediate file"
+    compression_precision: "float32, chunked only"
+    notes: "Zonal velocity on U-grid"
 
-    "NORDIC_1d_grid_V_YYYYMMDD-YYYYMMDD.nc":
-      name: "NORDIC Ocean Daily (V-grid)"
-      model_component: "NEMO"
-      domain: "Nordic+Baltic"
-      type: "intermediate file"
-      compression_precision: "float32, chunked only"
-      notes: "Meridional velocity on V-grid"
+  NORDIC_1d_grid_V:
+    name: "NORDIC Ocean Daily (V-grid)"
+    dir: "NORDIC_1d_grid_V"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "Nordic+Baltic"
+    type: "intermediate file"
+    compression_precision: "float32, chunked only"
+    notes: "Meridional velocity on V-grid"
 
-    # NORDIC Ice
-    "NORDIC_1d_ice_grid_T_YYYYMMDD-YYYYMMDD.nc":
-      name: "NORDIC Sea Ice Daily"
-      model_component: "SI3"
-      domain: "Nordic+Baltic"
-      type: "original output"
-      compression_precision: "float32, chunked only"
-      notes: "Sea ice variables"
+  # NORDIC Ice
+  NORDIC_1d_ice_grid_T:
+    name: "NORDIC Sea Ice Daily"
+    dir: "NORDIC_1d_ice_grid_T"
+    category: "Ice"
+    model_component: "SI3"
+    domain: "Nordic+Baltic"
+    type: "original output"
+    compression_precision: "float32, chunked only"
+    notes: "Sea ice variables"
 
-    # NORDIC Hourly
-    "NORDIC_1h_sealevel_YYYYMMDD-YYYYMMDD.nc":
-      name: "NORDIC Sea Level Hourly"
-      model_component: "NEMO"
-      domain: "Nordic+Baltic"
-      type: "original output"
-      compression_precision: "float32, chunked only"
-      notes: "High-frequency sea level"
+  # NORDIC Hourly
+  NORDIC_1h_sealevel:
+    name: "NORDIC Sea Level Hourly"
+    dir: "NORDIC_1h_sealevel"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "Nordic+Baltic"
+    type: "original output"
+    compression_precision: "float32, chunked only"
+    notes: "High-frequency sea level"
 
-    "NORDIC_1h_SURF_grid_T_YYYYMMDD-YYYYMMDD.nc":
-      name: "NORDIC Surface Hourly"
-      model_component: "NEMO"
-      domain: "Nordic+Baltic"
-      type: "original output"
-      compression_precision: "float32, chunked only"
-      notes: "Surface layer hourly"
+  NORDIC_1h_SURF_grid_T:
+    name: "NORDIC Surface Hourly"
+    dir: "NORDIC_1h_SURF_grid_T"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "Nordic+Baltic"
+    type: "original output"
+    compression_precision: "float32, chunked only"
+    notes: "Surface layer hourly"
 
-    # NORDIC ERGOM BGC
-    "NORDIC_12h_ERGOM_T_YYYYMMDD-YYYYMMDD.nc":
-      name: "NORDIC BGC 12-hourly"
-      model_component: "ERGOM"
-      domain: "Nordic+Baltic"
-      type: "original output"
-      compression_precision: "float32, chunked only"
-      notes: "Biogeochemistry 12h"
+  # NORDIC ERGOM BGC
+  NORDIC_12h_ERGOM_T:
+    name: "NORDIC BGC 12-hourly"
+    dir: "NORDIC_12h_ERGOM_T"
+    category: "Biogeochemistry"
+    model_component: "ERGOM"
+    domain: "Nordic+Baltic"
+    type: "original output"
+    compression_precision: "float32, chunked only"
+    notes: "Biogeochemistry 12h"
 
-    "NORDIC_1d_ERGOM_T_3D_YYYYMMDD-YYYYMMDD.nc":
-      name: "NORDIC BGC Daily 3D"
-      model_component: "ERGOM"
-      domain: "Nordic+Baltic"
-      type: "original output"
-      compression_precision: "float32, chunked only"
-      notes: "Full 3D biogeochemistry"
+  NORDIC_1d_ERGOM_T_3D:
+    name: "NORDIC BGC Daily 3D"
+    dir: "NORDIC_1d_ERGOM_T_3D"
+    category: "Biogeochemistry"
+    model_component: "ERGOM"
+    domain: "Nordic+Baltic"
+    type: "original output"
+    compression_precision: "float32, chunked only"
+    notes: "Full 3D biogeochemistry"
 
-    "NORDIC_NOON_ERGOM_T_YYYYMMDD-YYYYMMDD.nc":
-      name: "NORDIC BGC Noon"
-      model_component: "ERGOM"
-      domain: "Nordic+Baltic"
-      type: "intermediate file"
-      compression_precision: "float32, chunked only"
-      notes: "Noon snapshot BGC"
+  NORDIC_NOON_ERGOM_T:
+    name: "NORDIC BGC Noon"
+    dir: "NORDIC_NOON_ERGOM_T"
+    category: "Biogeochemistry"
+    model_component: "ERGOM"
+    domain: "Nordic+Baltic"
+    type: "intermediate file"
+    compression_precision: "float32, chunked only"
+    notes: "Noon snapshot BGC"
 
-    # North Sea
-    "NS-ERGOM_BGC-DailyMeans-YYYYMMDD.nc":
-      name: "North Sea BGC Daily"
-      model_component: "ERGOM"
-      domain: "North Sea"
-      type: "final product"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "North Sea biogeochemistry"
+  # North Sea
+  NS-ERGOM_BGC-DailyMeans:
+    name: "North Sea BGC Daily"
+    dir: "NS-ERGOM_BGC-DailyMeans"
+    category: "Biogeochemistry"
+    model_component: "ERGOM"
+    domain: "North Sea"
+    type: "final product"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "North Sea biogeochemistry"
 
-    "NS-NEMO_PHY-DailyMeans-YYYYMMDD_PS_PT.nc":
-      name: "North Sea Physics Daily (PS/PT)"
-      model_component: "NEMO"
-      domain: "North Sea"
-      type: "final product"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "North Sea physics (PS/PT)"
+  NS-NEMO_PHY-DailyMeans_PS_PT:
+    name: "North Sea Physics Daily (PS/PT)"
+    dir: "NS-NEMO_PHY-DailyMeans_PS_PT"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "North Sea"
+    type: "final product"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "North Sea physics (PS/PT)"
 
-    "NS-NEMO_PHY-DailyMeans-YYYYMMDD_SA_CT.nc":
-      name: "North Sea Physics Daily (SA/CT)"
-      model_component: "NEMO"
-      domain: "North Sea"
-      type: "final product"
-      compression_precision: "float32, deflate-1, shuffle"
-      notes: "North Sea physics (SA/CT)"
+  NS-NEMO_PHY-DailyMeans_SA_CT:
+    name: "North Sea Physics Daily (SA/CT)"
+    dir: "NS-NEMO_PHY-DailyMeans_SA_CT"
+    category: "Physics"
+    model_component: "NEMO"
+    domain: "North Sea"
+    type: "final product"
+    compression_precision: "float32, deflate-1, shuffle"
+    notes: "North Sea physics (SA/CT)"

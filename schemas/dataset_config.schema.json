@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Dataset Catalog Config",
-  "description": "Manifest describing a dataset's identity, file patterns, and catalog metadata.",
+  "description": "Manifest describing a dataset's identity, products, and catalog metadata.",
   "type": "object",
-  "required": ["dataset", "file_patterns"],
+  "required": ["dataset", "products"],
   "additionalProperties": false,
   "properties": {
     "dataset": {
@@ -29,29 +29,6 @@
         }
       }
     },
-    "file_patterns": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "required": ["regex", "label"],
-        "additionalProperties": false,
-        "properties": {
-          "regex": {
-            "type": "string",
-            "description": "Python regex pattern matching filenames."
-          },
-          "label": {
-            "type": "string",
-            "description": "Human-readable label (dates replaced with YYYYMMDD)."
-          },
-          "category": {
-            "type": "string",
-            "description": "Grouping category (e.g. Physics, Biogeochemistry)."
-          }
-        }
-      }
-    },
     "stac": {
       "type": "object",
       "additionalProperties": false,
@@ -65,24 +42,52 @@
           "type": "object",
           "additionalProperties": { "type": "string" },
           "description": "Map of product ID to DOI string."
-        },
-        "products": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "name": { "type": "string" },
-              "model_component": { "type": "string" },
-              "domain": { "type": "string" },
-              "type": { "type": "string" },
-              "notes": { "type": "string" },
-              "compression_precision": { "type": "string" }
-            }
-          },
-          "description": "Map of file pattern label to product metadata."
         }
       }
+    },
+    "products": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["name", "dir"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable product name."
+          },
+          "dir": {
+            "type": "string",
+            "description": "Subdirectory under dataset.path containing this product's files."
+          },
+          "category": {
+            "type": "string",
+            "description": "Grouping category (e.g. Physics, Biogeochemistry)."
+          },
+          "model_component": {
+            "type": "string",
+            "description": "Model component (e.g. NEMO, ERGOM, SI3)."
+          },
+          "domain": {
+            "type": "string",
+            "description": "Geographic domain for this product."
+          },
+          "type": {
+            "type": "string",
+            "description": "Product type (e.g. final product, original output, intermediate file)."
+          },
+          "compression_precision": {
+            "type": "string",
+            "description": "Compression and precision details."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes about this product."
+          }
+        }
+      },
+      "description": "Map of product key to product metadata. Each product lives in its own subdirectory."
     }
   }
 }
