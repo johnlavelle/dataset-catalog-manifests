@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dataset Catalog Config",
+  "description": "Configuration file for DMI data archive scanning and cataloging.",
+  "type": "object",
+  "required": ["dataset", "file_patterns"],
+  "additionalProperties": false,
+  "properties": {
+    "dataset": {
+      "type": "object",
+      "required": ["name", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable dataset name."
+        },
+        "path": {
+          "type": "string",
+          "description": "Absolute path to the dataset on the filesystem."
+        },
+        "model": {
+          "type": "string",
+          "description": "Model system name (e.g. NEMO, WAM)."
+        },
+        "domain": {
+          "type": "string",
+          "description": "Geographic domain (e.g. North Sea - Baltic Sea)."
+        }
+      }
+    },
+    "scanner": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_depth": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum directory depth to scan."
+        },
+        "ncdump_timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Timeout in seconds for ncdump commands."
+        },
+        "output_dir": {
+          "type": "string",
+          "description": "Override output directory (defaults to output/<config_name>/)."
+        },
+        "source": {
+          "type": "string",
+          "enum": ["filesystem", "robinhood"],
+          "description": "Data source: filesystem walk or Robinhood MariaDB."
+        },
+        "robinhood": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "host": { "type": "string" },
+            "port": { "type": "integer" },
+            "user": { "type": "string" },
+            "password_file": { "type": "string" },
+            "database": { "type": "string" },
+            "database_map": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            },
+            "query_timeout": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "file_patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["regex", "label"],
+        "additionalProperties": false,
+        "properties": {
+          "regex": {
+            "type": "string",
+            "description": "Python regex pattern matching filenames."
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable label (dates replaced with YYYYMMDD)."
+          },
+          "category": {
+            "type": "string",
+            "description": "Grouping category (e.g. Physics, Biogeochemistry)."
+          }
+        }
+      }
+    },
+    "skip_variables": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "NetCDF variable names to exclude from metadata extraction."
+    },
+    "treemap": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Treemap visualization title."
+        },
+        "category_colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "description": "Map of category name to hex color code."
+        },
+        "category_keywords": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "description": "Map of category name to keyword list for auto-categorization."
+        }
+      }
+    },
+    "stac": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "institution": { "type": "string" },
+        "purpose": { "type": "string" },
+        "model_system": { "type": "string" },
+        "cmems_product_code": { "type": "string" },
+        "period": { "type": "string" },
+        "dois": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Map of product ID to DOI string."
+        },
+        "products": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "model_component": { "type": "string" },
+              "domain": { "type": "string" },
+              "type": { "type": "string" },
+              "notes": { "type": "string" },
+              "compression_precision": { "type": "string" }
+            }
+          },
+          "description": "Map of file pattern label to product metadata."
+        }
+      }
+    }
+  }
+}
