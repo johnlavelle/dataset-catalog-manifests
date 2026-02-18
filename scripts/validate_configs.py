@@ -78,13 +78,6 @@ def validate_config(path, schema):
             if key not in label_set:
                 errors.append(f"stac.products key '{key}' is not a file_patterns label")
 
-    # Check treemap.category_colors are valid hex
-    colors = config.get("treemap", {}).get("category_colors", {})
-    hex_re = re.compile(r"^#[0-9a-fA-F]{6}$")
-    for cat, color in colors.items():
-        if not hex_re.match(color):
-            errors.append(f"treemap.category_colors['{cat}']: invalid hex color '{color}'")
-
     return errors
 
 

@@ -4,11 +4,6 @@ dataset:
   model: "NEMO-SI3-PDAF-ERGOM"
   domain: "North Sea - Baltic Sea"
 
-scanner:
-  max_depth: 10
-  ncdump_timeout: 60
-  # output_dir auto-derived as output/balmfc/
-
 file_patterns:
   # Assimilation files
   - regex: 'assim_background_increments_(\d{8})\.nc$'
@@ -192,50 +187,6 @@ file_patterns:
   - regex: 'JAMBAY_BGC_DailyMeans_(\d{8})\.tar\.gz$'
     label: "JAMBAY_BGC_DailyMeans_YYYYMMDD.tar.gz"
     category: "Biogeochemistry"
-
-skip_variables:
-  - nav_lat
-  - nav_lon
-  - time
-  - time_counter
-  - time_centered
-  - time_instant
-  - deptht
-  - depth
-  - depthu
-  - depthv
-  - lat
-  - lon
-  - nav_lev
-  - time_counter_bounds
-  - time_centered_bounds
-  - time_instant_bounds
-  - deptht_bounds
-  - depthu_bounds
-  - depthv_bounds
-  - deptht_bnds
-  - axis_nbounds
-
-treemap:
-  title: "BALMFC Dataset Storage"
-  category_colors:
-    Biogeochemistry: "#2ecc71"
-    Physics: "#3498db"
-    Ice: "#9b59b6"
-    Observations: "#e74c3c"
-    Assimilation: "#f39c12"
-    Stations: "#1abc9c"
-    "Test/misc": "#95a5a6"
-    Other: "#34495e"
-    Directory: "#ecf0f1"
-  category_keywords:
-    Biogeochemistry: [ergom, bgc]
-    Physics: [nemo, phy]
-    Ice: [ice]
-    Observations: [sst, obs]
-    Assimilation: [assim, ens]
-    Stations: [station]
-    "Test/misc": [test, diff]
 
 stac:
   institution: "Danish Meteorological Institute (DMI)"

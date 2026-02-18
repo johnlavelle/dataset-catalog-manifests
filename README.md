@@ -42,9 +42,6 @@ See [`schemas/dataset_config.schema.json`](schemas/dataset_config.schema.json) f
 |---------|-------------|
 | `dataset.model` | Model system name (e.g. "NEMO", "WAM") |
 | `dataset.domain` | Geographic domain (e.g. "North Sea - Baltic Sea") |
-| `scanner` | Scan settings: `max_depth`, `ncdump_timeout`, `source` |
-| `skip_variables` | NetCDF variables to exclude from metadata extraction |
-| `treemap` | Treemap visualization: `title`, `category_colors`, `category_keywords` |
 | `stac` | STAC catalog metadata: `institution`, `purpose`, `products`, `dois`, etc. |
 
 ### File Patterns
