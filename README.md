@@ -54,7 +54,6 @@ Each entry in `products` has:
 - **`model_component`** — Model component (e.g. "NEMO", "ERGOM", "SI3").
 - **`domain`** — Geographic domain for this product.
 - **`type`** — Product type (e.g. "final product", "original output", "intermediate file").
-- **`compression_precision`** — Compression and precision details.
 - **`notes`** — Additional notes.
 
 Each product lives in its own subdirectory. The directory is the product identifier — no file patterns or regex needed.

@@ -52,7 +52,6 @@ products:
     model_component: "ERGOM"
     domain: "Baltic"
     type: "final product"
-    compression_precision: "float32, deflate-1, shuffle"
     notes: "Chl, nutrients, oxygen, pH"
 
   BAL-ERGOM_BGC-DailyMeans_JAMBAY:
@@ -62,7 +61,7 @@ products:
     model_component: "ERGOM"
     domain: "Baltic"
     type: "project file"
-    compression_precision: "float32, deflate-1, shuffle"
+
     notes: "Extended plankton variables"
 
   BAL-MYP-ERGOM_BGC-DailyMeans_JAMBAY:
@@ -72,7 +71,7 @@ products:
     model_component: "ERGOM"
     domain: "Baltic"
     type: "project file"
-    compression_precision: "float32, deflate-1, shuffle"
+
     notes: "MYP extended variables"
 
   JAMBAY_BGC_DailyMeans:
@@ -92,7 +91,7 @@ products:
     model_component: "NEMO"
     domain: "Baltic"
     type: "final product"
-    compression_precision: "float32, deflate-1, shuffle"
+
     notes: "Practical Salinity/Potential Temp"
 
   BAL-NEMO_PHY-DailyMeans_SA_CT:
@@ -102,7 +101,7 @@ products:
     model_component: "NEMO"
     domain: "Baltic"
     type: "intermediate file"
-    compression_precision: "float32, deflate-1, shuffle"
+
     notes: "Derived from PS/PT (TEOS-10)"
 
   BAL-MYP-NEMO_PHY-HourlyMeans_PS_PT:
@@ -112,7 +111,7 @@ products:
     model_component: "NEMO"
     domain: "Baltic"
     type: "final product"
-    compression_precision: "float32, deflate-1, shuffle"
+
     notes: "High-frequency physics (PS/PT)"
 
   BAL-MYP-NEMO_PHY-HourlyMeans_SA_CT:
@@ -122,7 +121,7 @@ products:
     model_component: "NEMO"
     domain: "Baltic"
     type: "final product"
-    compression_precision: "float32, deflate-1, shuffle"
+
     notes: "High-frequency physics (SA/CT)"
 
   BAL-MYP-NEMO_PHY-HourlyMeans_only_PS_PT:
@@ -132,7 +131,7 @@ products:
     model_component: "NEMO"
     domain: "Baltic"
     type: "final product"
-    compression_precision: "float32, deflate-1, shuffle"
+
     notes: "Surface layer only"
 
   # NORDIC NEMO Physics
@@ -143,7 +142,7 @@ products:
     model_component: "NEMO"
     domain: "Nordic+Baltic"
     type: "original output"
-    compression_precision: "float32, chunked only"
+
     notes: "Temperature and salinity on T-grid"
 
   NORDIC_1d_grid_U:
@@ -153,7 +152,7 @@ products:
     model_component: "NEMO"
     domain: "Nordic+Baltic"
     type: "intermediate file"
-    compression_precision: "float32, chunked only"
+
     notes: "Zonal velocity on U-grid"
 
   NORDIC_1d_grid_V:
@@ -163,7 +162,7 @@ products:
     model_component: "NEMO"
     domain: "Nordic+Baltic"
     type: "intermediate file"
-    compression_precision: "float32, chunked only"
+
     notes: "Meridional velocity on V-grid"
 
   # NORDIC Ice
@@ -174,7 +173,7 @@ products:
     model_component: "SI3"
     domain: "Nordic+Baltic"
     type: "original output"
-    compression_precision: "float32, chunked only"
+
     notes: "Sea ice variables"
 
   # NORDIC Hourly
@@ -185,7 +184,7 @@ products:
     model_component: "NEMO"
     domain: "Nordic+Baltic"
     type: "original output"
-    compression_precision: "float32, chunked only"
+
     notes: "High-frequency sea level"
 
   NORDIC_1h_SURF_grid_T:
@@ -195,7 +194,7 @@ products:
     model_component: "NEMO"
     domain: "Nordic+Baltic"
     type: "original output"
-    compression_precision: "float32, chunked only"
+
     notes: "Surface layer hourly"
 
   # NORDIC ERGOM BGC
@@ -206,7 +205,7 @@ products:
     model_component: "ERGOM"
     domain: "Nordic+Baltic"
     type: "original output"
-    compression_precision: "float32, chunked only"
+
     notes: "Biogeochemistry 12h"
 
   NORDIC_1d_ERGOM_T_3D:
@@ -216,7 +215,7 @@ products:
     model_component: "ERGOM"
     domain: "Nordic+Baltic"
     type: "original output"
-    compression_precision: "float32, chunked only"
+
     notes: "Full 3D biogeochemistry"
 
   NORDIC_NOON_ERGOM_T:
@@ -226,7 +225,7 @@ products:
     model_component: "ERGOM"
     domain: "Nordic+Baltic"
     type: "intermediate file"
-    compression_precision: "float32, chunked only"
+
     notes: "Noon snapshot BGC"
 
   # North Sea
@@ -237,7 +236,7 @@ products:
     model_component: "ERGOM"
     domain: "North Sea"
     type: "final product"
-    compression_precision: "float32, deflate-1, shuffle"
+
     notes: "North Sea biogeochemistry"
 
   NS-NEMO_PHY-DailyMeans_PS_PT:
@@ -247,7 +246,7 @@ products:
     model_component: "NEMO"
     domain: "North Sea"
     type: "final product"
-    compression_precision: "float32, deflate-1, shuffle"
+
     notes: "North Sea physics (PS/PT)"
 
   NS-NEMO_PHY-DailyMeans_SA_CT:
@@ -257,5 +256,5 @@ products:
     model_component: "NEMO"
     domain: "North Sea"
     type: "final product"
-    compression_precision: "float32, deflate-1, shuffle"
+
     notes: "North Sea physics (SA/CT)"

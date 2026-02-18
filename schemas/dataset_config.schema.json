@@ -77,10 +77,6 @@
             "type": "string",
             "description": "Product type (e.g. final product, original output, intermediate file)."
           },
-          "compression_precision": {
-            "type": "string",
-            "description": "Compression and precision details."
-          },
           "notes": {
             "type": "string",
             "description": "Additional notes about this product."
