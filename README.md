@@ -24,6 +24,7 @@ products:
     name: "Daily Temperature"
     dir: "daily_temperature"
     category: "Physics"
+    type: "final product"
 ```
 
 ## Manifest Format
@@ -36,7 +37,7 @@ See [`schemas/dataset_manifest.schema.json`](schemas/dataset_manifest.schema.jso
 |-------|-------------|
 | `dataset.name` | Human-readable dataset name |
 | `dataset.path` | Absolute path to the dataset on the filesystem |
-| `products` | Map of product key to metadata — each product has a `name` and `dir` |
+| `products` | Map of product key to metadata — each product has a `name` and either `dir` or `dir_pattern` |
 
 ### Optional Fields
 
@@ -52,16 +53,17 @@ See [`schemas/dataset_manifest.schema.json`](schemas/dataset_manifest.schema.jso
 
 Each entry in `products` has:
 - **`name`** (required) — Human-readable product name.
-- **`dir`** (required) — Subdirectory under `dataset.path` containing this product's files.
-- **`category`** — Grouping category (e.g. "Physics", "Biogeochemistry", "Ice").
+- **`dir`** (required\*) — Literal subdirectory name under `dataset.path` containing this product's files.
+- **`dir_pattern`** (required\*) — Shell glob pattern matching multiple subdirectories (e.g. `n[0-9][0-9][0-4]`). Use instead of `dir` when a product spans many directories with a naming convention.
+- **`category`** — Grouping category. Common values: `Physics`, `Biogeochemistry`, `Ice`, `Observations`, `Assimilation`, `Waves`, `Atmospheric`. Climate datasets may use activity names (`DECK`, `CMIP`, `ScenarioMIP`, `DCPP`).
 - **`model_component`** — Model component (e.g. "NEMO", "ERGOM", "SI3").
 - **`domain`** — Geographic domain for this product.
-- **`type`** — Product type (e.g. "final product", "original output", "intermediate file").
+- **`type`** — Product type. Must be one of: `final product`, `original output`, `raw output`, `intermediate file`, `production file`, `project file`, `project archive`, `restart file`, `diagnostic`.
 - **`notes`** — Additional notes.
 
-Additional fields are allowed — different datasets may need domain-specific metadata (e.g. CMIP6 manifests use `experiment_id`, `realization`, `modules`).
+\* Each product must have exactly one of `dir` or `dir_pattern`, not both.
 
-Each product lives in its own subdirectory. The directory is the product identifier — no file patterns or regex needed.
+Additional fields are allowed — different datasets may need domain-specific metadata (e.g. CMIP6 manifests use `experiment_id`, `realization`, `modules`).
 
 ## Local Validation
 

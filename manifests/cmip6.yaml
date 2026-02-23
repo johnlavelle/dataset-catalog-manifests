@@ -159,7 +159,7 @@ products:
   # ── EC-Earth3 DCPP ──────────────────────────────────────────────
   dcpp_r1_r5:
     name: "DCPP Hindcasts (r1-r5)"
-    dir: "nyyR"
+    dir_pattern: "n[0-9][0-9][0-4]"
     category: "DCPP"
     model_component: "EC-Earth3"
     experiment_id: "dcppA-hindcast"
@@ -170,7 +170,7 @@ products:
 
   dcpp_r11_r15:
     name: "DCPP Hindcasts (r11-r15)"
-    dir: "dyyR"
+    dir_pattern: "d[0-9][0-9][0-4]"
     category: "DCPP"
     model_component: "EC-Earth3"
     experiment_id: "dcppA-hindcast"

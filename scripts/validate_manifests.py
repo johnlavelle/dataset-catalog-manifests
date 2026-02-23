@@ -38,26 +38,25 @@ def validate_manifest(path, schema):
         return ["File is empty"]
 
     # JSON Schema validation
-    try:
-        jsonschema.validate(instance=manifest, schema=schema)
-    except jsonschema.ValidationError as e:
-        errors.append(f"Schema: {e.message} (at {'.'.join(str(p) for p in e.absolute_path)})" if e.absolute_path else f"Schema: {e.message}")
+    validator = jsonschema.Draft7Validator(schema)
+    for error in sorted(validator.iter_errors(manifest), key=lambda e: list(e.absolute_path)):
+        path_str = ".".join(str(p) for p in error.absolute_path)
+        if path_str:
+            errors.append(f"Schema: {error.message} (at {path_str})")
+        else:
+            errors.append(f"Schema: {error.message}")
 
     # Extra checks on products
     products = manifest.get("products", {})
 
-    # Check for duplicate dir values
-    dirs = []
+    # Check for duplicate dir values (only literal dirs, not patterns)
+    seen_dirs = {}
     for key, product in products.items():
         d = product.get("dir")
         if d:
-            dirs.append((key, d))
-
-    seen_dirs = {}
-    for key, d in dirs:
-        if d in seen_dirs:
-            errors.append(f"Duplicate dir '{d}' in products '{seen_dirs[d]}' and '{key}'")
-        seen_dirs[d] = key
+            if d in seen_dirs:
+                errors.append(f"Duplicate dir '{d}' in products '{seen_dirs[d]}' and '{key}'")
+            seen_dirs[d] = key
 
     return errors
 

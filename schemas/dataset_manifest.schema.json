@@ -58,7 +58,14 @@
       "minProperties": 1,
       "additionalProperties": {
         "type": "object",
-        "required": ["name", "dir"],
+        "required": ["name"],
+        "anyOf": [
+          { "required": ["dir"] },
+          { "required": ["dir_pattern"] }
+        ],
+        "not": {
+          "required": ["dir", "dir_pattern"]
+        },
         "properties": {
           "name": {
             "type": "string",
@@ -66,11 +73,15 @@
           },
           "dir": {
             "type": "string",
-            "description": "Subdirectory under dataset.path containing this product's files."
+            "description": "Literal subdirectory name under dataset.path containing this product's files."
+          },
+          "dir_pattern": {
+            "type": "string",
+            "description": "Shell glob pattern matching multiple subdirectories under dataset.path (e.g. 'n[0-9][0-9][0-4]'). Use instead of dir when a product spans many directories with a naming convention."
           },
           "category": {
             "type": "string",
-            "description": "Grouping category (e.g. Physics, Biogeochemistry)."
+            "description": "Grouping category. Common values: Physics, Biogeochemistry, Ice, Observations, Assimilation, Waves, Atmospheric. Climate datasets may use activity names (DECK, CMIP, ScenarioMIP, DCPP)."
           },
           "model_component": {
             "type": "string",
@@ -82,7 +93,18 @@
           },
           "type": {
             "type": "string",
-            "description": "Product type (e.g. final product, original output, intermediate file)."
+            "enum": [
+              "final product",
+              "original output",
+              "raw output",
+              "intermediate file",
+              "production file",
+              "project file",
+              "project archive",
+              "restart file",
+              "diagnostic"
+            ],
+            "description": "Product type describing the role of this data in the processing chain."
           },
           "notes": {
             "type": "string",
@@ -90,7 +112,7 @@
           }
         }
       },
-      "description": "Map of product key to product metadata. Each product lives in its own subdirectory."
+      "description": "Map of product key to product metadata. Each product lives in its own subdirectory (dir) or matches multiple directories (dir_pattern)."
     }
   }
 }
