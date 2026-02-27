@@ -31,6 +31,14 @@ export function toYaml(formData: Record<string, unknown>): string {
   });
 }
 
+export function parseYaml(text: string): Record<string, unknown> {
+  const doc = yaml.load(text);
+  if (!doc || typeof doc !== "object" || Array.isArray(doc)) {
+    throw new Error("YAML must be a mapping (key-value object), not a scalar or list");
+  }
+  return doc as Record<string, unknown>;
+}
+
 export function downloadYaml(content: string, filename: string): void {
   const blob = new Blob([content], { type: "text/yaml" });
   const url = URL.createObjectURL(blob);

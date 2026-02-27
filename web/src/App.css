@@ -5,3 +5,21 @@
 body {
   margin: 0;
 }
+
+/* Add breathing room between form fields */
+.rjsf .field {
+  margin-bottom: 12px;
+}
+
+/* Reduce the gap for nested fields inside fieldsets so it doesn't double-up */
+.rjsf .field .field {
+  margin-bottom: 8px;
+}
+
+/* Slightly lighten helper/description text and tighten it to its own field */
+.rjsf .field-description {
+  margin-top: 2px;
+  margin-bottom: 0;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 0.78rem;
+}
