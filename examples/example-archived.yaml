@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=../schemas/dataset_manifest.schema.json
+#
+# Illustrative example — NOT a real catalogue entry. It follows the worked example
+# "a research dataset with mixed file types" (Storage and Archiving Guidelines §9.2)
+# and shows an archived entry with every section filled in. Names, links and the
+# DOI (10.5072 is the DataCite test prefix) are placeholders.
+id: example-archived
+status: archived
+
+dataset:
+  name: "Qaanaaq Sea-Ice Field Campaigns"
+  path: "/dmidata/archive/cryosphere/qaanaaq_fielddata"
+  description: "In-situ observations from the yearly Qaanaaq sea-ice field campaigns: ice-mass-balance buoy records, snow and ice thickness transects, automatic weather station data and calibration notes. Mixed CSV, netCDF and text files, kept in their original folder structure in one squashfs container per campaign year."
+  model: "Field observations (IMB buoys, AWS, drill transects)"
+  domain: "Qaanaaq, NW Greenland"
+  contact: "Sea-ice research group <seaice@dmi.dk>"
+
+roles:
+  owner: "Example Owner <owner@dmi.dk>"
+  steward: "Example Steward <steward@dmi.dk>"
+  custodian: "HPC storage team <hpc-storage@dmi.dk>"
+
+retention:
+  kind: indefinite
+  rationale: "Unrepeatable in-situ observations from a rapidly changing region. They underpin published sea-ice studies and are used to validate reanalyses."
+
+license:
+  id: CC-BY-4.0
+
+identifiers:
+  pid: "example-archived"
+  doi: "10.5072/example-qaanaaq"
+
+links:
+  metadata: "https://example.org/qaanaaq/metadata"
+  archiving_guide: "https://example.org/qaanaaq/archiving-guide"
+
+dates:
+  released: "2022-03-01"
+  archived: "2022-06-15"
+  reviewed: "2026-06-01"
+
+storage:
+  tier: archive
+  wis2_discipline: cryosphere
+  format: "squashfs (CSV, netCDF4, text)"
+  compression: "zstd, mksquashfs -comp zstd -b 1M -no-xattrs -noappend"
+  lossy: false
+  checksums: "sha256 file next to each .sqfs container"
+
+appraisal:
+  lasting_value: "The observations cannot be repeated, and they are the reference for several published papers and for validating sea-ice reanalyses over NW Greenland."
+  users:
+    - dmi_staff
+    - danish_researchers
+    - copernicus
+  regenerable: impossible
+  regeneration_notes: "In-situ observations; only the processed transect files could be rebuilt from the raw logs."
+  obligations: "Cited in peer-reviewed publications through the DOI. No personal data."
+  approved_by: "Example Owner <owner@dmi.dk>"
+  approved_on: "2022-05-20"
+
+archiving:
+  quality_verified_on: "2022-06-10"
+  aggregation: "One squashfs container per campaign year (40–60 GiB each)"
+  automated: false
+
+designated_community_notes: "Buoy clocks ran on local time (UTC-3) until 2021-04-12; the metadata page lists the affected files."
+
+products:
+  campaign_2021:
+    name: "Field campaign 2021"
+    dir: "qaanaaq_fielddata_2021-01-01--2021-12-31.sqfs"
+    category: "Observations"
+    type: "final product"
+    notes: "Buoys, transects, AWS and calibration notes"
+
+  campaign_2022:
+    name: "Field campaign 2022"
+    dir: "qaanaaq_fielddata_2022-01-01--2022-12-31.sqfs"
+    category: "Observations"
+    type: "final product"

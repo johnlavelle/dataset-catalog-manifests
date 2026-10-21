@@ -1,11 +1,24 @@
 import type { RJSFValidationError } from "@rjsf/utils";
+import rawSchema from "../../schemas/dataset_manifest.schema.json";
 
-export default function transformErrors(
-  errors: RJSFValidationError[]
-): RJSFValidationError[] {
+const defs = rawSchema.definitions;
+
+/** Friendly messages for the patterns used in the schema. */
+const PATTERN_HINTS: Record<string, string> = {
+  [defs.person.pattern]: "Enter a name and an e-mail address",
+  [defs.date.pattern]: "Use a date (YYYY-MM-DD)",
+  [defs.dateOrTbd.pattern]: "Use a date, or 'Not known yet'",
+  [defs.urlOrTbd.pattern]: "Use a full link starting with https://, or 'Not known yet'",
+  [defs.textOrTbd.pattern]: "Placeholders must read 'TBD by YYYY-MM-DD' — use 'Not known yet'",
+  [rawSchema.properties.id.pattern]: "Lower-case letters, digits, '-' and '_' only, starting with a letter or digit",
+  [rawSchema.properties.identifiers.properties.doi.pattern]: "A bare DOI such as 10.48670/moi-00013, or 'Not known yet'",
+};
+
+export default function transformErrors(errors: RJSFValidationError[]): RJSFValidationError[] {
   return errors
     .map((error) => {
-      // Suppress cryptic anyOf / not errors on products — handled by ProductsField
+      // Suppress cryptic combinator errors: the concrete error is reported separately
+      if (error.name === "if" || error.name === "allOf") return null;
       if (
         error.property?.includes("products") &&
         (error.name === "anyOf" || error.name === "not" || error.name === "oneOf")
@@ -13,20 +26,28 @@ export default function transformErrors(
         return null;
       }
 
-      // Rewrite required field errors
-      if (error.name === "required") {
+      if (error.name === "required" || error.name === "minLength") {
         const field = error.params?.missingProperty;
-        if (field === "name") error.message = "Name is required";
-        if (field === "path") error.message = "Path is required";
-        if (field === "dir" || field === "dir_pattern")
-          error.message = "Either dir or dir_pattern is required";
+        error.message = field === "dir" || field === "dir_pattern" ? "Either dir or dir_pattern is required" : "Required";
       }
 
-      // Rewrite minProperties on products
-      if (
-        error.name === "minProperties" &&
-        error.property === ".products"
-      ) {
+      if (error.name === "pattern") {
+        error.message = PATTERN_HINTS[error.params?.pattern] ?? error.message;
+      }
+
+      if (error.name === "not") {
+        error.message = "Placeholders are not allowed once a dataset is archived (REQ-ARC-001)";
+      }
+
+      if (error.name === "enum" && error.property === ".storage.tier") {
+        error.message = "An archived dataset lives in the archive tier";
+      }
+
+      if (error.name === "minItems" && error.property === ".appraisal.users") {
+        error.message = "Select at least one group";
+      }
+
+      if (error.name === "minProperties" && error.property === ".products") {
         error.message = "Add at least one product";
       }
 

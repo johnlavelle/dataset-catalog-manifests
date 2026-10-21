@@ -3,7 +3,7 @@ name: Deploy web editor to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: [web/**]
+    paths: [web/**, schemas/**, examples/**]
   workflow_dispatch:
 
 permissions:

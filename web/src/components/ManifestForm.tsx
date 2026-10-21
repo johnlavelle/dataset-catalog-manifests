@@ -1,60 +1,42 @@
+import { useMemo } from "react";
 import Form from "@rjsf/mui";
 import validator from "@rjsf/validator-ajv8";
 import type { IChangeEvent } from "@rjsf/core";
-import type { FieldProps, ObjectFieldTemplateProps } from "@rjsf/utils";
-import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import schema from "../../../schemas/dataset_manifest.schema.json";
-import uiSchema from "../uiSchema";
+import type { FieldProps } from "@rjsf/utils";
+import buildUiSchema from "../uiSchema";
 import transformErrors from "../transformErrors";
+import { customValidate, schema, type Manifest } from "../compliance";
 import ProductsField from "./ProductsField";
 import DoisField from "./DoisField";
+import ObjectFieldTemplate from "./FormLayout";
+import { widgets, type EditorContext } from "./widgets";
 
 const fields: Record<string, React.ComponentType<FieldProps>> = {
   ProductsField,
   DoisField,
 };
 
-/** Wrap the optional `stac` section in an accordion. */
-function RootObjectFieldTemplate(props: ObjectFieldTemplateProps) {
-  const stacProp = props.properties.find((p) => p.name === "stac");
-  const otherProps = props.properties.filter((p) => p.name !== "stac");
-
-  return (
-    <div>
-      {otherProps.map((p) => p.content)}
-      {stacProp && (
-        <Accordion defaultExpanded={false} sx={{ mt: 2 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6">STAC Metadata (optional)</Typography>
-          </AccordionSummary>
-          <AccordionDetails>{stacProp.content}</AccordionDetails>
-        </Accordion>
-      )}
-    </div>
-  );
-}
-
 interface ManifestFormProps {
-  formData: Record<string, unknown>;
+  formData: Manifest;
   onChange: (e: IChangeEvent) => void;
 }
 
 export default function ManifestForm({ formData, onChange }: ManifestFormProps) {
+  const uiSchema = useMemo(() => buildUiSchema(formData), [formData]);
+  const formContext: EditorContext = { formData };
+
   return (
     <Form
       schema={schema}
       uiSchema={uiSchema}
       formData={formData}
+      formContext={formContext}
       onChange={onChange}
       validator={validator}
       fields={fields}
-      templates={{ ObjectFieldTemplate: RootObjectFieldTemplate }}
+      widgets={widgets}
+      templates={{ ObjectFieldTemplate }}
+      customValidate={customValidate}
       transformErrors={transformErrors}
       liveValidate
       showErrorList={false}

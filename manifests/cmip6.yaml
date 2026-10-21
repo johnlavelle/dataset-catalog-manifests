@@ -1,3 +1,9 @@
+# yaml-language-server: $schema=../schemas/dataset_manifest.schema.json
+id: cmip6
+# Legacy data on /net/isilon awaiting triage (Policy §7): roles, retention and
+# licence are not yet agreed, so the entry stays 'proposed' until registered.
+status: proposed
+
 dataset:
   name: "CMIP6 EC-Earth3 Simulations"
   path: "/net/isilon/ifs/arch/home/shuting/ecearth3_exp"
@@ -5,6 +11,9 @@ dataset:
   domain: "Global"
   contact: "Shuting Yang <sy@dmi.dk>"
   description: "Raw model outputs of various CMIP6 experiments using climate model EC-Earth3 with multiple configurations (EC-Earth3, EC-Earth3-veg)."
+
+storage:
+  tier: legacy
 
 stac:
   institution: "Danish Meteorological Institute (DMI)"

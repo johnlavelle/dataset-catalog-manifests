@@ -1,0 +1,331 @@
+import type { FormValidation, RJSFSchema } from "@rjsf/utils";
+import rawSchema from "../../schemas/dataset_manifest.schema.json";
+import { REGISTERED, type Status } from "./guidance";
+
+export type Manifest = Record<string, any>;
+
+export const schema = rawSchema as RJSFSchema;
+
+export const TBD_RE = /^TBD by (\d{4}-\d{2}-\d{2})$/;
+export const PERSON_RE = new RegExp(rawSchema.definitions.person.pattern);
+const ARCHIVE_PREFIX = "/dmidata/archive/";
+
+/** Top-level properties that hold an object; kept as {} in the form so nested errors show on fields. */
+const OBJECT_KEYS = [
+  "dataset",
+  "roles",
+  "retention",
+  "license",
+  "identifiers",
+  "links",
+  "dates",
+  "storage",
+  "appraisal",
+  "archiving",
+  "deletion",
+  "stac",
+  "products",
+];
+
+const PRODUCT_KEY_ORDER = ["name", "dir", "dir_pattern", "category", "model_component", "domain", "type", "notes"];
+
+export function emptyManifest(): Manifest {
+  return normalise({ status: "proposed" });
+}
+
+export const has = (v: unknown) =>
+  v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0);
+
+export const isTbd = (v: unknown) => typeof v === "string" && v.startsWith("TBD");
+
+export const today = () => new Date().toISOString().slice(0, 10);
+
+export function addDays(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+export function slugify(text: string): string {
+  return text
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/** Owner, Steward and Custodian are the same, non-empty person. */
+export function sameRoleHolder(roles: Manifest = {}): boolean {
+  return has(roles.owner) && roles.owner === roles.steward && roles.owner === roles.custodian;
+}
+
+/**
+ * Bring form data into the shape the editor expects: every section present (possibly empty)
+ * and fields that only apply to another choice removed (e.g. retention.until when the
+ * retention is indefinite). Empty values are stripped again when exporting YAML.
+ */
+export function normalise(data: Manifest): Manifest {
+  const out: Manifest = { ...data };
+  for (const key of OBJECT_KEYS) {
+    if (out[key] === undefined || out[key] === null) out[key] = {};
+  }
+
+  const prune = (section: string, fields: string[], keep: boolean) => {
+    if (keep || typeof out[section] !== "object") return;
+    if (fields.some((f) => f in out[section])) {
+      out[section] = { ...out[section] };
+      for (const f of fields) delete out[section][f];
+    }
+  };
+  const kind = out.retention.kind;
+  prune("retention", ["until"], kind === "date");
+  prune("retention", ["condition"], kind === "condition");
+  const lic = out.license.id;
+  prune("license", ["reason"], lic === "restricted" || lic === "DMI-internal");
+  prune("license", ["decided_by"], lic === "restricted");
+  prune("storage", ["lossy_settings", "lossy_approved_by"], out.storage.lossy === true);
+  prune("archiving", ["pipeline", "owning_team"], out.archiving.automated === true);
+  prune("roles", ["single_person"], sameRoleHolder(out.roles));
+  return out;
+}
+
+function orderObject(obj: Manifest, order: string[]): Manifest {
+  const result: Manifest = {};
+  for (const k of order) if (k in obj) result[k] = obj[k];
+  for (const k of Object.keys(obj)) if (!(k in result)) result[k] = obj[k];
+  return result;
+}
+
+/** Canonical key order for YAML output: schema order for sections, a fixed order for products. */
+export function orderManifest(data: Manifest): Manifest {
+  const props = (rawSchema.properties ?? {}) as Record<string, { properties?: Record<string, unknown> }>;
+  const top = orderObject(data, Object.keys(props));
+  for (const [key, value] of Object.entries(top)) {
+    if (key === "products" && value && typeof value === "object") {
+      top.products = Object.fromEntries(
+        Object.entries(value as Manifest).map(([k, p]) => [k, p && typeof p === "object" ? orderObject(p, PRODUCT_KEY_ORDER) : p])
+      );
+    } else if (value && typeof value === "object" && !Array.isArray(value) && props[key]?.properties) {
+      top[key] = orderObject(value, Object.keys(props[key].properties!));
+    }
+  }
+  return top;
+}
+
+/** Cross-field rules the JSON Schema cannot express (mirrors scripts/validate_manifests.py). */
+export function customValidate(formData: Manifest | undefined, errors: FormValidation<Manifest>) {
+  const roles = formData?.roles ?? {};
+  if (sameRoleHolder(roles) && !roles.single_person) {
+    errors.roles?.custodian?.addError(
+      "Owner, Steward and Custodian are the same person — tick 'One person holds all three roles' (Standard §3)"
+    );
+  }
+  return errors;
+}
+
+/** All "TBD by YYYY-MM-DD" placeholders with their due dates. */
+export function placeholders(data: Manifest): { path: string; due: string; overdue: boolean }[] {
+  const found: { path: string; due: string; overdue: boolean }[] = [];
+  const now = today();
+  const walk = (v: unknown, path: string) => {
+    if (typeof v === "string") {
+      const m = TBD_RE.exec(v);
+      if (m) found.push({ path, due: m[1], overdue: m[1] < now });
+    } else if (Array.isArray(v)) {
+      v.forEach((item, i) => walk(item, `${path}[${i}]`));
+    } else if (v && typeof v === "object") {
+      for (const [k, item] of Object.entries(v)) walk(item, path ? `${path}.${k}` : k);
+    }
+  };
+  walk(data, "");
+  return found;
+}
+
+// ── Readiness checklist ─────────────────────────────────────────────────────
+
+/**
+ * ok        satisfied
+ * missing   mandatory for the current status and not satisfied
+ * todo      will be mandatory at a later status
+ * tbd       filled with a placeholder (allowed for now)
+ * warn      recommended (SHOULD) but not satisfied
+ * optional  only applies in some cases
+ * manual    a step outside the manifest — confirm it yourself
+ */
+export type CheckState = "ok" | "missing" | "todo" | "tbd" | "warn" | "optional" | "manual";
+
+export interface CheckItem {
+  label: string;
+  ref?: string;
+  state: CheckState;
+}
+
+export interface CheckGroup {
+  key: string;
+  title: string;
+  relation: "now" | "next" | "later";
+  items: CheckItem[];
+}
+
+type Rule = { label: string; ref?: string; level: "shall" | "should" | "optional" | "manual"; value?: unknown; ok?: boolean };
+
+function evaluate(rules: Rule[], relation: CheckGroup["relation"]): CheckItem[] {
+  return rules.map(({ label, ref, level, value, ok }) => {
+    if (level === "manual") return { label, ref, state: "manual" };
+    const satisfied = ok ?? has(value);
+    if (satisfied && isTbd(value)) return { label, ref, state: relation === "now" ? "tbd" : "todo" };
+    if (satisfied) return { label, ref, state: "ok" };
+    if (level === "optional") return { label, ref, state: "optional" };
+    if (relation !== "now") return { label, ref, state: "todo" };
+    return { label, ref, state: level === "shall" ? "missing" : "warn" };
+  });
+}
+
+export function checklist(data: Manifest): CheckGroup[] {
+  const status = (data.status ?? "proposed") as Status;
+  const d = data.dataset ?? {};
+  const roles = data.roles ?? {};
+  const ret = data.retention ?? {};
+  const lic = data.license ?? {};
+  const ids = data.identifiers ?? {};
+  const links = data.links ?? {};
+  const dates = data.dates ?? {};
+  const storage = data.storage ?? {};
+  const appraisal = data.appraisal ?? {};
+  const archiving = data.archiving ?? {};
+  const deletion = data.deletion ?? {};
+  const products: Manifest = data.products ?? {};
+  const person = (v: unknown) => typeof v === "string" && PERSON_RE.test(v);
+
+  const retentionDeclared =
+    (ret.kind === "date" && has(ret.until)) ||
+    (ret.kind === "condition" && has(ret.condition)) ||
+    (ret.kind === "indefinite" && has(ret.rationale));
+
+  const basics: Rule[] = [
+    { label: "Catalogue ID", ref: "REQ-CAT-003", level: "shall", value: data.id },
+    { label: "Title, location and description", ref: "REQ-CAT-004", level: "shall", ok: has(d.name) && has(d.path) && has(d.description) },
+    { label: "At least one product", level: "shall", ok: Object.keys(products).length > 0 },
+  ];
+
+  const register: Rule[] = [
+    { label: "Data Owner named, with e-mail", ref: "REQ-OWN-001", level: "shall", ok: person(roles.owner) },
+    { label: "Data Steward named, with e-mail", ref: "Standard §3", level: "shall", ok: person(roles.steward) },
+    { label: "Data Custodian named, with e-mail", ref: "Standard §3", level: "shall", ok: person(roles.custodian) },
+    ...(sameRoleHolder(roles)
+      ? [{ label: "Single holder of all three roles stated", ref: "Standard §3", level: "shall" as const, ok: roles.single_person === true }]
+      : []),
+    { label: "Retention declared", ref: "REQ-RET-001", level: "shall", ok: retentionDeclared },
+    {
+      label: lic.id === "restricted" ? "Licence declared, with reason and decision-maker" : "Licence declared",
+      ref: lic.id === "restricted" ? "REQ-LIC-002" : "REQ-LIC-001",
+      level: "shall",
+      ok: has(lic.id) && (lic.id !== "restricted" || (has(lic.reason) && person(lic.decided_by))),
+    },
+    { label: "Local persistent identifier", ref: "REQ-CAT-008", level: "shall", value: ids.pid },
+    { label: "DOI, if published or cited", ref: "REQ-CAT-009", level: "optional", value: ids.doi },
+    { label: "Metadata page linked", ref: "REQ-ARC-003", level: "shall", value: links.metadata },
+    { label: "Archiving guide linked", ref: "REQ-ARC-002", level: "shall", value: links.archiving_guide },
+    { label: "Release date", ref: "REQ-CAT-004", level: "shall", value: dates.released },
+    ...(storage.tier === "third_party"
+      ? [{ label: "Contract with the supplier linked", ref: "REQ-TPY-003", level: "shall" as const, value: links.contract }]
+      : []),
+    { label: "Owner approves the entry, e.g. by approving the merge request", ref: "Procedure A.7", level: "manual" },
+  ];
+
+  const discipline = storage.wis2_discipline;
+  const tbdLeft = placeholders(data).length;
+  const archive: Rule[] = [
+    {
+      label: "Appraisal: lasting value, users, regenerability",
+      ref: "REQ-APP-001/002",
+      level: "shall",
+      ok: has(appraisal.lasting_value) && has(appraisal.users) && has(appraisal.regenerable),
+    },
+    { label: "Appraisal approved by the Owner, with date", ref: "REQ-APP-003", level: "shall", ok: person(appraisal.approved_by) && has(appraisal.approved_on) },
+    { label: "Data quality verified", ref: "REQ-ARC-004", level: "shall", value: archiving.quality_verified_on },
+    { label: "WIS2 discipline chosen", ref: "REQ-NAME-004", level: "shall", value: discipline },
+    { label: "Primary file format recorded", ref: "REQ-FMT-001", level: "shall", value: storage.format },
+    { label: "Compression and settings recorded", ref: "Procedure C.7", level: "shall", value: storage.compression },
+    ...(storage.lossy
+      ? [{ label: "Lossy compression approved by the Owner", ref: "REQ-FMT-003", level: "shall" as const, ok: has(storage.lossy_settings) && person(storage.lossy_approved_by) }]
+      : []),
+    ...(archiving.automated
+      ? [{ label: "Automated job documented, with owning team", ref: "REQ-OPS-002", level: "shall" as const, ok: has(archiving.pipeline) && has(archiving.owning_team) }]
+      : []),
+    { label: "Archiving date", ref: "Procedure C.7", level: "shall", value: dates.archived },
+    { label: "No 'TBD' placeholders left", ref: "REQ-ARC-001", level: "shall", ok: tbdLeft === 0 },
+    {
+      label: `Location under ${ARCHIVE_PREFIX}${discipline ?? "<discipline>"}/`,
+      ref: "REQ-NAME-004",
+      level: "should",
+      ok: typeof d.path === "string" && d.path.startsWith(`${ARCHIVE_PREFIX}${discipline ?? ""}`),
+    },
+    { label: "Integrity checksums recorded", ref: "REQ-PRT-003", level: "should", value: storage.checksums },
+    {
+      label: "No intermediate files among the products",
+      ref: "REQ-ARC-005",
+      level: "should",
+      ok: !Object.values(products).some((p) => p?.type === "intermediate file"),
+    },
+    { label: "Archive files are 5 GiB–5 TiB (ideally 10 GiB–2 TiB)", ref: "REQ-SIZE-001/002", level: "manual" },
+    { label: "Names: letters, digits, underscores; ISO 8601 dates", ref: "REQ-NAME-001–003", level: "manual" },
+    { label: "Write-protection applied and tested by the Custodian", ref: "REQ-PRT-001", level: "manual" },
+  ];
+
+  const remove: Rule[] = [
+    { label: "Owner's approval recorded", ref: "REQ-RET-002", level: "shall", ok: person(deletion.approved_by) },
+    { label: "Deletion date", ref: "Procedure G.4", level: "shall", value: deletion.date },
+    { label: "Rigsarkivet authorisation, if the data has lasting value", ref: "REQ-RIG-002", level: "manual" },
+  ];
+
+  const groups: CheckGroup[] = [];
+  const add = (key: string, title: string, relation: CheckGroup["relation"], rules: Rule[]) =>
+    groups.push({ key, title, relation, items: evaluate(rules, relation) });
+
+  add("basics", "Basics (every entry)", "now", basics);
+  if (status === "proposed") {
+    add("register", "Register the dataset (Procedure A)", "next", register);
+    add("archive", "Archive the dataset (Procedures B–C)", "later", archive);
+  } else if (status === "active") {
+    add("register", "Registration (Procedure A)", "now", register);
+    add("archive", "Archive the dataset (Procedures B–C)", "next", archive);
+  } else if (status === "archived") {
+    add("register", "Registration (Procedure A)", "now", register);
+    add("archive", "Archiving (Procedures B–C, checklist §11)", "now", archive);
+  } else if (status === "deprecated") {
+    add("register", "Registration (Procedure A)", "now", register);
+    add("delete", "Delete the dataset (Procedure G)", "next", remove);
+  } else {
+    add("delete", "Deletion (Procedure G)", "now", remove);
+  }
+
+  // Recommendations (SHOULD / Guidelines) that apply now
+  const recs: CheckItem[] = [];
+  if ((ret.kind === "date" || ret.kind === "condition") && !has(ret.rationale))
+    recs.push({ label: "Give a rationale for the retention", ref: "Guidelines §4.2", state: "warn" });
+  if (lic.id === "DMI-internal" && !has(lic.reason))
+    recs.push({ label: "Record why the data is internal only", ref: "Guidelines §8.2", state: "warn" });
+  if (typeof d.path === "string" && d.path.startsWith("/net/isilon"))
+    recs.push({ label: "Plan migration off legacy /net/isilon", ref: "REQ-TIER-002", state: "warn" });
+  if (has(appraisal.approved_by) && has(roles.owner) && appraisal.approved_by !== roles.owner)
+    recs.push({ label: "Appraisal should be approved by the Data Owner", ref: "REQ-APP-003", state: "warn" });
+  const reviewed = dates.reviewed;
+  if (REGISTERED.includes(status) && (!has(reviewed) || reviewed < addDays(-366)))
+    recs.push({ label: "Review the entry at least yearly (set 'Last reviewed')", ref: "REQ-CAT-006", state: "warn" });
+  for (const exc of data.exceptions ?? []) {
+    if (exc?.expires && exc.expires < today())
+      recs.push({ label: `Exception ${exc.id ?? ""} has expired`, ref: "REQ-EXC-003", state: "warn" });
+  }
+  if (recs.length) groups.push({ key: "recommendations", title: "Recommendations", relation: "now", items: recs });
+
+  return groups;
+}
+
+/** Mandatory items still open for the current status. */
+export function missingCount(groups: CheckGroup[]): number {
+  return groups
+    .filter((g) => g.relation === "now")
+    .reduce((n, g) => n + g.items.filter((i) => i.state === "missing").length, 0);
+}

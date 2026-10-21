@@ -1,4 +1,8 @@
 import yaml from "js-yaml";
+import { orderManifest } from "./compliance";
+
+/** Lets VS Code (YAML extension) validate the manifest against the schema while editing. */
+const SCHEMA_HINT = "# yaml-language-server: $schema=../schemas/dataset_manifest.schema.json\n";
 
 /** Remove empty strings, empty objects, and undefined values recursively. */
 function stripEmpty(obj: unknown): unknown {
@@ -21,18 +25,23 @@ function stripEmpty(obj: unknown): unknown {
 export function toYaml(formData: Record<string, unknown>): string {
   const cleaned = stripEmpty(formData);
   if (!cleaned || typeof cleaned !== "object") return "";
-  return yaml.dump(cleaned, {
-    indent: 2,
-    lineWidth: 120,
-    noRefs: true,
-    sortKeys: false,
-    quotingType: '"',
-    forceQuotes: false,
-  });
+  // Dates and YAML 1.1 booleans ("no", "yes") are quoted by js-yaml, so PyYAML reads them back as strings.
+  return (
+    SCHEMA_HINT +
+    yaml.dump(orderManifest(cleaned as Record<string, unknown>), {
+      indent: 2,
+      lineWidth: 120,
+      noRefs: true,
+      sortKeys: false,
+      quotingType: '"',
+      forceQuotes: false,
+    })
+  );
 }
 
 export function parseYaml(text: string): Record<string, unknown> {
-  const doc = yaml.load(text);
+  // CORE_SCHEMA keeps unquoted dates (2024-05-22) as strings, as the schema expects
+  const doc = yaml.load(text, { schema: yaml.CORE_SCHEMA });
   if (!doc || typeof doc !== "object" || Array.isArray(doc)) {
     throw new Error("YAML must be a mapping (key-value object), not a scalar or list");
   }

@@ -27,11 +27,9 @@ export default function YamlPreview({ formData, onImport }: YamlPreviewProps) {
 
   const yamlContent = toYaml(formData);
 
-  const datasetName =
-    (formData?.dataset as Record<string, unknown>)?.name as string | undefined;
-  const filename = datasetName
-    ? `${datasetName.toLowerCase().replace(/\s+/g, "_")}.yaml`
-    : "manifest.yaml";
+  // The validator requires the file to be named after the catalogue ID
+  const id = formData?.id as string | undefined;
+  const filename = id ? `${id}.yaml` : "manifest.yaml";
 
   const handleCopy = async () => {
     await copyToClipboard(yamlContent);

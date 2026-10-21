@@ -8,6 +8,7 @@ validate:
     - changes:
         - manifests/*.yaml
         - manifests/*.yml
+        - examples/*.yaml
         - schemas/*.json
         - scripts/validate_manifests.py
 
@@ -23,3 +24,4 @@ pages:
     - changes:
         - web/**/*
         - schemas/*.json
+        - examples/*.yaml
