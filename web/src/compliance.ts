@@ -1,6 +1,7 @@
 import type { FormValidation, RJSFSchema } from "@rjsf/utils";
 import rawSchema from "../../schemas/dataset_manifest.schema.json";
 import { REGISTERED, type Status } from "./guidance";
+import { EXAMPLE_ID, OWNERS, isApprovedOwner } from "./owners";
 
 export type Manifest = Record<string, any>;
 
@@ -23,6 +24,7 @@ const OBJECT_KEYS = [
   "appraisal",
   "archiving",
   "deletion",
+  "extensions",
   "stac",
   "products",
 ];
@@ -120,12 +122,23 @@ export function orderManifest(data: Manifest): Manifest {
   return top;
 }
 
+/** The Owner must come from registry/owners.yaml (when it lists anyone); deleted entries and the example are exempt. */
+export function ownerNotApproved(data: Manifest): boolean {
+  const owner = data.roles?.owner;
+  return has(owner) && data.status !== "deleted" && data.id !== EXAMPLE_ID && !isApprovedOwner(owner);
+}
+
 /** Cross-field rules the JSON Schema cannot express (mirrors scripts/validate_manifests.py). */
 export function customValidate(formData: Manifest | undefined, errors: FormValidation<Manifest>) {
   const roles = formData?.roles ?? {};
   if (sameRoleHolder(roles) && !roles.single_person) {
     errors.roles?.custodian?.addError(
       "Owner, Steward and Custodian are the same person — tick 'One person holds all three roles' (Standard §3)"
+    );
+  }
+  if (formData && ownerNotApproved(formData)) {
+    errors.roles?.owner?.addError(
+      "Not on the list of approved Data Owners (registry/owners.yaml) — choose from the list, or ask for the person to be added"
     );
   }
   return errors;
@@ -217,7 +230,12 @@ export function checklist(data: Manifest): CheckGroup[] {
   ];
 
   const register: Rule[] = [
-    { label: "Data Owner named, with e-mail", ref: "REQ-OWN-001", level: "shall", ok: person(roles.owner) },
+    {
+      label: OWNERS.length ? "Data Owner from the approved list, with e-mail" : "Data Owner named, with e-mail",
+      ref: "REQ-OWN-001",
+      level: "shall",
+      ok: person(roles.owner) && !ownerNotApproved(data),
+    },
     { label: "Data Steward named, with e-mail", ref: "Standard §3", level: "shall", ok: person(roles.steward) },
     { label: "Data Custodian named, with e-mail", ref: "Standard §3", level: "shall", ok: person(roles.custodian) },
     ...(sameRoleHolder(roles)

@@ -26,8 +26,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SCHEMA_PATH = REPO_ROOT / "schemas" / "dataset_manifest.schema.json"
 MANIFESTS_GLOB = str(REPO_ROOT / "manifests" / "*.yaml")
 EXAMPLES_GLOB = str(REPO_ROOT / "examples" / "*.yaml")
+OWNERS_PATH = REPO_ROOT / "registry" / "owners.yaml"
 
 TBD_RE = re.compile(r"^TBD by (\d{4}-\d{2}-\d{2})$")
+EMAIL_RE = re.compile(r"^[^<>@\s]+@[^<>@\s]+$")
+PERSON_EMAIL_RE = re.compile(r"<([^<>@\s]+@[^<>@\s]+)>$")
 ROLES = ("owner", "steward", "custodian")
 LEGACY_PREFIX = "/net/isilon"
 ARCHIVE_PREFIX = "/dmidata/archive/"
@@ -51,6 +54,35 @@ def load_schema():
 def load_manifest(path):
     with open(path) as f:
         return yaml.load(f, Loader=StringDateLoader)
+
+
+def load_owners(path=OWNERS_PATH):
+    """E-mail addresses (lower case) of the approved Data Owners, and problems with the list itself.
+
+    A missing file or an empty list switches the Owner check off.
+    """
+    if not path.exists():
+        return set(), []
+    try:
+        with open(path) as f:
+            data = yaml.safe_load(f) or {}
+    except yaml.YAMLError as e:
+        return set(), [f"YAML parse error: {e}"]
+    entries = data.get("owners") if isinstance(data, dict) else None
+    if entries is None:
+        return set(), []
+    if not isinstance(entries, list):
+        return set(), ["'owners' must be a list"]
+    emails, errors = set(), []
+    for i, entry in enumerate(entries):
+        if not isinstance(entry, dict) or not str(entry.get("name") or "").strip():
+            errors.append(f"Entry {i + 1}: needs a name")
+        email = entry.get("email") if isinstance(entry, dict) else None
+        if not isinstance(email, str) or not EMAIL_RE.match(email):
+            errors.append(f"Entry {i + 1}: needs an e-mail address (initials@dmi.dk)")
+        else:
+            emails.add(email.lower())
+    return emails, errors
 
 
 PATTERN_HINTS = {
@@ -121,8 +153,11 @@ def parse_date(value):
         return None
 
 
-def cross_checks(path, manifest, today):
-    """Checks the JSON Schema cannot express. Returns (errors, warnings)."""
+def cross_checks(path, manifest, today, owners=frozenset()):
+    """Checks the JSON Schema cannot express. Returns (errors, warnings).
+
+    owners: e-mail addresses of the approved Data Owners; empty switches that check off.
+    """
     errors, warnings = [], []
     status = manifest.get("status")
     dataset = manifest.get("dataset") or {}
@@ -138,6 +173,15 @@ def cross_checks(path, manifest, today):
     names = [roles.get(r) for r in ROLES]
     if all(names) and len(set(names)) == 1 and not roles.get("single_person"):
         errors.append("Owner, Steward and Custodian are the same person: set roles.single_person: true (Standard §3)")
+
+    # Standard §3.1: the Owner is one of the approved Data Owners (the examples are fictional,
+    # and a deleted entry keeps the Owner who approved the deletion)
+    owner = roles.get("owner")
+    is_example = Path(path).resolve().parent.name == "examples"
+    if owners and owner and status != "deleted" and not is_example:
+        m = PERSON_EMAIL_RE.search(str(owner))
+        if not m or m.group(1).lower() not in owners:
+            errors.append(f"Data Owner '{owner}' is not on the list of approved Data Owners ({OWNERS_PATH.relative_to(REPO_ROOT)})")
 
     # Duplicate literal product directories
     seen_dirs = {}
@@ -202,7 +246,7 @@ def cross_checks(path, manifest, today):
     return errors, warnings
 
 
-def validate_file(path, schema, today):
+def validate_file(path, schema, today, owners=frozenset()):
     """Validate a single manifest file. Returns (errors, warnings, info)."""
     try:
         manifest = load_manifest(path)
@@ -215,7 +259,7 @@ def validate_file(path, schema, today):
         return ["Manifest must be a mapping"], [], []
 
     errors = schema_errors(manifest, schema)
-    extra_errors, warnings = cross_checks(path, manifest, today)
+    extra_errors, warnings = cross_checks(path, manifest, today, owners)
     errors += extra_errors
 
     info = []
@@ -256,9 +300,17 @@ def main():
 
     today = dt.date.today()
     n_errors = n_warnings = 0
+
+    owners, owner_list_errors = load_owners()
+    if owner_list_errors:
+        print(f"FAIL  {OWNERS_PATH.relative_to(REPO_ROOT)}")
+        for err in owner_list_errors:
+            print(f"      error: {err}")
+        n_errors += len(owner_list_errors)
+
     for path in manifest_files + example_files:
         name = str(Path(path).relative_to(REPO_ROOT))
-        errors, warnings, info = validate_file(path, schema, today)
+        errors, warnings, info = validate_file(path, schema, today, owners)
         n_errors += len(errors)
         n_warnings += len(warnings)
         label = "FAIL" if errors else "WARN" if warnings else "OK"
@@ -277,6 +329,8 @@ def main():
 
     total = len(manifest_files) + len(example_files)
     print(f"\n{total} file(s): {n_errors} error(s), {n_warnings} warning(s).")
+    if not owners and not args.quiet:
+        print(f"Owner check off: {OWNERS_PATH.relative_to(REPO_ROOT)} lists no approved Data Owners.")
     if n_errors or (args.strict and n_warnings):
         sys.exit(1)
 

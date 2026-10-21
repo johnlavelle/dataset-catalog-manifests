@@ -90,7 +90,7 @@
         "owner": {
           "$ref": "#/definitions/person",
           "title": "Data Owner",
-          "description": "Accountable: decides purpose, permitted use, retention and sharing; approves retention, archiving and deletion (REQ-OWN-001–003)."
+          "description": "Accountable: decides purpose, permitted use, retention and sharing; approves retention, archiving and deletion (REQ-OWN-001–003). When registry/owners.yaml lists approved Data Owners, the Owner must be one of them."
         },
         "steward": {
           "$ref": "#/definitions/person",
@@ -467,6 +467,12 @@
         }
       }
     },
+    "extensions": {
+      "type": "object",
+      "title": "Other information",
+      "description": "Free-form information that has no field of its own (any keys and values). Not checked, and not read by the scanner. Use the defined fields, product notes or designated_community_notes where they fit.",
+      "additionalProperties": true
+    },
     "stac": {
       "type": "object",
       "title": "STAC metadata",
@@ -508,7 +514,7 @@
           "dir": {
             "type": "string",
             "minLength": 1,
-            "description": "Literal subdirectory name under dataset.path containing this product's files."
+            "description": "Path relative to dataset.path holding this product: usually a sub-directory, but a nested path (v0.6.0/analysis.zarr) or a single file or container (.sqfs image, Zarr store) also works."
           },
           "dir_pattern": {
             "type": "string",

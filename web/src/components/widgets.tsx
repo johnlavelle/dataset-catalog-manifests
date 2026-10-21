@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { WidgetProps } from "@rjsf/utils";
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   FormControlLabel,
@@ -124,6 +125,31 @@ export function PersonWidget(props: WidgetProps) {
 
   const copyFrom = options.copyFrom as string | undefined;
   const source: string | undefined = copyFrom ? ctxOf(props).formData?.roles?.[copyFrom] : undefined;
+
+  // A fixed list of people to choose from (the approved Data Owners)
+  const choices = (options.choices as string[] | undefined) ?? [];
+  if (choices.length) {
+    return (
+      <Autocomplete
+        freeSolo
+        options={choices}
+        value={value ?? ""}
+        onChange={(_, v) => onChange(v || undefined)}
+        onInputChange={(_, v, reason) => reason === "input" && onChange(v || undefined)}
+        disabled={disabled || readonly}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            id={id}
+            label={label}
+            required={required}
+            error={hasErrors(props)}
+            placeholder="Type to search the approved Data Owners"
+          />
+        )}
+      />
+    );
+  }
 
   return (
     <Box>

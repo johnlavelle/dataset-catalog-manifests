@@ -9,6 +9,7 @@ import {
   USER_OPTIONS,
   WIS2_OPTIONS,
 } from "./guidance";
+import { OWNERS, ownerPerson } from "./owners";
 
 const hidden = { "ui:widget": "hidden" };
 const person = { "ui:widget": "PersonWidget" };
@@ -56,6 +57,7 @@ export default function buildUiSchema(data: Manifest): UiSchema {
       "products",
       "designated_community_notes",
       "exceptions",
+      "extensions",
       "stac",
     ],
     id: { "ui:widget": "IdWidget" },
@@ -71,7 +73,7 @@ export default function buildUiSchema(data: Manifest): UiSchema {
     },
     roles: {
       "ui:order": ["owner", "steward", "custodian", "single_person"],
-      owner: person,
+      owner: OWNERS.length ? { ...person, "ui:options": { choices: OWNERS.map(ownerPerson) } } : person,
       steward: { ...person, "ui:options": { copyFrom: "owner" } },
       custodian: { ...person, "ui:options": { copyFrom: "owner" } },
       single_person: showIf(sameRoleHolder(roles) || roles.single_person === true, {}),
@@ -172,6 +174,9 @@ export default function buildUiSchema(data: Manifest): UiSchema {
     },
     products: {
       "ui:field": "ProductsField",
+    },
+    extensions: {
+      "ui:field": "ExtensionsField",
     },
     stac: {
       "ui:order": ["institution", "purpose", "model_system", "cmems_product_code", "period", "dois"],

@@ -51,18 +51,33 @@ function fieldErrors(errorSchema: ErrorSchema | undefined, key: string, field: s
 }
 
 /** The YAML key is edited locally and only committed on blur, so typing never clobbers another product. */
-function ProductKeyInput({ value, taken, onCommit }: { value: string; taken: (k: string) => boolean; onCommit: (k: string) => void }) {
+/** A YAML key that is committed on blur or Enter; empty keys and keys already in use are refused. */
+export function KeyInput({
+  value,
+  taken,
+  onCommit,
+  label = "Product key (YAML key)",
+  helper = "Unique key within this manifest, usually the directory name",
+  takenText = "Another product already uses this key",
+}: {
+  value: string;
+  taken: (k: string) => boolean;
+  onCommit: (k: string) => void;
+  label?: string;
+  helper?: string;
+  takenText?: string;
+}) {
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
   const trimmed = draft.trim();
-  const problem = !trimmed ? "The key cannot be empty" : trimmed !== value && taken(trimmed) ? "Another product already uses this key" : "";
+  const problem = !trimmed ? "The key cannot be empty" : trimmed !== value && taken(trimmed) ? takenText : "";
   const commit = () => {
     if (problem) setDraft(value);
     else if (trimmed !== value) onCommit(trimmed);
   };
   return (
     <TextField
-      label="Product key (YAML key)"
+      label={label}
       value={draft}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
@@ -70,7 +85,7 @@ function ProductKeyInput({ value, taken, onCommit }: { value: string; taken: (k:
       size="small"
       fullWidth
       error={!!problem}
-      helperText={problem || "Unique key within this manifest, usually the directory name"}
+      helperText={problem || helper}
     />
   );
 }
@@ -192,7 +207,7 @@ export default function ProductsField(props: FieldProps) {
               <Collapse in={isOpen}>
                 <CardContent sx={{ pt: 1 }}>
                   <Stack spacing={2}>
-                    <ProductKeyInput
+                    <KeyInput
                       value={key}
                       taken={(k) => k in products}
                       onCommit={(k) => renameKey(key, k)}

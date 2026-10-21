@@ -9,9 +9,11 @@ validate:
         - manifests/*.yaml
         - manifests/*.yml
         - examples/*.yaml
+        - registry/*.yaml
         - schemas/*.json
         - scripts/validate_manifests.py
 
+# Publishes the web editor; only from the default branch, so feature branches don't overwrite it
 pages:
   image: node:20-slim
   script:
@@ -21,7 +23,9 @@ pages:
     paths:
       - public
   rules:
-    - changes:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
         - web/**/*
         - schemas/*.json
         - examples/*.yaml
+        - registry/*.yaml

@@ -72,10 +72,6 @@ export default function LlmDialog({ open, onClose, formData, hasDraft }: LlmDial
             label="Include the current form, so the assistant only asks about what is missing"
           />
         )}
-        <Alert severity="info" variant="outlined" sx={{ mt: 1 }}>
-          Only share information with an external AI service if DMI's rules allow it — leave out personal data and
-          anything confidential.
-        </Alert>
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
           <Button
             variant="contained"

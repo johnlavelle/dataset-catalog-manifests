@@ -6,8 +6,11 @@ Dataset stewards submit manifests here via merge requests — no need to modify 
 
 ## Adding a New Dataset
 
-1. Fill in the [web editor](https://johnlavelle.github.io/dataset-catalog-manifests/) (or copy an existing manifest / [`examples/example-archived.yaml`](examples/example-archived.yaml)). Its **AI prompt** button downloads `dataset-manifest-prompt.md`: upload it unchanged to an AI assistant (or point a command-line assistant at it) and the assistant interviews you and writes the YAML. The file carries the interview, rules, DMI guidance, schema and example. Paste the result back into the editor to check it.
-2. Save it as `manifests/<id>.yaml` — the file name must equal the manifest's `id`
+1. Write the manifest in one of three ways:
+   - **Web editor** — fill in the [form](https://johnlavelle.github.io/dataset-catalog-manifests/). It shows what is mandatory for the chosen status, explains each section and keeps a checklist.
+   - **AI assistant** — the editor's **AI prompt** button downloads `dataset-manifest-prompt.md`. Upload it unchanged to an AI assistant and send "Start"; it interviews you a few questions at a time and ends with the YAML. In a command-line assistant (e.g. Claude Code), run it from a clone of this repository — `claude "Follow the instructions in dataset-manifest-prompt.md"` — and it can look at the dataset directory itself, write `manifests/<id>.yaml` and run the validator. Tick *Include the current form* to have it complete a half-filled form.
+   - **By hand** — copy an existing manifest or [`examples/example-archived.yaml`](examples/example-archived.yaml).
+2. Save it as `manifests/<id>.yaml` — the file name must equal the manifest's `id`. (In the editor, *Open* loads a file and the YAML tab shows and downloads the result.)
 3. Run validation locally (see below)
 4. Submit a merge request; the Data Owner approves it (Procedure A.7)
 
@@ -60,6 +63,7 @@ Conditional rules that apply at any status:
 | `archiving.automated: true` | `archiving.pipeline`, `archiving.owning_team` (REQ-OPS-002) |
 | `storage.tier: third_party` | `links.contract` (REQ-TPY-003) |
 | Owner, Steward and Custodian are the same person | `roles.single_person: true` (Standard §3) |
+| `registry/owners.yaml` lists approved Data Owners | `roles.owner` is one of them (not checked for deleted entries) |
 
 ### Placeholders
 
@@ -67,7 +71,7 @@ Facts and links that are not known yet (`identifiers.pid`, `identifiers.doi`, `l
 
 ### Conventions
 
-- **People**: `"Full Name <name@dmi.dk>"` (a team name and mailbox is fine for the Custodian).
+- **People**: `"Full Name <name@dmi.dk>"` (a team name and mailbox is fine for the Custodian). The Data Owner must be on the approved list once it has entries (below).
 - **Dates**: ISO 8601, quoted — `"2024-05-22"`.
 - **Enumerations**: `license.id` — `CC-BY-4.0`, `CC0-1.0`, `WMO-UDP-core`, `WMO-UDP-recommended`, `DMI-internal`, `restricted`; `storage.tier` — `project_space`, `archive`, `database`, `third_party`, `legacy`; `storage.wis2_discipline` — `atmospheric-composition`, `climate`, `cryosphere`, `hydrology`, `ocean`, `space-weather`, `weather`; `appraisal.users` — `dmi_staff`, `wmo_nmhs`, `copernicus`, `danish_researchers`, `public`; `appraisal.regenerable` — `impossible`, `expensive`, `cheap`.
 
@@ -88,14 +92,17 @@ Facts and links that are not known yet (`identifiers.pid`, `identifiers.doi`, `l
 | `deletion` | Deletion date, approver, reference, Rigsarkivet authorisation |
 | `designated_community_notes` | Anything a future user needs to interpret the data |
 | `exceptions` | Registered exceptions (`id`, `requirement`, `expires`, `note`) |
+| `extensions` | Free-form information with no field of its own — any keys and values (text, lists, mappings). Not checked and not read by the scanner; use the defined fields, product `notes` or `designated_community_notes` where they fit |
 | `stac` | STAC catalog metadata: `institution`, `purpose`, `dois`, etc. |
 | `products` | Map of product key to metadata (below) |
+
+Apart from `extensions` and product entries, only the fields defined in the schema are allowed.
 
 ### Products
 
 Each entry in `products` has:
 - **`name`** (required) — Human-readable product name.
-- **`dir`** (required\*) — Literal subdirectory name under `dataset.path` containing this product's files.
+- **`dir`** (required\*) — Path relative to `dataset.path` holding the product: usually a sub-directory, but a nested path (`v0.6.0/analysis.zarr`) or a single file or container (`.sqfs` image, Zarr store) also works.
 - **`dir_pattern`** (required\*) — Shell glob pattern matching multiple subdirectories (e.g. `n[0-9][0-9][0-4]`). Use instead of `dir` when a product spans many directories with a naming convention.
 - **`category`** — Grouping category. Common values: `Physics`, `Biogeochemistry`, `Ice`, `Observations`, `Assimilation`, `Waves`, `Atmospheric`. Climate datasets may use activity names (`DECK`, `CMIP`, `ScenarioMIP`, `DCPP`).
 - **`model_component`** — Model component (e.g. "NEMO", "ERGOM", "SI3").
@@ -107,6 +114,18 @@ Each entry in `products` has:
 
 Additional product fields are allowed — different datasets may need domain-specific metadata (e.g. CMIP6 manifests use `experiment_id`, `realization`, `modules`).
 
+## Approved Data Owners
+
+[`registry/owners.yaml`](registry/owners.yaml) lists the people who may be Data Owner (`name`, `email`, optional `unit`). While it is empty the check is off. Once it has entries:
+
+- CI fails a manifest whose `roles.owner` is not on the list (matched by e-mail, ignoring case). Deleted entries and `examples/` are exempt.
+- The web editor offers the list as a dropdown for the Owner, and the AI prompt includes it.
+- Removing someone fails CI until their datasets have a new Owner, so reassign them in the same merge request.
+
+Who may be Owner is the project group's decision: the Guidelines (§11) say "usually a project lead, research group head or product owner"; a stricter rule, such as office managers only, is set by whom you list. Changing the list redeploys the editor.
+
+**Note:** the GitHub mirror and its Pages site are public, so names and addresses on the list are published there. Host the editor on internal GitLab Pages before filling it in if that matters.
+
 ## Local Validation
 
 ```bash
@@ -117,6 +136,30 @@ python scripts/validate_manifests.py --strict  # warnings fail too
 
 This runs the same checks as the CI pipeline on `manifests/` and `examples/`:
 
-- **Errors** (SHALL requirements): the JSON Schema; `id` equals the file name and is unique; the single-person flag; duplicate product directories.
+- **Errors** (SHALL requirements): the JSON Schema; `id` equals the file name and is unique; the single-person flag; duplicate product directories; the Owner is an approved Data Owner (when `registry/owners.yaml` has entries); a malformed owners list.
 - **Warnings** (SHOULD requirements and housekeeping): open and overdue `TBD` placeholders, expired exceptions, legacy `/net/isilon` locations, archived data outside `/dmidata/archive/<discipline>/`, missing checksums, intermediate products in an archive, gzip compression, missing retention rationale, entries not reviewed for a year.
 - **Info**: for `proposed` entries, the fields still needed to register.
+
+## Repository Layout
+
+| Path | Contents |
+|------|----------|
+| `manifests/` | One catalogue entry per dataset, `<id>.yaml` |
+| `examples/` | A complete, fictional archived entry (validated by CI, exempt from the Owner check) |
+| `schemas/` | The JSON Schema for manifests |
+| `registry/` | `owners.yaml` — the approved Data Owners |
+| `scripts/` | `validate_manifests.py` — the CI validator |
+| `web/` | The web editor (React, TypeScript, [react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/)) |
+
+## Web Editor
+
+The editor renders the form from the JSON Schema and adds the DMI guidance, status-dependent requirements, a checklist, YAML import and export, and the AI prompt. It runs entirely in the browser; nothing is sent anywhere.
+
+```bash
+cd web
+npm ci
+npm run dev      # http://localhost:5173
+npm run build    # type-check and build to web/dist
+```
+
+It is deployed from `main`: to GitHub Pages by [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml), and to GitLab Pages by the `pages` job in [`.gitlab-ci.yml`](.gitlab-ci.yml) (default branch only). Both rebuild when `web/`, `schemas/`, `examples/` or `registry/` change.

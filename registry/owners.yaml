@@ -1,0 +1,19 @@
+# Approved Data Owners (Standard §3.1)
+#
+# When this list has entries, every manifest's roles.owner must be one of them (matched
+# by e-mail, ignoring case). CI then fails an entry whose Owner is not listed, except for
+# deleted entries and the examples. While the list is empty the check is off.
+#
+# Who may be Owner is the project group's decision: the Guidelines (§11) say "usually a
+# project lead, research group head or product owner"; a stricter rule (e.g. office
+# managers only) is set simply by whom you list here.
+#
+# Removing someone fails CI until their datasets have a new Owner, so reassign them in
+# the same merge request.
+#
+# Entries:
+#   - name: Full Name
+#     email: initials@dmi.dk
+#     unit: Office or department   # optional
+
+owners: []

@@ -8,12 +8,14 @@ import transformErrors from "../transformErrors";
 import { customValidate, schema, type Manifest } from "../compliance";
 import ProductsField from "./ProductsField";
 import DoisField from "./DoisField";
+import ExtensionsField from "./ExtensionsField";
 import ObjectFieldTemplate from "./FormLayout";
 import { widgets, type EditorContext } from "./widgets";
 
 const fields: Record<string, React.ComponentType<FieldProps>> = {
   ProductsField,
   DoisField,
+  ExtensionsField,
 };
 
 interface ManifestFormProps {

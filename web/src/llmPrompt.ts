@@ -1,6 +1,7 @@
 import schemaText from "../../schemas/dataset_manifest.schema.json?raw";
 import exampleYaml from "../../examples/example-archived.yaml?raw";
 import { addDays, today } from "./compliance";
+import { OWNERS, ownerPerson } from "./owners";
 import {
   LICENSE_OPTIONS,
   PRODUCT_TYPE_OPTIONS,
@@ -32,7 +33,7 @@ const OPENING_QUESTIONS = `   1. The dataset's name, and what it contains in a s
    2. Where it is stored (the full path, e.g. \`/dmidata/projects/<project>/<dataset>\`).
    3. Where it stands now: (a) new — just recording that it exists; (b) in use, and who owns it, how long it is kept and its licence are decided; (c) ready to move to the archive; (d) being retired; (e) deleted.
 
-   Also invite them to paste a README, wiki page, notes or a directory listing (\`tree -L 2 <path>\`) if they have one: you will fill in what you can and ask fewer questions. (If you can read their files, say you will look at the directory yourself instead.) Remind them to leave out personal data and anything confidential.`;
+   Also invite them to paste a README, wiki page, notes or a directory listing (\`tree -L 2 <path>\`) if they have one: you will fill in what you can and ask fewer questions. (If you can read their files, say you will look at the directory yourself instead.)`;
 
 const OPENING_FROM_DRAFT = `   A **current draft** from the manifest editor is included below. Instead of the opening questions, summarise in two or three lines what the draft already holds, then ask the first questions about what is still missing for its status (or a higher one, if they want).`;
 
@@ -71,7 +72,11 @@ ${hasDraft ? OPENING_FROM_DRAFT : OPENING_QUESTIONS}
 3. **Rounds**, in this order, one or two topics per message. Skip anything already known. Which rounds apply: \`proposed\` 1, 2, 3 and 4 (asked together, once), 6 (the tier only) and 9; \`active\` and \`deprecated\` 1–6 and 9; \`archived\` 1–7 and 9; \`deleted\` 1, 2, 8 and 9.
    1. **Dataset** — the title, the description (offer your draft, written for a colleague in three years who knows the science but not the project), the \`id\` (offer one), and optionally the model, domain and a contact.
    2. **Products** — the parts users think of separately. For each: the directory or file (\`dir\`), or a pattern for a family of directories (\`dir_pattern\`); a short name; optionally the type, category and notes. Offer entries from a listing. Ask whether any directory holds intermediate files that need not be kept.
-   3. **Roles** — Owner (decides on retention, licence and deletion), Steward (keeps the metadata right), Custodian (runs the storage; a team and its mailbox is fine). Name and e-mail for each. For \`proposed\`, ask once and record what is known.
+   3. **Roles** — Owner (decides on retention, licence and deletion), Steward (keeps the metadata right), Custodian (runs the storage; a team and its mailbox is fine). Name and e-mail for each. For \`proposed\`, ask once and record what is known.${
+     OWNERS.length
+       ? " The Owner must be one of the *Approved Data Owners* in the reference material: offer the matching names, and if theirs is not there, record it as an open question."
+       : ""
+   }
    4. **Retention and licence** — how long it must be kept (until a date, until a condition, or indefinitely) and why; the licence (show the options). For \`proposed\`, ask once and record what is known.
    5. **Identifiers, links and dates** — \`active\` and beyond: the local PID, the metadata page, the archiving guide and the release date; optionally a DOI and the last review date.
    6. **Storage** — the storage tier (every status; show the options). For \`archived\` also the WIS2 discipline, format and compression (with the settings and approver if lossy), and any secondary copies or checksums.
@@ -111,7 +116,7 @@ Before you write it, check that:
 - \`id\`: short and stable, usually derived from the title (e.g. \`danra-data\`); lower-case letters, digits, \`-\` and \`_\`. It becomes the file name \`manifests/<id>.yaml\` and never changes.
 - People: \`"Full Name <name@dmi.dk>"\`. A team name and mailbox is fine for the Custodian. If the Owner, Steward and Custodian are the same person, set \`roles.single_person: true\`.
 - Dates: ISO 8601 and quoted, e.g. \`"2024-05-22"\`.
-- Only use the fields the schema defines. Products may carry extra keys (e.g. \`experiment_id\`).
+- Only use the fields the schema defines. Products may carry extra keys (e.g. \`experiment_id\`). Something worth keeping that fits no field — not even a product's \`notes\` or \`designated_community_notes\` — goes under \`extensions\` as a short key and value instead of being dropped.
 - Products: \`dir\` is a path relative to \`dataset.path\`: a sub-directory, a nested path (\`v0.6.0/height_levels_analysis.zarr\`), or a single file or container such as a \`.sqfs\` image or Zarr store. Use \`dir_pattern\` (a shell glob) for a family of directories, never both. Product keys are unique: the directory name, or letters, digits and underscores when the name contains slashes or dots. Set \`type\` only when one of the descriptions under *Allowed values* clearly fits.
 - Keep \`dataset.description\` to a few sentences, written for a stranger.
 `;
@@ -127,7 +132,13 @@ ${STATUSES.map((s) => `- \`${s}\` — ${STATUS_INFO[s].label} (${STATUS_INFO[s].
 ## Mandatory fields by status
 
 ${REQUIRED_BY_STATUS.map(([status, fields]) => `- **${status}:** ${fields}`).join("\n")}
-
+${
+  OWNERS.length
+    ? `\n## Approved Data Owners\n\nThe Owner must be one of these (write them as \`"Name <e-mail>"\`):\n\n${OWNERS.map(
+        (o) => `- ${ownerPerson(o)}${o.unit ? ` — ${o.unit}` : ""}`
+      ).join("\n")}\n`
+    : ""
+}
 ## Allowed values
 
 - \`license.id\`:\n${optionList(LICENSE_OPTIONS)}

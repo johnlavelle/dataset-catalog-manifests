@@ -3,6 +3,8 @@
  * set (Policy POL-, Standard STD-, Procedures PRC-, Guidelines GDL-STOR-ARCH-001 v1.0).
  */
 
+import { OWNERS } from "./owners";
+
 export type Status = "proposed" | "active" | "archived" | "deprecated" | "deleted";
 
 export const STATUSES: Status[] = ["proposed", "active", "archived", "deprecated", "deleted"];
@@ -246,6 +248,9 @@ export const SECTIONS: SectionInfo[] = [
         "Data Custodian — usually someone in IT or HPC. Owns the infrastructure, permissions and integrity, not the science.",
         "One person may wear all three hats for a small dataset — tick the box and record each decision. No role may be left empty: an orphaned dataset is a problem the moment its caretaker leaves.",
         "Every procedure assumes the three roles are named. If they are not, stop and assign them first.",
+        ...(OWNERS.length
+          ? ["The Data Owner is chosen from the approved Data Owners (registry/owners.yaml). If the right person is missing, ask for them to be added."]
+          : []),
       ],
       source: "Standard §3, Procedures §1, Guidelines §11",
     },
@@ -372,15 +377,16 @@ export const SECTIONS: SectionInfo[] = [
   },
   {
     key: "other",
-    title: "Notes & exceptions",
-    fields: ["designated_community_notes", "exceptions"],
-    summary: "Anything a future user needs to know, and registered deviations.",
+    title: "Notes, exceptions & other information",
+    fields: ["designated_community_notes", "exceptions", "extensions"],
+    summary: "Anything a future user needs to know, registered deviations, and information with no field of its own.",
     requiredFor: [],
     guidance: {
       points: [
         "The Designated Community is DMI staff, WMO members, Copernicus and its users, Danish researchers and the Danish public. Note anything they would need to interpret the data.",
         "A deviation from a SHALL requirement needs a registered exception: owner, reason, compensating control and an expiry at most 12 months ahead, approved by the Steering Group. An undocumented deviation is a finding.",
         "Legacy datasets that are in use but cannot be re-archived yet are accepted under a time-limited exception (Policy §7).",
+        "Other information: anything worth keeping that has no field of its own — add a key and a value. It is stored in the manifest but not checked, and the scanner ignores it.",
       ],
       source: "Standard §9–10, Policy §6.2 and §7",
     },
@@ -419,4 +425,5 @@ export const SUBSECTION_TITLES: Record<string, string> = {
   dates: "Dates",
   designated_community_notes: "",
   exceptions: "",
+  extensions: "",
 };
