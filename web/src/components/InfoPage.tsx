@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@mui/material";
 import mermaid from "mermaid";
+import { REQUIRED_BY_STATUS } from "../guidance";
 
 mermaid.initialize({ startOnLoad: false, theme: "default" });
 
@@ -52,25 +53,6 @@ function Mermaid({ id, chart }: { id: string; chart: string }) {
     />
   );
 }
-
-const REQUIRED_BY_STATUS: [string, string][] = [
-  ["Always", "Catalogue ID, status, dataset title, location and description, at least one product"],
-  [
-    "Active, Archived, Deprecated",
-    "Owner, Steward and Custodian (name + e-mail); retention; licence; local PID; metadata page; archiving guide; release date. " +
-      "Facts and links may be 'TBD by YYYY-MM-DD' until known.",
-  ],
-  [
-    "Archived",
-    "Appraisal approved by the Owner; WIS2 discipline; format; compression; quality check date; archiving date. No TBD placeholders.",
-  ],
-  ["Deleted", "Deletion date and the Owner's approval. The entry is never removed."],
-  [
-    "Whenever they apply",
-    "Rationale for indefinite retention; reason and decision-maker for a restricted licence; settings and approval for lossy compression; " +
-      "job and owning team for automated archiving; contract for third-party hosting.",
-  ],
-];
 
 const ROLES: [string, string, string][] = [
   ["Data Owner", "What is this dataset for, who may use it, how long do we keep it?", "Project lead, group head, product owner"],
@@ -236,6 +218,11 @@ export default function InfoPage() {
             </li>
             <li>
               <strong>Example</strong> — load a fully filled-in (fictional) archived dataset to see every field in use.
+            </li>
+            <li>
+              <strong>AI prompt</strong> — copy a self-contained prompt (instructions, rules, guidance, schema and
+              example) into an AI assistant together with your notes on the dataset, then paste the YAML it returns
+              back here and check it against the checklist. The schema and example can also be downloaded separately.
             </li>
           </ul>
         </Typography>

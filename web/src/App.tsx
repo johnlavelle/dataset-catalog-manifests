@@ -18,12 +18,20 @@ import {
   Tabs,
   Tooltip,
 } from "@mui/material";
-import { HelpOutline, ArrowBack, NoteAddOutlined, FolderOpenOutlined, AutoStoriesOutlined } from "@mui/icons-material";
+import {
+  HelpOutline,
+  ArrowBack,
+  NoteAddOutlined,
+  FolderOpenOutlined,
+  AutoStoriesOutlined,
+  SmartToyOutlined,
+} from "@mui/icons-material";
 import validator from "@rjsf/validator-ajv8";
 import ManifestForm from "./components/ManifestForm";
 import YamlPreview from "./components/YamlPreview";
 import ChecklistPanel from "./components/ChecklistPanel";
 import InfoPage from "./components/InfoPage";
+import LlmDialog from "./components/LlmDialog";
 import type { IChangeEvent } from "@rjsf/core";
 import {
   checklist,
@@ -56,6 +64,7 @@ export default function App() {
   const [formData, setFormData] = useState<Manifest>(loadDraft);
   const [showInfo, setShowInfo] = useState(false);
   const [tab, setTab] = useState<"checklist" | "yaml">("checklist");
+  const [showLlm, setShowLlm] = useState(false);
   const [pending, setPending] = useState<{ title: string; confirm: string; run: () => void } | null>(null);
   const [message, setMessage] = useState<{ text: string; severity: "success" | "error" } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -100,10 +109,14 @@ export default function App() {
     setMessage({ text: "Loaded an illustrative example of an archived dataset", severity: "success" });
   };
 
+  const formHasContent = useMemo(() => {
+    const { status: _, ...rest } = formData;
+    return Object.values(rest).some(hasContent);
+  }, [formData]);
+
   /** Ask before replacing a form that holds anything beyond the defaults. */
   const replaceForm = (title: string, confirm: string, run: () => void) => {
-    const { status: _, ...rest } = formData;
-    if (Object.values(rest).some(hasContent)) setPending({ title, confirm, run });
+    if (formHasContent) setPending({ title, confirm, run });
     else run();
   };
 
@@ -144,6 +157,11 @@ export default function App() {
               onClick={() => replaceForm("Load the example?", "Load example", loadExample)}
             >
               Example
+            </Button>
+          </Tooltip>
+          <Tooltip title="Get a prompt, the schema and an example to write the manifest with an AI assistant">
+            <Button color="inherit" startIcon={<SmartToyOutlined />} onClick={() => setShowLlm(true)}>
+              AI prompt
             </Button>
           </Tooltip>
           <input
@@ -232,6 +250,8 @@ export default function App() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <LlmDialog open={showLlm} onClose={() => setShowLlm(false)} formData={formData} hasDraft={formHasContent} />
 
       <Snackbar open={!!message} autoHideDuration={4000} onClose={() => setMessage(null)}>
         {message ? (

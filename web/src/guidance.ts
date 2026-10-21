@@ -46,6 +46,26 @@ export const STATUS_INFO: Record<Status, { label: string; short: string; detail:
   },
 };
 
+/** Mandatory fields per status, as shown on the info page and in the LLM prompt. */
+export const REQUIRED_BY_STATUS: [string, string][] = [
+  ["Always", "Catalogue ID, status, dataset title, location and description, at least one product"],
+  [
+    "Active, Archived, Deprecated",
+    "Owner, Steward and Custodian (name + e-mail); retention; licence; local PID; metadata page; archiving guide; release date. " +
+      "Facts and links may be 'TBD by YYYY-MM-DD' until known.",
+  ],
+  [
+    "Archived",
+    "Appraisal approved by the Owner; WIS2 discipline; format; compression; quality check date; archiving date. No TBD placeholders.",
+  ],
+  ["Deleted", "Deletion date and the Owner's approval. The entry is never removed."],
+  [
+    "Whenever they apply",
+    "Rationale for indefinite retention; reason and decision-maker for a restricted licence; settings and approval for lossy compression; " +
+      "job and owning team for automated archiving; contract for third-party hosting.",
+  ],
+];
+
 export interface Option {
   label: string;
   description?: string;
@@ -255,7 +275,7 @@ export const SECTIONS: SectionInfo[] = [
     requiredFor: ["active", "archived", "deprecated"],
     guidance: {
       intro:
-        "Not known yet? Choose 'Not known yet' to write 'TBD by YYYY-MM-DD' (Procedure A.5). CI lists open placeholders and flags overdue ones; all must be resolved before archiving.",
+        "Not known yet? Record 'TBD by YYYY-MM-DD' (Procedure A.5) — in the form, the 'Not known yet' switch does this. CI lists open placeholders and flags overdue ones; all must be resolved before archiving.",
       points: [
         "Every entry carries a local persistent identifier (REQ-CAT-008). Published or externally cited datasets also get a DOI via DataCite (REQ-CAT-009) — the DMI DataCite arrangement is being set up; ask the Data Custodian.",
         "Link, don't duplicate: the metadata page explains what the dataset is, how it was produced, what the variables mean and its known limitations.",

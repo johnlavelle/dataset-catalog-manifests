@@ -32,9 +32,14 @@ export default function YamlPreview({ formData, onImport }: YamlPreviewProps) {
   const filename = id ? `${id}.yaml` : "manifest.yaml";
 
   const handleCopy = async () => {
-    await copyToClipboard(yamlContent);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await copyToClipboard(yamlContent);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setParseError("The browser did not allow copying — use the download button instead");
+      setTimeout(() => setParseError(null), 4000);
+    }
   };
 
   const handleDownload = () => {

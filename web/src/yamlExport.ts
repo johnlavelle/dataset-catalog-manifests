@@ -49,7 +49,11 @@ export function parseYaml(text: string): Record<string, unknown> {
 }
 
 export function downloadYaml(content: string, filename: string): void {
-  const blob = new Blob([content], { type: "text/yaml" });
+  downloadFile(content, filename, "text/yaml");
+}
+
+export function downloadFile(content: string, filename: string, type: string): void {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -58,6 +62,30 @@ export function downloadYaml(content: string, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function copyToClipboard(text: string): Promise<void> {
-  return navigator.clipboard.writeText(text);
+/**
+ * Copy text, falling back to execCommand when the Clipboard API fails or never settles
+ * (it can hang in unfocused or embedded windows). Rejects if both fail.
+ */
+export async function copyToClipboard(text: string): Promise<void> {
+  try {
+    await Promise.race([
+      navigator.clipboard.writeText(text),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Clipboard timed out")), 1500)),
+    ]);
+    return;
+  } catch {
+    // Fall back below
+  }
+  // Inside a dialog, the textarea must live in the dialog or its focus trap steals the selection
+  const host = (document.activeElement?.closest('[role="dialog"]') as HTMLElement | null) ?? document.body;
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  host.appendChild(area);
+  area.select();
+  const ok = document.execCommand("copy");
+  area.remove();
+  if (!ok) throw new Error("Copy failed");
 }
