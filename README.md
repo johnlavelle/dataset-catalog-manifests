@@ -1,6 +1,6 @@
 # Dataset Catalog Manifests
 
-This repository is DMI's dataset catalogue. Each dataset has one YAML manifest, `manifests/<id>.yaml`: its catalogue entry as required by the DMI Storage and Archiving Standard (STD-STOR-ARCH-001 v1.0, §4) — what the dataset is, who is responsible for it, how long it is kept, under which licence, and, once archived, how it was appraised and prepared. Sizes, file counts, formats, variables and access times are read from the filesystem by a scanner, so they are not typed in.
+This repository is DMI's dataset catalogue. Each dataset has one YAML manifest, `manifests/<id>.yaml`: its catalogue entry as required by the DMI Storage and Archiving Standard (STD-STOR-ARCH-001 v1.0, §4) — what the dataset is, who is responsible for it, how long it is kept, under which licence, and, once archived, how it was appraised and prepared.
 
 Dataset stewards add and update manifests through merge requests. `examples/` holds only a fictional example; real entries always go in `manifests/`.
 
@@ -86,14 +86,14 @@ Facts and links that are not known yet (`identifiers.pid`, `identifiers.doi`, `l
 | `license` | Licence and, for restricted data, the reason and decision-maker (REQ-LIC-001/002) |
 | `identifiers` | Local PID (REQ-CAT-008) and DOI (REQ-CAT-009) |
 | `links` | Metadata page, archiving guide, supplier contract |
-| `dates` | Release, archiving, planned deletion, last review, last update (optional override — otherwise derived from Git and the scan) |
+| `dates` | Release, archiving, planned deletion, last review, last update |
 | `storage` | Tier, WIS2 discipline, format, compression, lossy settings, secondary locations, checksums |
 | `appraisal` | Why it has lasting value, who will use it, whether it can be regenerated, obligations, Owner's approval (REQ-APP-001–004) |
 | `archiving` | Quality check date, aggregation, automated archiving job and owning team |
 | `deletion` | Deletion date, approver, reference, Rigsarkivet authorisation |
 | `designated_community_notes` | Anything a future user needs to interpret the data |
 | `exceptions` | Registered exceptions (`id`, `requirement`, `expires`, `note`) |
-| `extensions` | Free-form information with no field of its own — any keys and values (text, lists, mappings). Not checked and not read by the scanner; use the defined fields, product `notes` or `designated_community_notes` where they fit |
+| `extensions` | Free-form information with no field of its own — any keys and values (text, lists, mappings). Not checked; use the defined fields, product `notes` or `designated_community_notes` where they fit |
 | `stac` | STAC catalog metadata: `institution`, `purpose`, `dois`, etc. |
 | `products` | Map of product key to metadata (below) |
 

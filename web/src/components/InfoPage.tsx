@@ -32,7 +32,7 @@ const WORKFLOW_DIAGRAM = `graph TD
     B --> C["Commit it to manifests/ in a merge request"]
     C --> D["CI validates: errors block the merge, warnings are listed"]
     D --> E["Data Owner approves the merge request (Procedure A.7)"]
-    E --> F["Merged: the scanner adds sizes, formats and dates; the entry appears in the catalogue"]
+    E --> F["Merged: the entry is part of the catalogue"]
 `;
 
 function Mermaid({ id, chart }: { id: string; chart: string }) {
@@ -81,8 +81,7 @@ export default function InfoPage() {
         <Typography paragraph>
           A manifest is the catalogue entry for one dataset, as required by DMI's Storage and Archiving Standard (§4,
           REQ-CAT-001–009). It records what a person has to decide or know — owner, retention, licence, appraisal,
-          where the data lives — and leaves the rest to the scanner, which reads sizes, file counts, formats, variables
-          and access times straight from the filesystem.
+          where the data lives.
         </Typography>
         <Typography>
           Manifests live in Git, are reviewed in merge requests and are validated by CI against the same JSON Schema

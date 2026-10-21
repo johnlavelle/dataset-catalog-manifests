@@ -252,7 +252,7 @@
         "updated": {
           "$ref": "#/definitions/date",
           "title": "Last updated",
-          "description": "Optional override. Otherwise derived from the manifest's Git history and the filesystem scan."
+          "description": "Optional: when the data or this entry last changed."
         }
       }
     },
@@ -470,7 +470,7 @@
     "extensions": {
       "type": "object",
       "title": "Other information",
-      "description": "Free-form information that has no field of its own (any keys and values). Not checked, and not read by the scanner. Use the defined fields, product notes or designated_community_notes where they fit.",
+      "description": "Free-form information that has no field of its own (any keys and values). Not checked. Use the defined fields, product notes or designated_community_notes where they fit.",
       "additionalProperties": true
     },
     "stac": {
