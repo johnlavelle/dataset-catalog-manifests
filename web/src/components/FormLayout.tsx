@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
-import { has, type Manifest } from "../compliance";
+import { hasContent, type Manifest } from "../compliance";
 import { SECTIONS, SECTION_OBJECT_KEYS, SUBSECTION_TITLES, type Guidance, type SectionInfo, type Status } from "../guidance";
 import type { EditorContext } from "./widgets";
 
@@ -31,12 +31,6 @@ function countErrors(schema: ErrorSchema | undefined): number {
     else n += countErrors(value as ErrorSchema);
   }
   return n;
-}
-
-function hasContent(value: unknown): boolean {
-  if (Array.isArray(value)) return value.length > 0;
-  if (value && typeof value === "object") return Object.values(value).some(hasContent);
-  return has(value);
 }
 
 function requirement(section: SectionInfo, status: Status): { label: string; color: "primary" | "default" } {

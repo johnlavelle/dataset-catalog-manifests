@@ -36,7 +36,14 @@ export function emptyManifest(): Manifest {
 export const has = (v: unknown) =>
   v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0);
 
-export const isTbd = (v: unknown) => typeof v === "string" && v.startsWith("TBD");
+/** True if a value, or anything nested in it, is non-empty. */
+export function hasContent(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") return Object.values(value).some(hasContent);
+  return has(value);
+}
+
+export const isTbd =(v: unknown) => typeof v === "string" && v.startsWith("TBD");
 
 export const today = () => new Date().toISOString().slice(0, 10);
 

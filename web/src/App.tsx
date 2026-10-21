@@ -25,7 +25,16 @@ import YamlPreview from "./components/YamlPreview";
 import ChecklistPanel from "./components/ChecklistPanel";
 import InfoPage from "./components/InfoPage";
 import type { IChangeEvent } from "@rjsf/core";
-import { checklist, customValidate, emptyManifest, missingCount, normalise, schema, type Manifest } from "./compliance";
+import {
+  checklist,
+  customValidate,
+  emptyManifest,
+  hasContent,
+  missingCount,
+  normalise,
+  schema,
+  type Manifest,
+} from "./compliance";
 import transformErrors from "./transformErrors";
 import { parseYaml } from "./yamlExport";
 import exampleYaml from "../../examples/example-archived.yaml?raw";
@@ -47,7 +56,7 @@ export default function App() {
   const [formData, setFormData] = useState<Manifest>(loadDraft);
   const [showInfo, setShowInfo] = useState(false);
   const [tab, setTab] = useState<"checklist" | "yaml">("checklist");
-  const [confirmNew, setConfirmNew] = useState(false);
+  const [pending, setPending] = useState<{ title: string; confirm: string; run: () => void } | null>(null);
   const [message, setMessage] = useState<{ text: string; severity: "success" | "error" } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -91,6 +100,13 @@ export default function App() {
     setMessage({ text: "Loaded an illustrative example of an archived dataset", severity: "success" });
   };
 
+  /** Ask before replacing a form that holds anything beyond the defaults. */
+  const replaceForm = (title: string, confirm: string, run: () => void) => {
+    const { status: _, ...rest } = formData;
+    if (Object.values(rest).some(hasContent)) setPending({ title, confirm, run });
+    else run();
+  };
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <AppBar position="static" elevation={1}>
@@ -99,17 +115,34 @@ export default function App() {
             Dataset Manifest Editor
           </Typography>
           <Tooltip title="Start a new manifest">
-            <Button color="inherit" startIcon={<NoteAddOutlined />} onClick={() => setConfirmNew(true)}>
+            <Button
+              color="inherit"
+              startIcon={<NoteAddOutlined />}
+              onClick={() =>
+                replaceForm("Start a new manifest?", "Clear form", () => {
+                  setFormData(emptyManifest());
+                  setShowInfo(false);
+                })
+              }
+            >
               New
             </Button>
           </Tooltip>
           <Tooltip title="Open an existing manifest (.yaml)">
-            <Button color="inherit" startIcon={<FolderOpenOutlined />} onClick={() => fileInput.current?.click()}>
+            <Button
+              color="inherit"
+              startIcon={<FolderOpenOutlined />}
+              onClick={() => replaceForm("Open another manifest?", "Choose file", () => fileInput.current?.click())}
+            >
               Open
             </Button>
           </Tooltip>
           <Tooltip title="Load a fully filled-in example">
-            <Button color="inherit" startIcon={<AutoStoriesOutlined />} onClick={loadExample}>
+            <Button
+              color="inherit"
+              startIcon={<AutoStoriesOutlined />}
+              onClick={() => replaceForm("Load the example?", "Load example", loadExample)}
+            >
               Example
             </Button>
           </Tooltip>
@@ -179,24 +212,23 @@ export default function App() {
         </Box>
       )}
 
-      <Dialog open={confirmNew} onClose={() => setConfirmNew(false)}>
-        <DialogTitle>Start a new manifest?</DialogTitle>
+      <Dialog open={!!pending} onClose={() => setPending(null)}>
+        <DialogTitle>{pending?.title}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This clears the form. Download or copy the current YAML first if you want to keep it.
+            This replaces what is in the form now. Download or copy the current YAML first if you want to keep it.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmNew(false)}>Cancel</Button>
+          <Button onClick={() => setPending(null)}>Cancel</Button>
           <Button
             color="error"
             onClick={() => {
-              setFormData(emptyManifest());
-              setConfirmNew(false);
-              setShowInfo(false);
+              pending?.run();
+              setPending(null);
             }}
           >
-            Clear form
+            {pending?.confirm}
           </Button>
         </DialogActions>
       </Dialog>
