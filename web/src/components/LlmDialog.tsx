@@ -26,7 +26,7 @@ interface LlmDialogProps {
   hasDraft: boolean;
 }
 
-/** Hands the schema, rules and guidance to an AI assistant, which writes the YAML. */
+/** Hands an AI assistant a file with which it interviews the user and writes the YAML. */
 export default function LlmDialog({ open, onClose, formData, hasDraft }: LlmDialogProps) {
   const [includeDraft, setIncludeDraft] = useState(true);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
@@ -50,24 +50,26 @@ export default function LlmDialog({ open, onClose, formData, hasDraft }: LlmDial
       <DialogContent>
         <Typography component="div" variant="body2">
           <ol style={{ paddingLeft: 20, marginTop: 0 }}>
+            <li>Download the prompt file. Nothing needs to be added to it.</li>
             <li>
-              Copy or download the prompt. It contains the instructions, the rules for each status, the DMI guidance,
-              the JSON Schema and a complete example.
+              Upload it to your AI assistant (or paste its text) and send &ldquo;Start&rdquo;. In a command-line
+              assistant, ask it to follow the instructions in the file; it can then look at the dataset directory
+              itself.
             </li>
             <li>
-              Paste it into your AI assistant and add what you know about the dataset at the end — notes, a directory
-              listing, an existing wiki page. It will ask about anything mandatory that is missing.
+              Answer its questions, a few at a time — &ldquo;don&rsquo;t know&rdquo; is a fine answer. It ends with
+              the YAML.
             </li>
             <li>
-              Paste the YAML it returns into the YAML tab (edit button), or save it as a file and use <em>Open</em>.
-              Then work through the checklist: the result is a draft, and you are still responsible for it.
+              Paste the YAML into the YAML tab (edit button), or save it as a file and use <em>Open</em>. Then work
+              through the checklist: the result is a draft, and you are still responsible for it.
             </li>
           </ol>
         </Typography>
         {hasDraft && (
           <FormControlLabel
             control={<Checkbox checked={includeDraft} onChange={(e) => setIncludeDraft(e.target.checked)} />}
-            label="Include the current form as a starting point"
+            label="Include the current form, so the assistant only asks about what is missing"
           />
         )}
         <Alert severity="info" variant="outlined" sx={{ mt: 1 }}>
@@ -77,17 +79,13 @@ export default function LlmDialog({ open, onClose, formData, hasDraft }: LlmDial
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
           <Button
             variant="contained"
-            startIcon={copied ? <CheckIcon /> : <ContentCopyIcon />}
-            onClick={handleCopy}
-          >
-            {copied ? "Copied" : "Copy prompt"}
-          </Button>
-          <Button
-            variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={() => downloadFile(prompt(), "dataset-manifest-prompt.md", "text/markdown")}
           >
             Prompt (.md)
+          </Button>
+          <Button variant="outlined" startIcon={copied ? <CheckIcon /> : <ContentCopyIcon />} onClick={handleCopy}>
+            {copied ? "Copied" : "Copy prompt"}
           </Button>
           <Button
             variant="outlined"

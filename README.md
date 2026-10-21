@@ -6,7 +6,7 @@ Dataset stewards submit manifests here via merge requests — no need to modify 
 
 ## Adding a New Dataset
 
-1. Fill in the [web editor](https://johnlavelle.github.io/dataset-catalog-manifests/) (or copy an existing manifest / [`examples/example-archived.yaml`](examples/example-archived.yaml)). Its **AI prompt** button gives you a self-contained prompt — instructions, rules, DMI guidance, schema and example — to have an AI assistant draft the YAML from your notes; paste the result back into the editor to check it.
+1. Fill in the [web editor](https://johnlavelle.github.io/dataset-catalog-manifests/) (or copy an existing manifest / [`examples/example-archived.yaml`](examples/example-archived.yaml)). Its **AI prompt** button downloads `dataset-manifest-prompt.md`: upload it unchanged to an AI assistant (or point a command-line assistant at it) and the assistant interviews you and writes the YAML. The file carries the interview, rules, DMI guidance, schema and example. Paste the result back into the editor to check it.
 2. Save it as `manifests/<id>.yaml` — the file name must equal the manifest's `id`
 3. Run validation locally (see below)
 4. Submit a merge request; the Data Owner approves it (Procedure A.7)

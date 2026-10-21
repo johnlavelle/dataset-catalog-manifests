@@ -159,7 +159,7 @@ export default function App() {
               Example
             </Button>
           </Tooltip>
-          <Tooltip title="Get a prompt, the schema and an example to write the manifest with an AI assistant">
+          <Tooltip title="Get a file that lets an AI assistant interview you and write the manifest">
             <Button color="inherit" startIcon={<SmartToyOutlined />} onClick={() => setShowLlm(true)}>
               AI prompt
             </Button>

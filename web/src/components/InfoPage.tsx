@@ -220,9 +220,9 @@ export default function InfoPage() {
               <strong>Example</strong> — load a fully filled-in (fictional) archived dataset to see every field in use.
             </li>
             <li>
-              <strong>AI prompt</strong> — copy a self-contained prompt (instructions, rules, guidance, schema and
-              example) into an AI assistant together with your notes on the dataset, then paste the YAML it returns
-              back here and check it against the checklist. The schema and example can also be downloaded separately.
+              <strong>AI prompt</strong> — download a file and upload it to an AI assistant as it is. The assistant
+              interviews you a few questions at a time and ends with the YAML; paste that back here and check it
+              against the checklist. The schema and example can also be downloaded separately.
             </li>
           </ul>
         </Typography>
