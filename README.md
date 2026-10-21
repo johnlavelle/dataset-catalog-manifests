@@ -1,8 +1,8 @@
 # Dataset Catalog Manifests
 
-Dataset manifest files for the [DMI data archiving tools](https://gitlab.dmi.dk/jola/data-archiving-info). Each YAML manifest is the catalogue entry for one dataset, as required by the DMI Storage and Archiving Standard (STD-STOR-ARCH-001 v1.0, §4): what the dataset is, who is responsible for it, how long it is kept, under which licence, and — once archived — how it was appraised and prepared. The scanner adds everything it can read from the filesystem (sizes, file counts, formats, variables, access times).
+This repository is DMI's dataset catalogue. Each dataset has one YAML manifest, `manifests/<id>.yaml`: its catalogue entry as required by the DMI Storage and Archiving Standard (STD-STOR-ARCH-001 v1.0, §4) — what the dataset is, who is responsible for it, how long it is kept, under which licence, and, once archived, how it was appraised and prepared. Sizes, file counts, formats, variables and access times are read from the filesystem by a scanner, so they are not typed in.
 
-Dataset stewards submit manifests here via merge requests — no need to modify the tooling repo.
+Dataset stewards add and update manifests through merge requests. `examples/` holds only a fictional example; real entries always go in `manifests/`.
 
 ## Adding a New Dataset
 
@@ -73,6 +73,7 @@ Facts and links that are not known yet (`identifiers.pid`, `identifiers.doi`, `l
 
 - **People**: `"Full Name <name@dmi.dk>"` (a team name and mailbox is fine for the Custodian). The Data Owner must be on the approved list once it has entries (below).
 - **Dates**: ISO 8601, quoted — `"2024-05-22"`.
+- **No comments**: the web editor does not keep YAML comments, so put notes in fields — `designated_community_notes`, a product's `notes`, or `extensions`.
 - **Enumerations**: `license.id` — `CC-BY-4.0`, `CC0-1.0`, `WMO-UDP-core`, `WMO-UDP-recommended`, `DMI-internal`, `restricted`; `storage.tier` — `project_space`, `archive`, `database`, `third_party`, `legacy`; `storage.wis2_discipline` — `atmospheric-composition`, `climate`, `cryosphere`, `hydrology`, `ocean`, `space-weather`, `weather`; `appraisal.users` — `dmi_staff`, `wmo_nmhs`, `copernicus`, `danish_researchers`, `public`; `appraisal.regenerable` — `impossible`, `expensive`, `cheap`.
 
 ### Sections
@@ -140,16 +141,28 @@ This runs the same checks as the CI pipeline on `manifests/` and `examples/`:
 - **Warnings** (SHOULD requirements and housekeeping): open and overdue `TBD` placeholders, expired exceptions, legacy `/net/isilon` locations, archived data outside `/dmidata/archive/<discipline>/`, missing checksums, intermediate products in an archive, gzip compression, missing retention rationale, entries not reviewed for a year.
 - **Info**: for `proposed` entries, the fields still needed to register.
 
+### Web editor compatibility
+
+Every manifest must also open in the web editor and save back without losing data. CI checks this with the editor's own code (the `editor-compat` job); run it locally with:
+
+```bash
+cd web && npm ci
+npm run check:manifests              # fails on data loss or errors the editor would show
+npm run check:manifests -- --write   # also rewrite files in the editor's exact format
+```
+
+It also reports comments (which the editor drops) and formatting that differs from what the editor writes. Those only produce notes, so hand-written files pass, but files in the editor's format give clean diffs when someone later edits them in the editor. The manifests in this repository are kept in that format.
+
 ## Repository Layout
 
 | Path | Contents |
 |------|----------|
-| `manifests/` | One catalogue entry per dataset, `<id>.yaml` |
-| `examples/` | A complete, fictional archived entry (validated by CI, exempt from the Owner check) |
+| `manifests/` | The catalogue: one entry per dataset, `<id>.yaml` |
+| `examples/` | A complete, fictional archived entry, loaded by the editor's *Example* button (validated by CI, exempt from the Owner check) |
 | `schemas/` | The JSON Schema for manifests |
 | `registry/` | `owners.yaml` — the approved Data Owners |
 | `scripts/` | `validate_manifests.py` — the CI validator |
-| `web/` | The web editor (React, TypeScript, [react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/)) |
+| `web/` | The web editor (React, TypeScript, [react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/)); `web/scripts/check-manifests.ts` is the editor compatibility check |
 
 ## Web Editor
 

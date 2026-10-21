@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=../schemas/dataset_manifest.schema.json
+id: danra-archive
+status: proposed
+
+dataset:
+  name: DANRA Reanalysis — Raw Archive
+  path: /dmidata/projects/nckf/danra/archive
+  description: >-
+    Raw DANRA reanalysis archive containing compressed tarballs of GRIB output. Organised by year/month/day with three
+    tarballs per day (analysis, 3h forecast, 33h forecast). Covers 1989–2023, ~3.6 TB per year (~9.7 GB per day).
+  model: HARMONIE-AROME (DANRA)
+  domain: Denmark / Northern Europe
+
+storage:
+  tier: project_space
+
+products:
+  daily_analysis:
+    name: Daily Analysis Tarballs
+    dir_pattern: "[0-9][0-9][0-9][0-9]"
+    category: Atmospheric
+    type: raw output
+    notes: >-
+      35 year dirs (1989–2023), each containing MM/DD subdirs. Per day: YYYY_MM_DD_ANALYSIS.tgz (~1.1 GB),
+      YYYY_MM_DD_FC3hr.tgz (~3.9 GB), YYYY_MM_DD_FC33hr.tgz (~4.8 GB)
+
+  constant_params:
+    name: Constant Parameters (Orography)
+    dir: constant_params
+    category: Atmospheric
+    type: production file
+    notes: Orography and land-sea mask GRIB files for different domain vintages (1991, 2000, 2021)
+
+  repair_units:
+    name: Repair Units
+    dir: repair_units
+    category: Atmospheric
+    type: production file
+    notes: Repaired tarballs and check scripts
+
+  prod_periods_in_data:
+    name: Production Period Logs
+    dir: prod_periods_in_data
+    category: Atmospheric
+    type: production file
+    notes: Text files listing production periods per year (PROD_1990.txt – PROD_2002_onwards.txt)
+
+  warm_periods_in_data:
+    name: Warm-up Period Logs
+    dir: warm_periods_in_data
+    category: Atmospheric
+    type: production file
+    notes: Text files listing warm-up periods (WARM_1989.txt – WARM.txt)
+
+  warmup_only:
+    name: Warm-up Only Data
+    dir: WARMUP_ONLY
+    category: Atmospheric
+    type: intermediate file
+    notes: Tarballs containing only warm-up period data, copied from old hpcdev archive
+
+  salida:
+    name: Salida (Diagnostics)
+    dir: salida
+    category: Atmospheric
+    type: diagnostic
+    notes: Contains year subdirectory (2002) and README
+
+  tmp_save:
+    name: Temporary Save
+    dir: tmp_save
+    category: Atmospheric
+    type: intermediate file
+    notes: Temporary storage

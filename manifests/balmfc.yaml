@@ -1,271 +1,243 @@
 # yaml-language-server: $schema=../schemas/dataset_manifest.schema.json
 id: balmfc
-# Legacy data on /net/isilon awaiting triage (Policy §7): roles, retention and
-# licence are not yet agreed, so the entry stays 'proposed' until registered.
 status: proposed
 
 dataset:
-  name: "BALMFC MYP2022 Univariate SST"
-  path: "/net/isilon/ifs/arch/home/iri/BALMFC/Nemo4.0/BALMFCMYP2022_univariateSST"
-  model: "NEMO-SI3-PDAF-ERGOM"
-  domain: "North Sea - Baltic Sea"
-  contact: "Ida Margrethe Ringgaard <iri@dmi.dk>"
-  description: "Copernicus Marine Service Baltic Sea Ocean Reanalysis (Multiyear Product) using NEMO 4.0 with ERGOM biogeochemistry, SI3 sea ice, and PDAF data assimilation. Period 1993-2024."
+  name: BALMFC MYP2022 Univariate SST
+  path: /net/isilon/ifs/arch/home/iri/BALMFC/Nemo4.0/BALMFCMYP2022_univariateSST
+  description: >-
+    Copernicus Marine Service Baltic Sea Ocean Reanalysis (Multiyear Product) using NEMO 4.0 with ERGOM biogeochemistry,
+    SI3 sea ice, and PDAF data assimilation. Period 1993-2024.
+  model: NEMO-SI3-PDAF-ERGOM
+  domain: North Sea - Baltic Sea
+  contact: Ida Margrethe Ringgaard <iri@dmi.dk>
 
 storage:
   tier: legacy
 
 stac:
-  institution: "Danish Meteorological Institute (DMI)"
-  purpose: "Copernicus Marine Service - Baltic Sea Ocean Reanalysis (Multiyear)"
-  model_system: "NEMO 4.0 + ERGOM + SI3 + PDAF"
-  cmems_product_code: "BALTICSEA_MULTIYEAR_PHY_003_011"
-  period: "1993-01-01 to 2024-05-22"
+  institution: Danish Meteorological Institute (DMI)
+  purpose: Copernicus Marine Service - Baltic Sea Ocean Reanalysis (Multiyear)
+  model_system: NEMO 4.0 + ERGOM + SI3 + PDAF
+  cmems_product_code: BALTICSEA_MULTIYEAR_PHY_003_011
+  period: 1993-01-01 to 2024-05-22
   dois:
-    BALTICSEA_MULTIYEAR_PHY_003_011: "10.48670/moi-00013"
-    BALTICSEA_MULTIYEAR_BGC_003_012: "10.48670/moi-00012"
+    BALTICSEA_MULTIYEAR_PHY_003_011: 10.48670/moi-00013
+    BALTICSEA_MULTIYEAR_BGC_003_012: 10.48670/moi-00012
 
 products:
-  # Assimilation
   assim_background_increments:
-    name: "Assimilation Background Increments"
-    dir: "assim_background_increments"
-    category: "Assimilation"
-    model_component: "PDAF"
-    domain: "Baltic"
-    type: "production file"
-    notes: "Data assimilation fields"
+    name: Assimilation Background Increments
+    dir: assim_background_increments
+    category: Assimilation
+    model_component: PDAF
+    domain: Baltic
+    type: production file
+    notes: Data assimilation fields
 
   ens_mean_fct_3d:
-    name: "Ensemble Mean Forecast 3D"
-    dir: "ens_mean_fct_3d"
-    category: "Assimilation"
-    model_component: "NEMO"
-    domain: "Baltic"
-    type: "production file"
-    notes: "Ensemble mean forecast fields"
+    name: Ensemble Mean Forecast 3D
+    dir: ens_mean_fct_3d
+    category: Assimilation
+    model_component: NEMO
+    domain: Baltic
+    type: production file
+    notes: Ensemble mean forecast fields
 
-  # Observations
   obs_SST_super_capped:
-    name: "SST Observations (Capped)"
-    dir: "obs_SST_super_capped"
-    category: "Observations"
-    model_component: "Observations"
-    domain: "Baltic+Nordic"
-    type: "production file"
-    notes: "Super-observation SST data"
+    name: SST Observations (Capped)
+    dir: obs_SST_super_capped
+    category: Observations
+    model_component: Observations
+    domain: Baltic+Nordic
+    type: production file
+    notes: Super-observation SST data
 
-  # Baltic ERGOM BGC
   BAL-ERGOM_BGC-DailyMeans:
-    name: "Baltic Biogeochemistry Daily"
-    dir: "BAL-ERGOM_BGC-DailyMeans"
-    category: "Biogeochemistry"
-    model_component: "ERGOM"
-    domain: "Baltic"
-    type: "final product"
-    notes: "Chl, nutrients, oxygen, pH"
+    name: Baltic Biogeochemistry Daily
+    dir: BAL-ERGOM_BGC-DailyMeans
+    category: Biogeochemistry
+    model_component: ERGOM
+    domain: Baltic
+    type: final product
+    notes: Chl, nutrients, oxygen, pH
 
   BAL-ERGOM_BGC-DailyMeans_JAMBAY:
-    name: "Baltic BGC Daily (JAMBAY)"
-    dir: "BAL-ERGOM_BGC-DailyMeans_JAMBAY"
-    category: "Biogeochemistry"
-    model_component: "ERGOM"
-    domain: "Baltic"
-    type: "project file"
-
-    notes: "Extended plankton variables"
+    name: Baltic BGC Daily (JAMBAY)
+    dir: BAL-ERGOM_BGC-DailyMeans_JAMBAY
+    category: Biogeochemistry
+    model_component: ERGOM
+    domain: Baltic
+    type: project file
+    notes: Extended plankton variables
 
   BAL-MYP-ERGOM_BGC-DailyMeans_JAMBAY:
-    name: "Baltic MYP BGC (JAMBAY)"
-    dir: "BAL-MYP-ERGOM_BGC-DailyMeans_JAMBAY"
-    category: "Biogeochemistry"
-    model_component: "ERGOM"
-    domain: "Baltic"
-    type: "project file"
-
-    notes: "MYP extended variables"
+    name: Baltic MYP BGC (JAMBAY)
+    dir: BAL-MYP-ERGOM_BGC-DailyMeans_JAMBAY
+    category: Biogeochemistry
+    model_component: ERGOM
+    domain: Baltic
+    type: project file
+    notes: MYP extended variables
 
   JAMBAY_BGC_DailyMeans:
-    name: "JAMBAY BGC Archive"
-    dir: "JAMBAY_BGC_DailyMeans"
-    category: "Biogeochemistry"
-    model_component: "ERGOM"
-    domain: "Baltic"
-    type: "project archive"
-    notes: "Compressed JAMBAY outputs"
+    name: JAMBAY BGC Archive
+    dir: JAMBAY_BGC_DailyMeans
+    category: Biogeochemistry
+    model_component: ERGOM
+    domain: Baltic
+    type: project archive
+    notes: Compressed JAMBAY outputs
 
-  # Baltic NEMO Physics
   BAL-NEMO_PHY-DailyMeans_PS_PT:
-    name: "Baltic Physics Daily (PS/PT)"
-    dir: "BAL-NEMO_PHY-DailyMeans_PS_PT"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "Baltic"
-    type: "final product"
-
-    notes: "Practical Salinity/Potential Temp"
+    name: Baltic Physics Daily (PS/PT)
+    dir: BAL-NEMO_PHY-DailyMeans_PS_PT
+    category: Physics
+    model_component: NEMO
+    domain: Baltic
+    type: final product
+    notes: Practical Salinity/Potential Temp
 
   BAL-NEMO_PHY-DailyMeans_SA_CT:
-    name: "Baltic Physics Daily (SA/CT)"
-    dir: "BAL-NEMO_PHY-DailyMeans_SA_CT"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "Baltic"
-    type: "intermediate file"
-
-    notes: "Derived from PS/PT (TEOS-10)"
+    name: Baltic Physics Daily (SA/CT)
+    dir: BAL-NEMO_PHY-DailyMeans_SA_CT
+    category: Physics
+    model_component: NEMO
+    domain: Baltic
+    type: intermediate file
+    notes: Derived from PS/PT (TEOS-10)
 
   BAL-MYP-NEMO_PHY-HourlyMeans_PS_PT:
-    name: "Baltic Physics Hourly (PS/PT)"
-    dir: "BAL-MYP-NEMO_PHY-HourlyMeans_PS_PT"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "Baltic"
-    type: "final product"
-
-    notes: "High-frequency physics (PS/PT)"
+    name: Baltic Physics Hourly (PS/PT)
+    dir: BAL-MYP-NEMO_PHY-HourlyMeans_PS_PT
+    category: Physics
+    model_component: NEMO
+    domain: Baltic
+    type: final product
+    notes: High-frequency physics (PS/PT)
 
   BAL-MYP-NEMO_PHY-HourlyMeans_SA_CT:
-    name: "Baltic Physics Hourly (SA/CT)"
-    dir: "BAL-MYP-NEMO_PHY-HourlyMeans_SA_CT"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "Baltic"
-    type: "final product"
-
-    notes: "High-frequency physics (SA/CT)"
+    name: Baltic Physics Hourly (SA/CT)
+    dir: BAL-MYP-NEMO_PHY-HourlyMeans_SA_CT
+    category: Physics
+    model_component: NEMO
+    domain: Baltic
+    type: final product
+    notes: High-frequency physics (SA/CT)
 
   BAL-MYP-NEMO_PHY-HourlyMeans_only_PS_PT:
-    name: "Baltic Physics Hourly (PS/PT only)"
-    dir: "BAL-MYP-NEMO_PHY-HourlyMeans_only_PS_PT"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "Baltic"
-    type: "final product"
+    name: Baltic Physics Hourly (PS/PT only)
+    dir: BAL-MYP-NEMO_PHY-HourlyMeans_only_PS_PT
+    category: Physics
+    model_component: NEMO
+    domain: Baltic
+    type: final product
+    notes: Surface layer only
 
-    notes: "Surface layer only"
-
-  # NORDIC NEMO Physics
   NORDIC_1d_grid_T:
-    name: "NORDIC Ocean Daily (T-grid)"
-    dir: "NORDIC_1d_grid_T"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "Nordic+Baltic"
-    type: "original output"
-
-    notes: "Temperature and salinity on T-grid"
+    name: NORDIC Ocean Daily (T-grid)
+    dir: NORDIC_1d_grid_T
+    category: Physics
+    model_component: NEMO
+    domain: Nordic+Baltic
+    type: original output
+    notes: Temperature and salinity on T-grid
 
   NORDIC_1d_grid_U:
-    name: "NORDIC Ocean Daily (U-grid)"
-    dir: "NORDIC_1d_grid_U"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "Nordic+Baltic"
-    type: "intermediate file"
-
-    notes: "Zonal velocity on U-grid"
+    name: NORDIC Ocean Daily (U-grid)
+    dir: NORDIC_1d_grid_U
+    category: Physics
+    model_component: NEMO
+    domain: Nordic+Baltic
+    type: intermediate file
+    notes: Zonal velocity on U-grid
 
   NORDIC_1d_grid_V:
-    name: "NORDIC Ocean Daily (V-grid)"
-    dir: "NORDIC_1d_grid_V"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "Nordic+Baltic"
-    type: "intermediate file"
+    name: NORDIC Ocean Daily (V-grid)
+    dir: NORDIC_1d_grid_V
+    category: Physics
+    model_component: NEMO
+    domain: Nordic+Baltic
+    type: intermediate file
+    notes: Meridional velocity on V-grid
 
-    notes: "Meridional velocity on V-grid"
-
-  # NORDIC Ice
   NORDIC_1d_ice_grid_T:
-    name: "NORDIC Sea Ice Daily"
-    dir: "NORDIC_1d_ice_grid_T"
-    category: "Ice"
-    model_component: "SI3"
-    domain: "Nordic+Baltic"
-    type: "original output"
+    name: NORDIC Sea Ice Daily
+    dir: NORDIC_1d_ice_grid_T
+    category: Ice
+    model_component: SI3
+    domain: Nordic+Baltic
+    type: original output
+    notes: Sea ice variables
 
-    notes: "Sea ice variables"
-
-  # NORDIC Hourly
   NORDIC_1h_sealevel:
-    name: "NORDIC Sea Level Hourly"
-    dir: "NORDIC_1h_sealevel"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "Nordic+Baltic"
-    type: "original output"
-
-    notes: "High-frequency sea level"
+    name: NORDIC Sea Level Hourly
+    dir: NORDIC_1h_sealevel
+    category: Physics
+    model_component: NEMO
+    domain: Nordic+Baltic
+    type: original output
+    notes: High-frequency sea level
 
   NORDIC_1h_SURF_grid_T:
-    name: "NORDIC Surface Hourly"
-    dir: "NORDIC_1h_SURF_grid_T"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "Nordic+Baltic"
-    type: "original output"
+    name: NORDIC Surface Hourly
+    dir: NORDIC_1h_SURF_grid_T
+    category: Physics
+    model_component: NEMO
+    domain: Nordic+Baltic
+    type: original output
+    notes: Surface layer hourly
 
-    notes: "Surface layer hourly"
-
-  # NORDIC ERGOM BGC
   NORDIC_12h_ERGOM_T:
-    name: "NORDIC BGC 12-hourly"
-    dir: "NORDIC_12h_ERGOM_T"
-    category: "Biogeochemistry"
-    model_component: "ERGOM"
-    domain: "Nordic+Baltic"
-    type: "original output"
-
-    notes: "Biogeochemistry 12h"
+    name: NORDIC BGC 12-hourly
+    dir: NORDIC_12h_ERGOM_T
+    category: Biogeochemistry
+    model_component: ERGOM
+    domain: Nordic+Baltic
+    type: original output
+    notes: Biogeochemistry 12h
 
   NORDIC_1d_ERGOM_T_3D:
-    name: "NORDIC BGC Daily 3D"
-    dir: "NORDIC_1d_ERGOM_T_3D"
-    category: "Biogeochemistry"
-    model_component: "ERGOM"
-    domain: "Nordic+Baltic"
-    type: "original output"
-
-    notes: "Full 3D biogeochemistry"
+    name: NORDIC BGC Daily 3D
+    dir: NORDIC_1d_ERGOM_T_3D
+    category: Biogeochemistry
+    model_component: ERGOM
+    domain: Nordic+Baltic
+    type: original output
+    notes: Full 3D biogeochemistry
 
   NORDIC_NOON_ERGOM_T:
-    name: "NORDIC BGC Noon"
-    dir: "NORDIC_NOON_ERGOM_T"
-    category: "Biogeochemistry"
-    model_component: "ERGOM"
-    domain: "Nordic+Baltic"
-    type: "intermediate file"
+    name: NORDIC BGC Noon
+    dir: NORDIC_NOON_ERGOM_T
+    category: Biogeochemistry
+    model_component: ERGOM
+    domain: Nordic+Baltic
+    type: intermediate file
+    notes: Noon snapshot BGC
 
-    notes: "Noon snapshot BGC"
-
-  # North Sea
   NS-ERGOM_BGC-DailyMeans:
-    name: "North Sea BGC Daily"
-    dir: "NS-ERGOM_BGC-DailyMeans"
-    category: "Biogeochemistry"
-    model_component: "ERGOM"
-    domain: "North Sea"
-    type: "final product"
-
-    notes: "North Sea biogeochemistry"
+    name: North Sea BGC Daily
+    dir: NS-ERGOM_BGC-DailyMeans
+    category: Biogeochemistry
+    model_component: ERGOM
+    domain: North Sea
+    type: final product
+    notes: North Sea biogeochemistry
 
   NS-NEMO_PHY-DailyMeans_PS_PT:
-    name: "North Sea Physics Daily (PS/PT)"
-    dir: "NS-NEMO_PHY-DailyMeans_PS_PT"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "North Sea"
-    type: "final product"
-
-    notes: "North Sea physics (PS/PT)"
+    name: North Sea Physics Daily (PS/PT)
+    dir: NS-NEMO_PHY-DailyMeans_PS_PT
+    category: Physics
+    model_component: NEMO
+    domain: North Sea
+    type: final product
+    notes: North Sea physics (PS/PT)
 
   NS-NEMO_PHY-DailyMeans_SA_CT:
-    name: "North Sea Physics Daily (SA/CT)"
-    dir: "NS-NEMO_PHY-DailyMeans_SA_CT"
-    category: "Physics"
-    model_component: "NEMO"
-    domain: "North Sea"
-    type: "final product"
-
-    notes: "North Sea physics (SA/CT)"
+    name: North Sea Physics Daily (SA/CT)
+    dir: NS-NEMO_PHY-DailyMeans_SA_CT
+    category: Physics
+    model_component: NEMO
+    domain: North Sea
+    type: final product
+    notes: North Sea physics (SA/CT)

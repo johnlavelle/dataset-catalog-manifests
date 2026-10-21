@@ -13,6 +13,20 @@ validate:
         - schemas/*.json
         - scripts/validate_manifests.py
 
+# Every manifest opens in the web editor and is saved back without losing or changing data
+editor-compat:
+  image: node:20-slim
+  script:
+    - cd web && npm ci && npm run check:manifests
+  rules:
+    - changes:
+        - manifests/*.yaml
+        - manifests/*.yml
+        - examples/*.yaml
+        - registry/*.yaml
+        - schemas/*.json
+        - web/**/*
+
 # Publishes the web editor; only from the default branch, so feature branches don't overwrite it
 pages:
   image: node:20-slim

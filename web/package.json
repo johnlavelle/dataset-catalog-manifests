@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:manifests": "vite build --config scripts/vite.check.config.ts && node node_modules/.check-manifests/check-manifests.js"
   },
   "dependencies": {
     "@emotion/react": "^11.13.0",

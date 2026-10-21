@@ -1,0 +1,137 @@
+# yaml-language-server: $schema=../schemas/dataset_manifest.schema.json
+id: danra-data
+status: proposed
+
+dataset:
+  name: DANRA Reanalysis — Zarr Data Collection
+  path: /dmidata/projects/cloudphysics/danra/data
+  description: >-
+    Post-processed DANRA reanalysis data in Zarr format, covering 1990–2024. Variables on height levels, pressure
+    levels, and single levels. Produced from the raw DANRA archive by the cloudphysics group.
+  model: HARMONIE-AROME (DANRA)
+  domain: Denmark / Northern Europe
+
+storage:
+  tier: project_space
+
+products:
+  v0.6.0_height_levels_analysis:
+    name: Height Levels Analysis (v0.6.0)
+    dir: v0.6.0/height_levels_analysis.zarr
+    category: Atmospheric
+    type: final product
+    notes: "Variables: r, t, u, v on 9 height levels (30–500 m)"
+
+  v0.6.0_height_levels_forecast_PT3H:
+    name: Height Levels Forecast +3h (v0.6.0)
+    dir: v0.6.0/height_levels_forecast_PT3H.zarr
+    category: Atmospheric
+    type: final product
+    notes: 3-hour forecast, height levels
+
+  v0.6.0_height_levels_forecast_PT18H:
+    name: Height Levels Forecast +18h (v0.6.0)
+    dir: v0.6.0/height_levels_forecast_PT18H.zarr
+    category: Atmospheric
+    type: final product
+    notes: 18-hour forecast, height levels
+
+  v0.6.0_pressure_levels_analysis:
+    name: Pressure Levels Analysis (v0.6.0)
+    dir: v0.6.0/pressure_levels_analysis.zarr
+    category: Atmospheric
+    type: final product
+    notes: "Variables: ciwc, cwat, r, t, tw, u, v, z on 14 pressure levels (1000–100 hPa)"
+
+  v0.6.0_pressure_levels_forecast_PT3H:
+    name: Pressure Levels Forecast +3h (v0.6.0)
+    dir: v0.6.0/pressure_levels_forecast_PT3H.zarr
+    category: Atmospheric
+    type: final product
+    notes: 3-hour forecast, pressure levels
+
+  v0.6.0_pressure_levels_forecast_PT18H:
+    name: Pressure Levels Forecast +18h (v0.6.0)
+    dir: v0.6.0/pressure_levels_forecast_PT18H.zarr
+    category: Atmospheric
+    type: final product
+    notes: 18-hour forecast, pressure levels
+
+  v0.6.0_single_levels_analysis:
+    name: Single Levels Analysis (v0.6.0)
+    dir: v0.6.0/single_levels_analysis.zarr
+    category: Atmospheric
+    type: final product
+    notes: ~50 surface/column variables including t2m, u10m, v10m, r2m, precip, radiation, cloud cover
+
+  v0.6.0_single_levels_forecast_PT3H:
+    name: Single Levels Forecast +3h (v0.6.0)
+    dir: v0.6.0/single_levels_forecast_PT3H.zarr
+    category: Atmospheric
+    type: final product
+    notes: 3-hour forecast, single levels
+
+  v0.6.0_single_levels_forecast_PT18H:
+    name: Single Levels Forecast +18h (v0.6.0)
+    dir: v0.6.0/single_levels_forecast_PT18H.zarr
+    category: Atmospheric
+    type: final product
+    notes: 18-hour forecast, single levels
+
+  v0.5.0_height_levels:
+    name: Height Levels (v0.5.0, squashfs)
+    dir: v0.5.0
+    category: Atmospheric
+    type: final product
+    notes: >-
+      1990-09 to 2024-01. Contains height_levels.zarr.sqfs (~2.8 TB), pressure_levels.zarr (dir),
+      single_levels.zarr.sqfs (~1.8 TB)
+
+  v0.4.0:
+    name: Full 30-year collection (v0.4.0, squashfs)
+    dir: v0.4.0.sqfs
+    category: Atmospheric
+    type: project archive
+    notes: 1990-09 to 2020-09, ~2.3 TB squashfs image
+
+  v0.3.0:
+    name: First 10 years (v0.3.0, squashfs)
+    dir: v0.3.0.sqfs
+    category: Atmospheric
+    type: project archive
+    notes: 1990-09 to 2000-09, ~773 GB squashfs image
+
+  v0.2.2:
+    name: Bug-fix release (v0.2.2, squashfs)
+    dir: v0.2.2.sqfs
+    category: Atmospheric
+    type: project archive
+    notes: ~81 GB squashfs image
+
+  v0.2.1:
+    name: First multi-level collection (v0.2.1, squashfs)
+    dir: v0.2.1.sqfs
+    category: Atmospheric
+    type: project archive
+    notes: ~82 GB squashfs image
+
+  v0.1.0:
+    name: Initial prototype (v0.1.0, squashfs)
+    dir: v0.1.0.sqfs
+    category: Atmospheric
+    type: project archive
+    notes: ~6.5 GB squashfs image
+
+  lsm:
+    name: Land-Sea Mask
+    dir: lsm.zarr
+    category: Atmospheric
+    type: production file
+    notes: Land-sea mask, also available as lsm.nc (~11 MB)
+
+  overview:
+    name: Overview / Documentation
+    dir: overview
+    category: Atmospheric
+    type: production file
+    notes: Contains danra_tarfiles.txt and zarr_layout.txt

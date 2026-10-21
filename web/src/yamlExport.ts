@@ -5,7 +5,7 @@ import { orderManifest } from "./compliance";
 const SCHEMA_HINT = "# yaml-language-server: $schema=../schemas/dataset_manifest.schema.json\n";
 
 /** Remove empty strings, empty objects, and undefined values recursively. */
-function stripEmpty(obj: unknown): unknown {
+export function stripEmpty(obj: unknown): unknown {
   if (Array.isArray(obj)) {
     const filtered = obj.map(stripEmpty).filter((v) => v !== undefined);
     return filtered.length ? filtered : undefined;
@@ -22,20 +22,45 @@ function stripEmpty(obj: unknown): unknown {
   return obj;
 }
 
+/**
+ * A blank line before each section (after id and status) and between products, as in
+ * hand-written manifests. Only inserted before keys: a top-level key starts in column 0 and
+ * a product key is indented by exactly two spaces, while multi-line values are indented deeper.
+ */
+function spaceOut(text: string): string {
+  const out: string[] = [];
+  let inProducts = false;
+  let firstProduct = true;
+  for (const line of text.split("\n")) {
+    if (/^[^\s#-]/.test(line)) {
+      inProducts = line.startsWith("products:");
+      firstProduct = true;
+      if (out.length && !/^(id|status):/.test(line)) out.push("");
+    } else if (inProducts && /^ {2}[^\s#-]/.test(line)) {
+      if (!firstProduct) out.push("");
+      firstProduct = false;
+    }
+    out.push(line);
+  }
+  return out.join("\n");
+}
+
 export function toYaml(formData: Record<string, unknown>): string {
   const cleaned = stripEmpty(formData);
   if (!cleaned || typeof cleaned !== "object") return "";
   // Dates and YAML 1.1 booleans ("no", "yes") are quoted by js-yaml, so PyYAML reads them back as strings.
   return (
     SCHEMA_HINT +
-    yaml.dump(orderManifest(cleaned as Record<string, unknown>), {
-      indent: 2,
-      lineWidth: 120,
-      noRefs: true,
-      sortKeys: false,
-      quotingType: '"',
-      forceQuotes: false,
-    })
+    spaceOut(
+      yaml.dump(orderManifest(cleaned as Record<string, unknown>), {
+        indent: 2,
+        lineWidth: 120,
+        noRefs: true,
+        sortKeys: false,
+        quotingType: '"',
+        forceQuotes: false,
+      })
+    )
   );
 }
 
