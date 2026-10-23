@@ -235,6 +235,21 @@ export const SECTIONS: SectionInfo[] = [
     },
   },
   {
+    key: "products",
+    title: "Products",
+    fields: ["products"],
+    summary: "The sub-directories that make up the dataset.",
+    requiredFor: "always",
+    guidance: {
+      points: [
+        "Each product is a sub-directory of the dataset path (dir), or a family of directories matched by a shell glob (dir_pattern).",
+        "Archive only data of lasting relevance: intermediate, temporary and cheaply reproducible outputs are filtered out first (REQ-ARC-005).",
+        "Directory and file names should be informative on their own: type, period, domain, version (REQ-FND-002).",
+      ],
+      source: "Standard §6.2 and §6.9",
+    },
+  },
+  {
     key: "roles",
     title: "Roles",
     fields: ["roles"],
@@ -357,21 +372,6 @@ export const SECTIONS: SectionInfo[] = [
         "Mark the entry deleted with date and approver — never remove it (REQ-CAT-007).",
       ],
       source: "Standard §6.8 and §10.1, Procedure G",
-    },
-  },
-  {
-    key: "products",
-    title: "Products",
-    fields: ["products"],
-    summary: "The sub-directories that make up the dataset.",
-    requiredFor: "always",
-    guidance: {
-      points: [
-        "Each product is a sub-directory of the dataset path (dir), or a family of directories matched by a shell glob (dir_pattern).",
-        "Archive only data of lasting relevance: intermediate, temporary and cheaply reproducible outputs are filtered out first (REQ-ARC-005).",
-        "Directory and file names should be informative on their own: type, period, domain, version (REQ-FND-002).",
-      ],
-      source: "Standard §6.2 and §6.9",
     },
   },
   {
