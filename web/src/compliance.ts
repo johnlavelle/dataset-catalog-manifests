@@ -1,6 +1,6 @@
 import type { FormValidation, RJSFSchema } from "@rjsf/utils";
 import rawSchema from "../../schemas/dataset_manifest.schema.json";
-import { REGISTERED, type Status } from "./guidance";
+import { REGISTERED, statusOf } from "./guidance";
 import { EXAMPLE_ID, OWNERS, isApprovedOwner } from "./owners";
 
 export type Manifest = Record<string, any>;
@@ -203,7 +203,7 @@ function evaluate(rules: Rule[], relation: CheckGroup["relation"]): CheckItem[] 
 }
 
 export function checklist(data: Manifest): CheckGroup[] {
-  const status = (data.status ?? "proposed") as Status;
+  const status = statusOf(data.status);
   const d = data.dataset ?? {};
   const roles = data.roles ?? {};
   const ret = data.retention ?? {};

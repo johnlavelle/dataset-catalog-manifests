@@ -9,6 +9,9 @@ export type Status = "proposed" | "active" | "archived" | "deprecated" | "delete
 
 export const STATUSES: Status[] = ["proposed", "active", "archived", "deprecated", "deleted"];
 
+/** The status to work with: an unknown value (e.g. typed in the YAML) counts as proposed; the schema still flags it. */
+export const statusOf = (value: unknown): Status => (STATUSES.includes(value as Status) ? (value as Status) : "proposed");
+
 /** Statuses for which the dataset counts as registered in the catalogue. */
 export const REGISTERED: Status[] = ["active", "archived", "deprecated"];
 

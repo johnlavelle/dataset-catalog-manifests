@@ -18,7 +18,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 import { hasContent, type Manifest } from "../compliance";
-import { SECTIONS, SECTION_OBJECT_KEYS, SUBSECTION_TITLES, type Guidance, type SectionInfo, type Status } from "../guidance";
+import { SECTIONS, SECTION_OBJECT_KEYS, SUBSECTION_TITLES, statusOf, type Guidance, type SectionInfo, type Status } from "../guidance";
 import type { EditorContext } from "./widgets";
 
 const MuiObjectFieldTemplate = Templates.ObjectFieldTemplate!;
@@ -81,7 +81,7 @@ interface SectionCardProps {
 }
 
 function SectionCard({ section, props, formData, errorSchema }: SectionCardProps) {
-  const status = (formData.status ?? "proposed") as Status;
+  const status = statusOf(formData.status);
   const errors = section.fields.reduce((n, f) => n + countErrors((errorSchema as Record<string, ErrorSchema>)?.[f]), 0);
   const filled = section.fields.some((f) => hasContent(formData[f]));
   const req = requirement(section, status);
@@ -136,7 +136,7 @@ function SectionCard({ section, props, formData, errorSchema }: SectionCardProps
 function RootLayout({ properties, registry, errorSchema }: ObjectFieldTemplateProps) {
   const formData = ((registry.formContext as EditorContext)?.formData ?? {}) as Manifest;
   const byName = Object.fromEntries(properties.map((p) => [p.name, p]));
-  const status = formData.status as Status;
+  const status = statusOf(formData.status);
   const visible = SECTIONS.filter(
     (s) => s.key !== "deletion" || status === "deleted" || hasContent(formData.deletion)
   );

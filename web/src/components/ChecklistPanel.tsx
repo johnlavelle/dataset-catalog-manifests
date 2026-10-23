@@ -8,7 +8,7 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import HandymanOutlinedIcon from "@mui/icons-material/HandymanOutlined";
 import RemoveIcon from "@mui/icons-material/Remove";
 import { checklist, missingCount, placeholders, type CheckState, type Manifest } from "../compliance";
-import { STATUS_INFO, type Status } from "../guidance";
+import { STATUS_INFO, statusOf } from "../guidance";
 
 const ICONS: Record<CheckState, { icon: JSX.Element; hint: string }> = {
   ok: { icon: <CheckCircleIcon color="success" fontSize="small" />, hint: "Done" },
@@ -32,7 +32,7 @@ interface ChecklistPanelProps {
 }
 
 export default function ChecklistPanel({ formData, errors }: ChecklistPanelProps) {
-  const status = (formData.status ?? "proposed") as Status;
+  const status = statusOf(formData.status);
   const groups = checklist(formData);
   const missing = missingCount(groups);
   const tbds = placeholders(formData);

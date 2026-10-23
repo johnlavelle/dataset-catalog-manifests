@@ -32,6 +32,7 @@ import YamlPreview from "./components/YamlPreview";
 import ChecklistPanel from "./components/ChecklistPanel";
 import InfoPage from "./components/InfoPage";
 import LlmDialog from "./components/LlmDialog";
+import ErrorBoundary from "./components/ErrorBoundary";
 import SplitHandle, { FORM_MIN, PANEL_DEFAULT, PANEL_MIN, clampPanel } from "./components/SplitHandle";
 import type { IChangeEvent } from "@rjsf/core";
 import {
@@ -209,50 +210,52 @@ export default function App() {
       {showInfo ? (
         <InfoPage />
       ) : (
-        <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
-          <Box
-            sx={{
-              flex: 1,
-              minWidth: 0,
-              overflow: "auto",
-              p: 3,
-            }}
-          >
-            <ManifestForm formData={formData} onChange={handleChange} />
-          </Box>
-          <SplitHandle panelRef={panel} width={panelWidth} onChange={setPanelWidth} />
-          <Box
-            ref={panel}
-            style={{ width: panelWidth }}
-            sx={{
-              flex: "none",
-              minWidth: PANEL_MIN,
-              maxWidth: `calc(100% - ${FORM_MIN}px)`,
-              display: "flex",
-              flexDirection: "column",
-              bgcolor: "grey.50",
-            }}
-          >
-            <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="fullWidth" sx={{ borderBottom: 1, borderColor: "divider" }}>
-              <Tab
-                value="checklist"
-                label={
-                  <Badge color="error" badgeContent={errors.length || missing} sx={{ pr: 1.5 }}>
-                    Checklist
-                  </Badge>
-                }
-              />
-              <Tab value="yaml" label="YAML" />
-            </Tabs>
-            <Box sx={{ flex: 1, overflow: "auto" }}>
-              {tab === "checklist" ? (
-                <ChecklistPanel formData={formData} errors={errors} />
-              ) : (
-                <YamlPreview formData={formData} onImport={(data) => handleImport(data)} />
-              )}
+        <ErrorBoundary formData={formData} onReset={() => setFormData(emptyManifest())}>
+          <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+            <Box
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                overflow: "auto",
+                p: 3,
+              }}
+            >
+              <ManifestForm formData={formData} onChange={handleChange} />
+            </Box>
+            <SplitHandle panelRef={panel} width={panelWidth} onChange={setPanelWidth} />
+            <Box
+              ref={panel}
+              style={{ width: panelWidth }}
+              sx={{
+                flex: "none",
+                minWidth: PANEL_MIN,
+                maxWidth: `calc(100% - ${FORM_MIN}px)`,
+                display: "flex",
+                flexDirection: "column",
+                bgcolor: "grey.50",
+              }}
+            >
+              <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="fullWidth" sx={{ borderBottom: 1, borderColor: "divider" }}>
+                <Tab
+                  value="checklist"
+                  label={
+                    <Badge color="error" badgeContent={errors.length || missing} sx={{ pr: 1.5 }}>
+                      Checklist
+                    </Badge>
+                  }
+                />
+                <Tab value="yaml" label="YAML" />
+              </Tabs>
+              <Box sx={{ flex: 1, overflow: "auto" }}>
+                {tab === "checklist" ? (
+                  <ChecklistPanel formData={formData} errors={errors} />
+                ) : (
+                  <YamlPreview formData={formData} onImport={(data) => handleImport(data)} />
+                )}
+              </Box>
             </Box>
           </Box>
-        </Box>
+        </ErrorBoundary>
       )}
 
       <Dialog open={!!pending} onClose={() => setPending(null)}>

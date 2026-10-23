@@ -18,7 +18,7 @@ import {
   Typography,
 } from "@mui/material";
 import { addDays, slugify, type Manifest } from "../compliance";
-import { STATUSES, STATUS_INFO, type Option, type Status } from "../guidance";
+import { STATUSES, STATUS_INFO, statusOf, type Option } from "../guidance";
 
 /** Shared with every widget through rjsf's formContext. */
 export interface EditorContext {
@@ -30,7 +30,8 @@ const hasErrors = (props: WidgetProps) => (props.rawErrors?.length ?? 0) > 0;
 
 /** Lifecycle status as a clickable stepper (Standard §4, Figure 1). */
 export function StatusWidget({ value, onChange, disabled, readonly }: WidgetProps) {
-  const status = (STATUSES.includes(value) ? value : "proposed") as Status;
+  const status = statusOf(value);
+  const unknown = value !== undefined && value !== status;
   const index = STATUSES.indexOf(status);
   return (
     <Box>
@@ -54,9 +55,16 @@ export function StatusWidget({ value, onChange, disabled, readonly }: WidgetProp
           </Step>
         ))}
       </Stepper>
-      <Alert severity="info" variant="outlined" sx={{ py: 0 }}>
-        <strong>{STATUS_INFO[status].label}:</strong> {STATUS_INFO[status].detail}
-      </Alert>
+      {unknown ? (
+        <Alert severity="error" variant="outlined" sx={{ py: 0 }}>
+          <strong>"{String(value)}"</strong> is not a lifecycle status. Pick one above; until then the form treats the
+          entry as Proposed.
+        </Alert>
+      ) : (
+        <Alert severity="info" variant="outlined" sx={{ py: 0 }}>
+          <strong>{STATUS_INFO[status].label}:</strong> {STATUS_INFO[status].detail}
+        </Alert>
+      )}
     </Box>
   );
 }
