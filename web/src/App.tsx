@@ -32,6 +32,7 @@ import YamlPreview from "./components/YamlPreview";
 import ChecklistPanel from "./components/ChecklistPanel";
 import InfoPage from "./components/InfoPage";
 import LlmDialog from "./components/LlmDialog";
+import SplitHandle, { FORM_MIN, PANEL_DEFAULT, PANEL_MIN, clampPanel } from "./components/SplitHandle";
 import type { IChangeEvent } from "@rjsf/core";
 import {
   checklist,
@@ -49,6 +50,7 @@ import exampleYaml from "../../examples/example-archived.yaml?raw";
 import "./App.css";
 
 const DRAFT_KEY = "dataset-manifest-editor:draft";
+const PANEL_KEY = "dataset-manifest-editor:panel-width";
 
 function loadDraft(): Manifest {
   try {
@@ -60,6 +62,16 @@ function loadDraft(): Manifest {
   return emptyManifest();
 }
 
+function loadPanelWidth(): number {
+  try {
+    const saved = Number(localStorage.getItem(PANEL_KEY));
+    if (saved > 0) return clampPanel(saved);
+  } catch {
+    // Storage unavailable: use the default width
+  }
+  return PANEL_DEFAULT;
+}
+
 export default function App() {
   const [formData, setFormData] = useState<Manifest>(loadDraft);
   const [showInfo, setShowInfo] = useState(false);
@@ -67,6 +79,8 @@ export default function App() {
   const [showLlm, setShowLlm] = useState(false);
   const [pending, setPending] = useState<{ title: string; confirm: string; run: () => void } | null>(null);
   const [message, setMessage] = useState<{ text: string; severity: "success" | "error" } | null>(null);
+  const [panelWidth, setPanelWidth] = useState(loadPanelWidth);
+  const panel = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -76,6 +90,14 @@ export default function App() {
       // Autosave is a convenience only
     }
   }, [formData]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PANEL_KEY, String(panelWidth));
+    } catch {
+      // The width is remembered only as a convenience
+    }
+  }, [panelWidth]);
 
   const errors = useMemo(
     () => validator.validateFormData(formData, schema, customValidate, transformErrors).errors,
@@ -191,18 +213,21 @@ export default function App() {
           <Box
             sx={{
               flex: 1,
+              minWidth: 0,
               overflow: "auto",
               p: 3,
-              borderRight: 1,
-              borderColor: "divider",
             }}
           >
             <ManifestForm formData={formData} onChange={handleChange} />
           </Box>
+          <SplitHandle panelRef={panel} width={panelWidth} onChange={setPanelWidth} />
           <Box
+            ref={panel}
+            style={{ width: panelWidth }}
             sx={{
-              width: 480,
-              minWidth: 360,
+              flex: "none",
+              minWidth: PANEL_MIN,
+              maxWidth: `calc(100% - ${FORM_MIN}px)`,
               display: "flex",
               flexDirection: "column",
               bgcolor: "grey.50",
