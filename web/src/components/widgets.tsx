@@ -74,7 +74,9 @@ export function IdWidget(props: WidgetProps) {
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value || undefined)}
         disabled={disabled || readonly}
-        placeholder={placeholder || "e.g. danra-data"}
+        // Suggest the title's slug without filling it in: the ID must not follow later title edits
+        placeholder={name ? slugify(name) : placeholder || "e.g. danra-data"}
+        InputLabelProps={name ? { shrink: true } : undefined}
         error={hasErrors(props)}
         fullWidth
       />
