@@ -38,6 +38,13 @@ export function emptyManifest(): Manifest {
 export const has = (v: unknown) =>
   v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0);
 
+/** A mapping of keys to values, not a list or a single value. */
+export const isMapping = (v: unknown): v is Manifest => !!v && typeof v === "object" && !Array.isArray(v);
+
+/** A value shown in a text input: anything but text, a number or a boolean shows as empty. */
+export const asText = (v: unknown): string =>
+  typeof v === "string" ? v : typeof v === "number" || typeof v === "boolean" ? String(v) : "";
+
 /** True if a value, or anything nested in it, is non-empty. */
 export function hasContent(value: unknown): boolean {
   if (Array.isArray(value)) return value.length > 0;
@@ -64,6 +71,42 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+function kindOf(v: unknown): string {
+  if (Array.isArray(v)) return "a list";
+  if (typeof v === "string") return "text";
+  return typeof v === "object" ? "a mapping" : `a ${typeof v}`;
+}
+
+interface SchemaNode {
+  type?: string;
+  properties?: Record<string, SchemaNode>;
+  items?: SchemaNode;
+  additionalProperties?: SchemaNode | boolean;
+}
+
+/**
+ * Mappings and lists of the wrong kind, following the schema: e.g. a list where a section
+ * belongs, or text where a list of users belongs. The form has no way to show or repair
+ * them, so a file with any of these is refused on import with this list. Empty values and
+ * wrong single values (a number for a date) are left to the validator.
+ */
+export function structureProblems(data: Manifest): string[] {
+  const problems: string[] = [];
+  const walk = (value: unknown, node: SchemaNode | undefined, path: string) => {
+    if (value === undefined || value === null || !node) return;
+    if (node.type === "object") {
+      if (!isMapping(value)) return void problems.push(`${path} must be a mapping (key: value lines), not ${kindOf(value)}`);
+      const rest = typeof node.additionalProperties === "object" ? node.additionalProperties : undefined;
+      for (const [k, v] of Object.entries(value)) walk(v, node.properties?.[k] ?? rest, path ? `${path}.${k}` : k);
+    } else if (node.type === "array") {
+      if (!Array.isArray(value)) return void problems.push(`${path} must be a list ("- " lines), not ${kindOf(value)}`);
+      value.forEach((v, i) => walk(v, node.items, `${path}[${i}]`));
+    }
+  };
+  walk(data, rawSchema as SchemaNode, "");
+  return problems;
+}
+
 /** Owner, Steward and Custodian are the same, non-empty person. */
 export function sameRoleHolder(roles: Manifest = {}): boolean {
   return has(roles.owner) && roles.owner === roles.steward && roles.owner === roles.custodian;
@@ -79,6 +122,9 @@ export function normalise(data: Manifest): Manifest {
   for (const key of OBJECT_KEYS) {
     if (out[key] === undefined || out[key] === null) out[key] = {};
   }
+  // A product key with nothing after it ("my_product:") is a product still to be filled in
+  if (isMapping(out.products) && Object.values(out.products).some((p) => p === null))
+    out.products = Object.fromEntries(Object.entries(out.products).map(([k, p]) => [k, p ?? {}]));
 
   const prune = (section: string, fields: string[], keep: boolean) => {
     if (keep || typeof out[section] !== "object") return;
@@ -339,7 +385,7 @@ export function checklist(data: Manifest): CheckGroup[] {
   const reviewed = dates.reviewed;
   if (REGISTERED.includes(status) && (!has(reviewed) || reviewed < addDays(-366)))
     recs.push({ label: "Review the entry at least yearly (set 'Last reviewed')", ref: "REQ-CAT-006", state: "warn" });
-  for (const exc of data.exceptions ?? []) {
+  for (const exc of Array.isArray(data.exceptions) ? data.exceptions : []) {
     if (exc?.expires && exc.expires < today())
       recs.push({ label: `Exception ${exc.id ?? ""} has expired`, ref: "REQ-EXC-003", state: "warn" });
   }

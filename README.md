@@ -173,6 +173,14 @@ cd web
 npm ci
 npm run dev      # http://localhost:5173
 npm run build    # type-check and build to web/dist
+npm run check:robustness   # malformed manifests must not crash the editor
 ```
+
+Bad input never leaves a blank page:
+- **Import:** a file or pasted YAML whose sections have the wrong shape (a list where `dataset:` should be key–value lines, a product that is plain text) is refused with a message naming the fields.
+- **Field values:** wrong values, such as an unknown status or a number where text belongs, load and are listed as errors in the checklist.
+- **Recovery:** if the form still cannot show a draft, it offers to download the draft or start a new one.
+
+`check:robustness` (CI job `editor-robustness`) replaces each field of the example with values of the wrong type and renders the editor with every variant.
 
 It is deployed from `main`: to GitHub Pages by [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml), and to GitLab Pages by the `pages` job in [`.gitlab-ci.yml`](.gitlab-ci.yml) (default branch only). Both rebuild when `web/`, `schemas/`, `examples/` or `registry/` change.

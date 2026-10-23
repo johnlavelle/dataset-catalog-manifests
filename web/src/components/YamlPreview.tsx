@@ -13,6 +13,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import CheckIcon from "@mui/icons-material/Check";
 import EditIcon from "@mui/icons-material/Edit";
 import { toYaml, downloadYaml, copyToClipboard, parseYaml } from "../yamlExport";
+import { asText } from "../compliance";
 
 interface YamlPreviewProps {
   formData: Record<string, unknown>;
@@ -28,7 +29,7 @@ export default function YamlPreview({ formData, onImport }: YamlPreviewProps) {
   const yamlContent = toYaml(formData);
 
   // The validator requires the file to be named after the catalogue ID
-  const id = formData?.id as string | undefined;
+  const id = asText(formData?.id);
   const filename = id ? `${id}.yaml` : "manifest.yaml";
 
   const handleCopy = async () => {

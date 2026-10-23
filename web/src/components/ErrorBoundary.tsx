@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Alert, AlertTitle, Box, Button, Stack } from "@mui/material";
 import { downloadFile, toYaml } from "../yamlExport";
-import type { Manifest } from "../compliance";
+import { asText, type Manifest } from "../compliance";
 
 interface ErrorBoundaryProps {
   formData: Manifest;
@@ -46,11 +46,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
     } catch {
       text = JSON.stringify(formData, null, 2);
     }
-    downloadFile(text, `${typeof formData.id === "string" && formData.id ? formData.id : "manifest-draft"}.yaml`, "text/yaml");
-  };
-
-  private reset = () => {
-    this.props.onReset();
+    downloadFile(text, `${asText(formData.id) || "manifest-draft"}.yaml`, "text/yaml");
   };
 
   render() {
@@ -69,7 +65,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
             <Button variant="outlined" color="inherit" onClick={this.download}>
               Download draft
             </Button>
-            <Button variant="contained" color="error" onClick={this.reset}>
+            <Button variant="contained" color="error" onClick={this.props.onReset}>
               Start a new manifest
             </Button>
           </Stack>

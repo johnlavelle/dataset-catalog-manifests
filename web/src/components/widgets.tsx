@@ -17,7 +17,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { addDays, slugify, type Manifest } from "../compliance";
+import { addDays, asText, slugify, type Manifest } from "../compliance";
 import { STATUSES, STATUS_INFO, statusOf, type Option } from "../guidance";
 
 /** Shared with every widget through rjsf's formContext. */
@@ -72,29 +72,30 @@ export function StatusWidget({ value, onChange, disabled, readonly }: WidgetProp
 /** Catalogue ID with a "suggest from title" helper. */
 export function IdWidget(props: WidgetProps) {
   const { id, value, onChange, label, required, disabled, readonly, placeholder } = props;
-  const name: string | undefined = ctxOf(props).formData?.dataset?.name;
+  const title: unknown = ctxOf(props).formData?.dataset?.name;
+  const suggestion = typeof title === "string" ? slugify(title) : "";
   return (
     <Stack direction="row" spacing={1} alignItems="flex-start">
       <TextField
         id={id}
         label={label}
         required={required}
-        value={value ?? ""}
+        value={asText(value)}
         onChange={(e) => onChange(e.target.value || undefined)}
         disabled={disabled || readonly}
         // Suggest the title's slug without filling it in: the ID must not follow later title edits
-        placeholder={name ? slugify(name) : placeholder || "e.g. danra-data"}
-        InputLabelProps={name ? { shrink: true } : undefined}
+        placeholder={suggestion || placeholder || "e.g. danra-data"}
+        InputLabelProps={suggestion ? { shrink: true } : undefined}
         error={hasErrors(props)}
         fullWidth
       />
-      <Tooltip title={name ? `Use "${slugify(name)}"` : "Fill in the dataset title first"}>
+      <Tooltip title={suggestion ? `Use "${suggestion}"` : "Fill in the dataset title first"}>
         <span>
           <Button
             variant="outlined"
             sx={{ whiteSpace: "nowrap", height: 56 }}
-            disabled={!name || disabled || readonly}
-            onClick={() => name && onChange(slugify(name))}
+            disabled={!suggestion || disabled || readonly}
+            onClick={() => onChange(suggestion)}
           >
             From title
           </Button>
@@ -143,7 +144,7 @@ export function PersonWidget(props: WidgetProps) {
       <Autocomplete
         freeSolo
         options={choices}
-        value={value ?? ""}
+        value={asText(value)}
         onChange={(_, v) => onChange(v || undefined)}
         onInputChange={(_, v, reason) => reason === "input" && onChange(v || undefined)}
         disabled={disabled || readonly}
@@ -232,7 +233,7 @@ export function TbdWidget(props: WidgetProps) {
           type={inputType}
           label={label}
           required={required}
-          value={value ?? ""}
+          value={asText(value)}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value || undefined)}
           disabled={disabled || readonly}
@@ -277,7 +278,7 @@ export function DescribedSelectWidget(props: WidgetProps) {
       fullWidth
       label={label}
       required={required}
-      value={value ?? ""}
+      value={asText(value)}
       onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
       disabled={disabled || readonly}
       error={hasErrors(props)}

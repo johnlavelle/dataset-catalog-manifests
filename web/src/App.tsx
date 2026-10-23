@@ -45,23 +45,13 @@ import {
   schema,
   type Manifest,
 } from "./compliance";
+import { loadDraft, saveDraft } from "./draft";
 import transformErrors from "./transformErrors";
 import { parseYaml } from "./yamlExport";
 import exampleYaml from "../../examples/example-archived.yaml?raw";
 import "./App.css";
 
-const DRAFT_KEY = "dataset-manifest-editor:draft";
 const PANEL_KEY = "dataset-manifest-editor:panel-width";
-
-function loadDraft(): Manifest {
-  try {
-    const saved = localStorage.getItem(DRAFT_KEY);
-    if (saved) return normalise(JSON.parse(saved));
-  } catch {
-    // Storage unavailable or corrupt: start fresh
-  }
-  return emptyManifest();
-}
 
 function loadPanelWidth(): number {
   try {
@@ -84,13 +74,7 @@ export default function App() {
   const panel = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
-    } catch {
-      // Autosave is a convenience only
-    }
-  }, [formData]);
+  useEffect(() => saveDraft(formData), [formData]);
 
   useEffect(() => {
     try {

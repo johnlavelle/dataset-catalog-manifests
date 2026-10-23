@@ -5,6 +5,7 @@ import { Box, Button, IconButton, Stack, TextField, Tooltip, Typography } from "
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { KeyInput } from "./ProductsField";
+import { isMapping } from "../compliance";
 
 type Extensions = Record<string, unknown>;
 
@@ -16,7 +17,7 @@ const isText = (v: unknown) => typeof v === "string" || typeof v === "number" ||
  * and edited in the YAML tab.
  */
 export default function ExtensionsField(props: FieldProps) {
-  const data: Extensions = (props.formData as Extensions) || {};
+  const data: Extensions = isMapping(props.formData) ? (props.formData as Extensions) : {};
   const entries = Object.entries(data);
 
   // Row ids that survive a rename, so the row is not remounted and keeps focus

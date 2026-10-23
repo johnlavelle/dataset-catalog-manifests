@@ -27,6 +27,18 @@ editor-compat:
         - schemas/*.json
         - web/**/*
 
+# The editor survives malformed manifests: wrong types in every field render, never crash
+editor-robustness:
+  image: node:20-slim
+  script:
+    - cd web && npm ci && npm run check:robustness
+  rules:
+    - changes:
+        - examples/*.yaml
+        - registry/*.yaml
+        - schemas/*.json
+        - web/**/*
+
 # Publishes the web editor; only from the default branch, so feature branches don't overwrite it
 pages:
   image: node:20-slim

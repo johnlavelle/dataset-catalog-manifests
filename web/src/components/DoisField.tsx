@@ -9,11 +9,12 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+import { asText, isMapping } from "../compliance";
 
 type DoisMap = Record<string, string>;
 
 export default function DoisField(props: FieldProps) {
-  const dois: DoisMap = (props.formData as DoisMap) || {};
+  const dois: DoisMap = isMapping(props.formData) ? (props.formData as DoisMap) : {};
   const entries = Object.entries(dois);
 
   const update = (newDois: DoisMap) => {
@@ -63,7 +64,7 @@ export default function DoisField(props: FieldProps) {
             />
             <TextField
               label="DOI"
-              value={value}
+              value={asText(value)}
               onChange={(e) => updateValue(key, e.target.value)}
               size="small"
               sx={{ flex: 1 }}

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "check:manifests": "vite build --config scripts/vite.check.config.ts && node node_modules/.check-manifests/check-manifests.js"
+    "check:manifests": "vite build --config scripts/vite.check.config.ts && node node_modules/.check-manifests/check-manifests.js",
+    "check:robustness": "vite build --config scripts/vite.robustness.config.ts && node node_modules/.check-robustness/check-robustness.js"
   },
   "dependencies": {
     "@emotion/react": "^11.13.0",

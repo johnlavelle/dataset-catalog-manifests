@@ -28,6 +28,7 @@ import AddIcon from "@mui/icons-material/Add";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { PRODUCT_CATEGORIES, PRODUCT_TYPE_OPTIONS } from "../guidance";
 import type { EditorContext } from "./widgets";
+import { asText, isMapping } from "../compliance";
 
 interface Product {
   name?: string;
@@ -91,8 +92,9 @@ export function KeyInput({
 }
 
 export default function ProductsField(props: FieldProps) {
-  const products: ProductsMap = (props.formData as ProductsMap) || {};
-  const entries = Object.entries(products);
+  // Anything but a mapping is a schema error, listed in the checklist; show it as no products
+  const products: ProductsMap = isMapping(props.formData) ? (props.formData as ProductsMap) : {};
+  const entries = Object.entries(products).map(([k, p]) => [k, isMapping(p) ? p : {}] as [string, Product]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const status = (props.registry.formContext as EditorContext | undefined)?.formData?.status;
   const errorSchema = props.errorSchema as ErrorSchema | undefined;
@@ -129,14 +131,14 @@ export default function ProductsField(props: FieldProps) {
   };
 
   const updateProduct = (key: string, field: string, value: string) => {
-    const product = { ...products[key], [field]: value };
+    const product = { ...(isMapping(products[key]) ? products[key] : {}), [field]: value };
     // Clear empty optional fields
     if (!value) delete (product as Record<string, unknown>)[field];
     update({ ...products, [key]: product });
   };
 
   const setDirMode = (key: string, mode: "dir" | "dir_pattern") => {
-    const product = { ...products[key] };
+    const product: Product = { ...(isMapping(products[key]) ? products[key] : {}) };
     if (mode === "dir") {
       product.dir = product.dir_pattern || "";
       delete product.dir_pattern;
@@ -191,14 +193,14 @@ export default function ProductsField(props: FieldProps) {
                   <ExpandMoreIcon />
                 </IconButton>
                 <Typography variant="subtitle1" sx={{ flex: 1, fontWeight: 500, minWidth: 0 }} noWrap>
-                  {product.name || key}
+                  {asText(product.name) || key}
                 </Typography>
                 {archiveWarning && (
                   <Tooltip title="Intermediate files should be filtered out before archiving (REQ-ARC-005)">
                     <WarningAmberIcon color="warning" fontSize="small" />
                   </Tooltip>
                 )}
-                {product.type && <Chip size="small" variant="outlined" label={product.type} />}
+                {asText(product.type) && <Chip size="small" variant="outlined" label={asText(product.type)} />}
                 {errorCount > 0 && <Chip size="small" color="error" label={`${errorCount} to fix`} />}
                 <Typography variant="caption" color="text.secondary">
                   {key}
@@ -214,7 +216,7 @@ export default function ProductsField(props: FieldProps) {
                     />
                     <TextField
                       label="Name"
-                      value={product.name || ""}
+                      value={asText(product.name)}
                       onChange={(e) => updateProduct(key, "name", e.target.value)}
                       size="small"
                       fullWidth
@@ -248,8 +250,8 @@ export default function ProductsField(props: FieldProps) {
                       label={dirMode === "dir" ? "dir" : "dir_pattern"}
                       value={
                         dirMode === "dir"
-                          ? product.dir || ""
-                          : product.dir_pattern || ""
+                          ? asText(product.dir)
+                          : asText(product.dir_pattern)
                       }
                       onChange={(e) => updateProduct(key, dirMode, e.target.value)}
                       size="small"
@@ -271,7 +273,7 @@ export default function ProductsField(props: FieldProps) {
                     <Autocomplete
                       freeSolo
                       options={PRODUCT_CATEGORIES}
-                      inputValue={product.category || ""}
+                      inputValue={asText(product.category)}
                       onInputChange={(_, value) => updateProduct(key, "category", value)}
                       renderInput={(params) => (
                         <TextField {...params} label="Category" size="small" placeholder="e.g. Physics, Biogeochemistry, Ice" />
@@ -280,11 +282,11 @@ export default function ProductsField(props: FieldProps) {
                     <TextField
                       select
                       label="Type"
-                      value={product.type || ""}
+                      value={asText(product.type)}
                       onChange={(e) => updateProduct(key, "type", e.target.value)}
                       size="small"
                       fullWidth
-                      helperText={product.type ? PRODUCT_TYPE_OPTIONS[product.type]?.description : "Role of this data in the processing chain"}
+                      helperText={PRODUCT_TYPE_OPTIONS[asText(product.type)]?.description ?? "Role of this data in the processing chain"}
                       SelectProps={{ renderValue: (v) => String(v) }}
                     >
                       <MenuItem value="">
@@ -298,7 +300,7 @@ export default function ProductsField(props: FieldProps) {
                     </TextField>
                     <TextField
                       label="Model Component"
-                      value={product.model_component || ""}
+                      value={asText(product.model_component)}
                       onChange={(e) =>
                         updateProduct(key, "model_component", e.target.value)
                       }
@@ -308,7 +310,7 @@ export default function ProductsField(props: FieldProps) {
                     />
                     <TextField
                       label="Domain"
-                      value={product.domain || ""}
+                      value={asText(product.domain)}
                       onChange={(e) =>
                         updateProduct(key, "domain", e.target.value)
                       }
@@ -318,7 +320,7 @@ export default function ProductsField(props: FieldProps) {
                     />
                     <TextField
                       label="Notes"
-                      value={product.notes || ""}
+                      value={asText(product.notes)}
                       onChange={(e) =>
                         updateProduct(key, "notes", e.target.value)
                       }
