@@ -4,6 +4,8 @@ import {
   Badge,
   Box,
   AppBar,
+  Chip,
+  Divider,
   Toolbar,
   Typography,
   IconButton,
@@ -25,11 +27,13 @@ import {
   FolderOpenOutlined,
   AutoStoriesOutlined,
   SmartToyOutlined,
+  Inventory2Outlined,
 } from "@mui/icons-material";
 import validator from "@rjsf/validator-ajv8";
 import ManifestForm from "./components/ManifestForm";
 import YamlPreview from "./components/YamlPreview";
 import ChecklistPanel from "./components/ChecklistPanel";
+import SectionNav from "./components/SectionNav";
 import InfoPage from "./components/InfoPage";
 import LlmDialog from "./components/LlmDialog";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -44,7 +48,9 @@ import {
   normalise,
   schema,
   type Manifest,
+  asText,
 } from "./compliance";
+import { STATUS_INFO, statusOf } from "./guidance";
 import { loadDraft, saveDraft } from "./draft";
 import transformErrors from "./transformErrors";
 import { parseYaml } from "./yamlExport";
@@ -127,13 +133,36 @@ export default function App() {
     else run();
   };
 
+  const title = asText(formData.dataset?.name) || asText(formData.id);
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <AppBar position="static" elevation={1}>
-        <Toolbar variant="dense" sx={{ gap: 0.5 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, flexGrow: 1 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "background.default" }}>
+      <AppBar
+        position="static"
+        elevation={0}
+        sx={{ background: "linear-gradient(90deg, #083f78 0%, #0b5cad 100%)" }}
+      >
+        <Toolbar variant="dense" sx={{ gap: 0.5, minHeight: 56 }}>
+          <Inventory2Outlined sx={{ mr: 1, opacity: 0.9 }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: "1.1rem", whiteSpace: "nowrap" }}>
             Dataset Manifest Editor
           </Typography>
+          <Box sx={{ flexGrow: 1, minWidth: 0, display: { xs: "none", md: "flex" }, alignItems: "center", gap: 1, ml: 2 }}>
+            {!showInfo && (
+              <>
+                <Divider orientation="vertical" flexItem sx={{ borderColor: "rgba(255,255,255,0.3)", my: 1.5 }} />
+                <Typography variant="body2" noWrap sx={{ opacity: 0.9, ml: 1 }} title={title}>
+                  {title || "Untitled dataset"}
+                </Typography>
+                <Chip
+                  size="small"
+                  label={STATUS_INFO[statusOf(formData.status)].label}
+                  sx={{ bgcolor: "rgba(255,255,255,0.18)", color: "inherit", flex: "none" }}
+                />
+              </>
+            )}
+          </Box>
+          <Box sx={{ flexGrow: 1, display: { xs: "block", md: "none" } }} />
           <Tooltip title="Start a new manifest">
             <Button
               color="inherit"
@@ -196,15 +225,11 @@ export default function App() {
       ) : (
         <ErrorBoundary formData={formData} onReset={() => setFormData(emptyManifest())}>
           <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
-            <Box
-              sx={{
-                flex: 1,
-                minWidth: 0,
-                overflow: "auto",
-                p: 3,
-              }}
-            >
-              <ManifestForm formData={formData} onChange={handleChange} />
+            <Box sx={{ flex: 1, minWidth: 0, overflow: "auto" }}>
+              <SectionNav formData={formData} errors={errors} />
+              <Box sx={{ maxWidth: 960, mx: "auto", p: { xs: 2, md: 3 }, pb: 8 }}>
+                <ManifestForm formData={formData} onChange={handleChange} />
+              </Box>
             </Box>
             <SplitHandle panelRef={panel} width={panelWidth} onChange={setPanelWidth} />
             <Box
@@ -216,10 +241,17 @@ export default function App() {
                 maxWidth: `calc(100% - ${FORM_MIN}px)`,
                 display: "flex",
                 flexDirection: "column",
-                bgcolor: "grey.50",
+                bgcolor: "#f8fafc",
+                borderLeft: 1,
+                borderColor: "divider",
               }}
             >
-              <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="fullWidth" sx={{ borderBottom: 1, borderColor: "divider" }}>
+              <Tabs
+                value={tab}
+                onChange={(_, v) => setTab(v)}
+                variant="fullWidth"
+                sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.paper" }}
+              >
                 <Tab
                   value="checklist"
                   label={

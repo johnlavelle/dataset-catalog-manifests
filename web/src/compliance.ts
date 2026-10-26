@@ -225,6 +225,8 @@ export interface CheckItem {
   label: string;
   ref?: string;
   state: CheckState;
+  /** Field to jump to from the checklist, e.g. "dataset.name"; none for manual steps. */
+  target?: string;
 }
 
 export interface CheckGroup {
@@ -234,17 +236,32 @@ export interface CheckGroup {
   items: CheckItem[];
 }
 
-type Rule = { label: string; ref?: string; level: "shall" | "should" | "optional" | "manual"; value?: unknown; ok?: boolean };
+type Rule = {
+  label: string;
+  ref?: string;
+  level: "shall" | "should" | "optional" | "manual";
+  value?: unknown;
+  ok?: boolean;
+  /** Fields the rule covers; the checklist jumps to the first empty one. */
+  fields?: string[];
+};
 
-function evaluate(rules: Rule[], relation: CheckGroup["relation"]): CheckItem[] {
-  return rules.map(({ label, ref, level, value, ok }) => {
-    if (level === "manual") return { label, ref, state: "manual" };
+/** Value at a dotted path, e.g. "dataset.name". */
+function valueAt(data: Manifest, path: string): unknown {
+  return path.split(".").reduce<unknown>((v, k) => (isMapping(v) ? v[k] : undefined), data);
+}
+
+function evaluate(data: Manifest, rules: Rule[], relation: CheckGroup["relation"]): CheckItem[] {
+  return rules.map(({ label, ref, level, value, ok, fields }) => {
+    const target = fields && (fields.find((f) => !has(valueAt(data, f))) ?? fields[0]);
+    const item = (state: CheckState): CheckItem => ({ label, ref, state, target });
+    if (level === "manual") return item("manual");
     const satisfied = ok ?? has(value);
-    if (satisfied && isTbd(value)) return { label, ref, state: relation === "now" ? "tbd" : "todo" };
-    if (satisfied) return { label, ref, state: "ok" };
-    if (level === "optional") return { label, ref, state: "optional" };
-    if (relation !== "now") return { label, ref, state: "todo" };
-    return { label, ref, state: level === "shall" ? "missing" : "warn" };
+    if (satisfied && isTbd(value)) return item(relation === "now" ? "tbd" : "todo");
+    if (satisfied) return item("ok");
+    if (level === "optional") return item("optional");
+    if (relation !== "now") return item("todo");
+    return item(level === "shall" ? "missing" : "warn");
   });
 }
 
@@ -264,15 +281,19 @@ export function checklist(data: Manifest): CheckGroup[] {
   const products: Manifest = data.products ?? {};
   const person = (v: unknown) => typeof v === "string" && PERSON_RE.test(v);
 
+  const retentionFields = [
+    "retention.kind",
+    ret.kind === "date" ? "retention.until" : ret.kind === "condition" ? "retention.condition" : "retention.rationale",
+  ];
   const retentionDeclared =
     (ret.kind === "date" && has(ret.until)) ||
     (ret.kind === "condition" && has(ret.condition)) ||
     (ret.kind === "indefinite" && has(ret.rationale));
 
   const basics: Rule[] = [
-    { label: "Catalogue ID", ref: "REQ-CAT-003", level: "shall", value: data.id },
-    { label: "Title, location and description", ref: "REQ-CAT-004", level: "shall", ok: has(d.name) && has(d.path) && has(d.description) },
-    { label: "At least one product", level: "shall", ok: Object.keys(products).length > 0 },
+    { label: "Catalogue ID", ref: "REQ-CAT-003", level: "shall", value: data.id, fields: ["id"] },
+    { label: "Title, location and description", ref: "REQ-CAT-004", level: "shall", ok: has(d.name) && has(d.path) && has(d.description), fields: ["dataset.name", "dataset.path", "dataset.description"] },
+    { label: "At least one product", level: "shall", ok: Object.keys(products).length > 0, fields: ["products"] },
   ];
 
   const register: Rule[] = [
@@ -281,64 +302,69 @@ export function checklist(data: Manifest): CheckGroup[] {
       ref: "REQ-OWN-001",
       level: "shall",
       ok: person(roles.owner) && !ownerNotApproved(data),
+      fields: ["roles.owner"],
     },
-    { label: "Data Steward named, with e-mail", ref: "Standard §3", level: "shall", ok: person(roles.steward) },
-    { label: "Data Custodian named, with e-mail", ref: "Standard §3", level: "shall", ok: person(roles.custodian) },
+    { label: "Data Steward named, with e-mail", ref: "Standard §3", level: "shall", ok: person(roles.steward), fields: ["roles.steward"] },
+    { label: "Data Custodian named, with e-mail", ref: "Standard §3", level: "shall", ok: person(roles.custodian), fields: ["roles.custodian"] },
     ...(sameRoleHolder(roles)
-      ? [{ label: "Single holder of all three roles stated", ref: "Standard §3", level: "shall" as const, ok: roles.single_person === true }]
+      ? [{ label: "Single holder of all three roles stated", ref: "Standard §3", level: "shall" as const, ok: roles.single_person === true, fields: ["roles.single_person"] }]
       : []),
-    { label: "Retention declared", ref: "REQ-RET-001", level: "shall", ok: retentionDeclared },
+    { label: "Retention declared", ref: "REQ-RET-001", level: "shall", ok: retentionDeclared, fields: retentionFields },
     {
       label: lic.id === "restricted" ? "Licence declared, with reason and decision-maker" : "Licence declared",
       ref: lic.id === "restricted" ? "REQ-LIC-002" : "REQ-LIC-001",
       level: "shall",
       ok: has(lic.id) && (lic.id !== "restricted" || (has(lic.reason) && person(lic.decided_by))),
+      fields: lic.id === "restricted" ? ["license.id", "license.reason", "license.decided_by"] : ["license.id"],
     },
-    { label: "Local persistent identifier", ref: "REQ-CAT-008", level: "shall", value: ids.pid },
-    { label: "DOI, if published or cited", ref: "REQ-CAT-009", level: "optional", value: ids.doi },
-    { label: "Metadata page linked", ref: "REQ-ARC-003", level: "shall", value: links.metadata },
-    { label: "Archiving guide linked", ref: "REQ-ARC-002", level: "shall", value: links.archiving_guide },
-    { label: "Release date", ref: "REQ-CAT-004", level: "shall", value: dates.released },
+    { label: "Local persistent identifier", ref: "REQ-CAT-008", level: "shall", value: ids.pid, fields: ["identifiers.pid"] },
+    { label: "DOI, if published or cited", ref: "REQ-CAT-009", level: "optional", value: ids.doi, fields: ["identifiers.doi"] },
+    { label: "Metadata page linked", ref: "REQ-ARC-003", level: "shall", value: links.metadata, fields: ["links.metadata"] },
+    { label: "Archiving guide linked", ref: "REQ-ARC-002", level: "shall", value: links.archiving_guide, fields: ["links.archiving_guide"] },
+    { label: "Release date", ref: "REQ-CAT-004", level: "shall", value: dates.released, fields: ["dates.released"] },
     ...(storage.tier === "third_party"
-      ? [{ label: "Contract with the supplier linked", ref: "REQ-TPY-003", level: "shall" as const, value: links.contract }]
+      ? [{ label: "Contract with the supplier linked", ref: "REQ-TPY-003", level: "shall" as const, value: links.contract, fields: ["links.contract"] }]
       : []),
     { label: "Owner approves the entry, e.g. by approving the merge request", ref: "Procedure A.7", level: "manual" },
   ];
 
   const discipline = storage.wis2_discipline;
-  const tbdLeft = placeholders(data).length;
+  const tbdLeft = placeholders(data);
   const archive: Rule[] = [
     {
       label: "Appraisal: lasting value, users, regenerability",
       ref: "REQ-APP-001/002",
       level: "shall",
       ok: has(appraisal.lasting_value) && has(appraisal.users) && has(appraisal.regenerable),
+      fields: ["appraisal.lasting_value", "appraisal.users", "appraisal.regenerable"],
     },
-    { label: "Appraisal approved by the Owner, with date", ref: "REQ-APP-003", level: "shall", ok: person(appraisal.approved_by) && has(appraisal.approved_on) },
-    { label: "Data quality verified", ref: "REQ-ARC-004", level: "shall", value: archiving.quality_verified_on },
-    { label: "WIS2 discipline chosen", ref: "REQ-NAME-004", level: "shall", value: discipline },
-    { label: "Primary file format recorded", ref: "REQ-FMT-001", level: "shall", value: storage.format },
-    { label: "Compression and settings recorded", ref: "Procedure C.7", level: "shall", value: storage.compression },
+    { label: "Appraisal approved by the Owner, with date", ref: "REQ-APP-003", level: "shall", ok: person(appraisal.approved_by) && has(appraisal.approved_on), fields: ["appraisal.approved_by", "appraisal.approved_on"] },
+    { label: "Data quality verified", ref: "REQ-ARC-004", level: "shall", value: archiving.quality_verified_on, fields: ["archiving.quality_verified_on"] },
+    { label: "WIS2 discipline chosen", ref: "REQ-NAME-004", level: "shall", value: discipline, fields: ["storage.wis2_discipline"] },
+    { label: "Primary file format recorded", ref: "REQ-FMT-001", level: "shall", value: storage.format, fields: ["storage.format"] },
+    { label: "Compression and settings recorded", ref: "Procedure C.7", level: "shall", value: storage.compression, fields: ["storage.compression"] },
     ...(storage.lossy
-      ? [{ label: "Lossy compression approved by the Owner", ref: "REQ-FMT-003", level: "shall" as const, ok: has(storage.lossy_settings) && person(storage.lossy_approved_by) }]
+      ? [{ label: "Lossy compression approved by the Owner", ref: "REQ-FMT-003", level: "shall" as const, ok: has(storage.lossy_settings) && person(storage.lossy_approved_by), fields: ["storage.lossy_settings", "storage.lossy_approved_by"] }]
       : []),
     ...(archiving.automated
-      ? [{ label: "Automated job documented, with owning team", ref: "REQ-OPS-002", level: "shall" as const, ok: has(archiving.pipeline) && has(archiving.owning_team) }]
+      ? [{ label: "Automated job documented, with owning team", ref: "REQ-OPS-002", level: "shall" as const, ok: has(archiving.pipeline) && has(archiving.owning_team), fields: ["archiving.pipeline", "archiving.owning_team"] }]
       : []),
-    { label: "Archiving date", ref: "Procedure C.7", level: "shall", value: dates.archived },
-    { label: "No 'TBD' placeholders left", ref: "REQ-ARC-001", level: "shall", ok: tbdLeft === 0 },
+    { label: "Archiving date", ref: "Procedure C.7", level: "shall", value: dates.archived, fields: ["dates.archived"] },
+    { label: "No 'TBD' placeholders left", ref: "REQ-ARC-001", level: "shall", ok: tbdLeft.length === 0, fields: tbdLeft.slice(0, 1).map((t) => t.path) },
     {
       label: `Location under ${ARCHIVE_PREFIX}${discipline ?? "<discipline>"}/`,
       ref: "REQ-NAME-004",
       level: "should",
       ok: typeof d.path === "string" && d.path.startsWith(`${ARCHIVE_PREFIX}${discipline ?? ""}`),
+      fields: ["dataset.path"],
     },
-    { label: "Integrity checksums recorded", ref: "REQ-PRT-003", level: "should", value: storage.checksums },
+    { label: "Integrity checksums recorded", ref: "REQ-PRT-003", level: "should", value: storage.checksums, fields: ["storage.checksums"] },
     {
       label: "No intermediate files among the products",
       ref: "REQ-ARC-005",
       level: "should",
       ok: !Object.values(products).some((p) => p?.type === "intermediate file"),
+      fields: ["products"],
     },
     { label: "Archive files are 5 GiB–5 TiB (ideally 10 GiB–2 TiB)", ref: "REQ-SIZE-001/002", level: "manual" },
     { label: "Names: letters, digits, underscores; ISO 8601 dates", ref: "REQ-NAME-001–003", level: "manual" },
@@ -346,14 +372,14 @@ export function checklist(data: Manifest): CheckGroup[] {
   ];
 
   const remove: Rule[] = [
-    { label: "Owner's approval recorded", ref: "REQ-RET-002", level: "shall", ok: person(deletion.approved_by) },
-    { label: "Deletion date", ref: "Procedure G.4", level: "shall", value: deletion.date },
+    { label: "Owner's approval recorded", ref: "REQ-RET-002", level: "shall", ok: person(deletion.approved_by), fields: ["deletion.approved_by"] },
+    { label: "Deletion date", ref: "Procedure G.4", level: "shall", value: deletion.date, fields: ["deletion.date"] },
     { label: "Rigsarkivet authorisation, if the data has lasting value", ref: "REQ-RIG-002", level: "manual" },
   ];
 
   const groups: CheckGroup[] = [];
   const add = (key: string, title: string, relation: CheckGroup["relation"], rules: Rule[]) =>
-    groups.push({ key, title, relation, items: evaluate(rules, relation) });
+    groups.push({ key, title, relation, items: evaluate(data, rules, relation) });
 
   add("basics", "Basics (every entry)", "now", basics);
   if (status === "proposed") {
@@ -375,20 +401,20 @@ export function checklist(data: Manifest): CheckGroup[] {
   // Recommendations (SHOULD / Guidelines) that apply now
   const recs: CheckItem[] = [];
   if ((ret.kind === "date" || ret.kind === "condition") && !has(ret.rationale))
-    recs.push({ label: "Give a rationale for the retention", ref: "Guidelines §4.2", state: "warn" });
+    recs.push({ label: "Give a rationale for the retention", ref: "Guidelines §4.2", state: "warn", target: "retention.rationale" });
   if (lic.id === "DMI-internal" && !has(lic.reason))
-    recs.push({ label: "Record why the data is internal only", ref: "Guidelines §8.2", state: "warn" });
+    recs.push({ label: "Record why the data is internal only", ref: "Guidelines §8.2", state: "warn", target: "license.reason" });
   if (typeof d.path === "string" && d.path.startsWith("/net/isilon"))
-    recs.push({ label: "Plan migration off legacy /net/isilon", ref: "REQ-TIER-002", state: "warn" });
+    recs.push({ label: "Plan migration off legacy /net/isilon", ref: "REQ-TIER-002", state: "warn", target: "dataset.path" });
   if (has(appraisal.approved_by) && has(roles.owner) && appraisal.approved_by !== roles.owner)
-    recs.push({ label: "Appraisal should be approved by the Data Owner", ref: "REQ-APP-003", state: "warn" });
+    recs.push({ label: "Appraisal should be approved by the Data Owner", ref: "REQ-APP-003", state: "warn", target: "appraisal.approved_by" });
   const reviewed = dates.reviewed;
   if (REGISTERED.includes(status) && (!has(reviewed) || reviewed < addDays(-366)))
-    recs.push({ label: "Review the entry at least yearly (set 'Last reviewed')", ref: "REQ-CAT-006", state: "warn" });
-  for (const exc of Array.isArray(data.exceptions) ? data.exceptions : []) {
+    recs.push({ label: "Review the entry at least yearly (set 'Last reviewed')", ref: "REQ-CAT-006", state: "warn", target: "dates.reviewed" });
+  (Array.isArray(data.exceptions) ? data.exceptions : []).forEach((exc, i) => {
     if (exc?.expires && exc.expires < today())
-      recs.push({ label: `Exception ${exc.id ?? ""} has expired`, ref: "REQ-EXC-003", state: "warn" });
-  }
+      recs.push({ label: `Exception ${exc.id ?? ""} has expired`, ref: "REQ-EXC-003", state: "warn", target: `exceptions[${i}].expires` });
+  });
   if (recs.length) groups.push({ key: "recommendations", title: "Recommendations", relation: "now", items: recs });
 
   return groups;
