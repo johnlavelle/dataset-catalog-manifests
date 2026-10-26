@@ -125,7 +125,7 @@ export default function ChecklistPanel({ formData, errors }: ChecklistPanelProps
   ].filter(Boolean);
 
   // Progress over the mandatory items for the current status (placeholders count as done for now)
-  const mandatory = current.flatMap((g) => g.items).filter((i) => ["ok", "tbd", "missing"].includes(i.state));
+  const mandatory = current.flatMap((g) => g.items).filter((i) => i.mandatory);
   const done = mandatory.length - missing;
   const complete = missing === 0 && errors.length === 0;
 

@@ -138,7 +138,7 @@ function SectionCard({ section, number, props, formData, errorSchema }: SectionC
         "&:before": { display: "none" },
         borderLeft: 4,
         borderLeftColor: TONE_COLOR[tone],
-        scrollMarginTop: 64,
+        scrollMarginTop: 72,
         transition: "box-shadow 0.2s",
         "&.Mui-expanded": { boxShadow: "0 1px 3px rgba(16, 24, 40, 0.08)" },
       }}
@@ -200,7 +200,7 @@ function RootLayout({ properties, registry, errorSchema }: ObjectFieldTemplatePr
 
   return (
     <Stack spacing={2}>
-      <Paper id={sectionDomId(ENTRY_SECTION)} variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: "10px", scrollMarginTop: 64 }}>
+      <Paper id={sectionDomId(ENTRY_SECTION)} variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: "10px", scrollMarginTop: 72 }}>
         <Stack spacing={2}>
           {byName.status?.content}
           {byName.id?.content}

@@ -227,6 +227,8 @@ export interface CheckItem {
   state: CheckState;
   /** Field to jump to from the checklist, e.g. "dataset.name"; none for manual steps. */
   target?: string;
+  /** A SHALL item, counted in the checklist's progress. */
+  mandatory?: boolean;
 }
 
 export interface CheckGroup {
@@ -254,7 +256,7 @@ function valueAt(data: Manifest, path: string): unknown {
 function evaluate(data: Manifest, rules: Rule[], relation: CheckGroup["relation"]): CheckItem[] {
   return rules.map(({ label, ref, level, value, ok, fields }) => {
     const target = fields && (fields.find((f) => !has(valueAt(data, f))) ?? fields[0]);
-    const item = (state: CheckState): CheckItem => ({ label, ref, state, target });
+    const item = (state: CheckState): CheckItem => ({ label, ref, state, target, mandatory: level === "shall" });
     if (level === "manual") return item("manual");
     const satisfied = ok ?? has(value);
     if (satisfied && isTbd(value)) return item(relation === "now" ? "tbd" : "todo");

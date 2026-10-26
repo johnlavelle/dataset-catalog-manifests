@@ -36,7 +36,12 @@ export default function SectionNav({ formData, errors }: SectionNavProps) {
         py: 1,
       }}
     >
-      <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ maxWidth: 960, mx: "auto" }}>
+      {/* One row that scrolls sideways, so its height (and the cards' scroll margin) stays fixed */}
+      <Stack
+        direction="row"
+        spacing={0.75}
+        sx={{ maxWidth: 960, mx: "auto", overflowX: "auto", scrollbarWidth: "thin", pb: 0.25 }}
+      >
         {visibleSections(formData).map((s) => {
           const count = errors.filter((e) => sectionOf(e.property ?? "") === s.key).length;
           const filled = s.fields.some((f) => hasContent(formData[f]));
@@ -53,6 +58,7 @@ export default function SectionNav({ formData, errors }: SectionNavProps) {
                   border: 1,
                   borderColor: "divider",
                   bgcolor: "background.paper",
+                  flex: "none",
                   "&:hover, &.Mui-focusVisible": { borderColor: "primary.main", bgcolor: "primary.light" },
                 }}
               >
