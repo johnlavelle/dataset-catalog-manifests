@@ -195,6 +195,25 @@ export function upgradeLegacy(data: Manifest): Manifest {
  * and fields that only apply to another choice removed (e.g. retention.until when the
  * retention is indefinite). Empty values are stripped again when exporting YAML.
  */
+/**
+ * Fields that only apply to one choice in their section, as the schema's "else" rules say: with any
+ * other choice they are not stored (the form hides them, and CI refuses them).
+ */
+export const DEPENDENT_FIELDS: { section: string; field: string; applies: (data: Manifest) => boolean }[] = [
+  { section: "retention", field: "until", applies: (d) => d.retention?.kind === "date" },
+  { section: "retention", field: "condition", applies: (d) => d.retention?.kind === "condition" },
+  { section: "license", field: "reason", applies: (d) => d.license?.id === "restricted" || d.license?.id === "DMI-internal" },
+  { section: "license", field: "decided_by", applies: (d) => d.license?.id === "restricted" },
+  { section: "storage", field: "lossy_settings", applies: (d) => d.storage?.lossy === true },
+  { section: "storage", field: "lossy_approved_by", applies: (d) => d.storage?.lossy === true },
+  { section: "archiving", field: "pipeline", applies: (d) => d.archiving?.automated === true },
+  { section: "archiving", field: "owning_team", applies: (d) => d.archiving?.automated === true },
+];
+
+/** A DOI link or "doi:" prefix in front of a DOI, which is stored bare. */
+const DOI_PREFIX = /^\s*(?:https?:\/\/(?:dx\.)?doi\.org\/|doi:\s*)/i;
+const bareDoi = (v: unknown) => (typeof v === "string" ? v.replace(DOI_PREFIX, "") : v);
+
 export function normalise(data: Manifest): Manifest {
   const out: Manifest = upgradeLegacy(data);
   for (const key of OBJECT_KEYS) {
@@ -204,24 +223,79 @@ export function normalise(data: Manifest): Manifest {
   if (isMapping(out.products) && Object.values(out.products).some((p) => p === null))
     out.products = Object.fromEntries(Object.entries(out.products).map(([k, p]) => [k, p ?? {}]));
 
-  const prune = (section: string, fields: string[], keep: boolean) => {
-    if (keep || typeof out[section] !== "object") return;
-    if (fields.some((f) => f in out[section])) {
-      out[section] = { ...out[section] };
-      for (const f of fields) delete out[section][f];
+  for (const { section, field, applies } of DEPENDENT_FIELDS) {
+    if (isMapping(out[section]) && field in out[section] && !applies(out)) {
+      const { [field]: _, ...rest } = out[section];
+      out[section] = rest;
     }
-  };
-  const kind = out.retention.kind;
-  prune("retention", ["until"], kind === "date");
-  prune("retention", ["condition"], kind === "condition");
-  const lic = out.license.id;
-  prune("license", ["reason"], lic === "restricted" || lic === "DMI-internal");
-  prune("license", ["decided_by"], lic === "restricted");
-  prune("storage", ["lossy_settings", "lossy_approved_by"], out.storage.lossy === true);
-  prune("archiving", ["pipeline", "owning_team"], out.archiving.automated === true);
+  }
   // roles.single_person is kept when the names differ: they often do for a moment while one is being
   // edited, and the box stays visible while ticked, so it can be unticked
+
+  // DOIs are stored bare: a pasted https://doi.org/ link loses its prefix
+  const ids = out.identifiers;
+  if (isMapping(ids)) {
+    const related = Array.isArray(ids.related)
+      ? ids.related.map((r: unknown) => (isMapping(r) && DOI_PREFIX.test(asText(r.doi)) ? { ...r, doi: bareDoi(r.doi) } : r))
+      : ids.related;
+    if (DOI_PREFIX.test(asText(ids.doi)) || related?.some?.((r: unknown, i: number) => r !== ids.related[i]))
+      out.identifiers = { ...ids, doi: bareDoi(ids.doi), related };
+  }
   return out;
+}
+
+/**
+ * Values the form hides because they only apply to another choice are kept here for the session,
+ * so that switching back restores them; the manifest itself never holds them. `typed` is the form
+ * as changed, `data` the same after normalise.
+ */
+export function keepHidden(typed: Manifest, data: Manifest, stash: Record<string, unknown>): Manifest {
+  let out = data;
+  for (const { section, field, applies } of DEPENDENT_FIELDS) {
+    const key = `${section}.${field}`;
+    if (!applies(out)) {
+      const value = isMapping(typed[section]) ? typed[section][field] : undefined;
+      if (has(value)) stash[key] = value;
+      continue;
+    }
+    if (key in stash && isMapping(out[section]) && !has(out[section][field]))
+      out = { ...out, [section]: { ...out[section], [field]: stash[key] } };
+    delete stash[key];
+  }
+  return out;
+}
+
+/**
+ * The path of a form field from its element id: "root_links_archiving_guide" is links.archiving_guide.
+ * Keys may contain "_", so the id is matched against the keys in the data, longest first.
+ */
+export function pathFromId(data: unknown, id: string): string[] | null {
+  if (!id.startsWith("root_")) return null;
+  const walk = (node: unknown, rest: string): string[] | null => {
+    if (!rest) return [];
+    const keys = Array.isArray(node) ? node.map((_, i) => String(i)) : isMapping(node) ? Object.keys(node) : [];
+    for (const k of keys.sort((a, b) => b.length - a.length)) {
+      if (rest !== k && !rest.startsWith(`${k}_`)) continue;
+      const sub = walk((node as Manifest)[k], rest.slice(k.length + 1));
+      if (sub) return [k, ...sub];
+    }
+    return null;
+  };
+  return walk(data, id.slice("root_".length));
+}
+
+/** The field with this element id without spaces at either end; the same object if nothing changes. */
+export function trimField(data: Manifest, id: string): Manifest {
+  const path = pathFromId(data, id);
+  if (!path?.length) return data;
+  const value = path.reduce<unknown>((v, k) => (isMapping(v) || Array.isArray(v) ? (v as Manifest)[k] : undefined), data);
+  if (typeof value !== "string" || value === value.trim()) return data;
+  const set = (node: unknown, [k, ...rest]: string[]): unknown => {
+    const copy: Manifest = Array.isArray(node) ? [...node] : { ...(node as Manifest) };
+    copy[k] = rest.length ? set((node as Manifest)[k], rest) : value.trim() || undefined;
+    return copy;
+  };
+  return set(data, path) as Manifest;
 }
 
 function orderObject(obj: Manifest, order: string[]): Manifest {
@@ -260,6 +334,10 @@ export function customValidate(formData: Manifest | undefined, errors: FormValid
     errors.roles?.custodian?.addError(
       "Owner, Steward and Custodian are the same person — tick 'One person holds all three roles' (Standard §3)"
     );
+  }
+  const names = [roles.owner, roles.steward, roles.custodian];
+  if (roles.single_person === true && names.every(has) && !sameRoleHolder(roles)) {
+    errors.roles?.single_person?.addError("Owner, Steward and Custodian are not the same person — untick this");
   }
   if (formData && ownerNotApproved(formData)) {
     errors.roles?.owner?.addError(

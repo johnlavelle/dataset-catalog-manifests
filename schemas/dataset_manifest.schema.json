@@ -25,6 +25,16 @@
     "textOrTbd": {
       "type": "string",
       "pattern": "^((?!TBD)\\S[\\s\\S]*|TBD by \\d{4}-\\d{2}-\\d{2})$"
+    },
+    "location": {
+      "type": "string",
+      "description": "An absolute path (/dmidata/…), a path on another server (host:/path), or a URL (scheme://…) for a database or external store. No trailing slash on a path, no spaces at either end.",
+      "pattern": "^(?:[A-Za-z][A-Za-z0-9+.-]*://\\S+|(?:[A-Za-z0-9][A-Za-z0-9.-]*:)?/(?:\\S(?:.*[^\\s/])?)?)$"
+    },
+    "relativePath": {
+      "type": "string",
+      "description": "A path relative to dataset.path: no slash at the start or end, no spaces at either end.",
+      "pattern": "^[^\\s/](?:.*[^\\s/])?$"
     }
   },
   "properties": {
@@ -53,10 +63,9 @@
           "description": "Short, human-readable name (REQ-CAT-004). Prefer names that survive reorganisation: 'Operational WAM', not 'John's wave model output'."
         },
         "path": {
-          "type": "string",
+          "$ref": "#/definitions/location",
           "title": "Location (primary path)",
-          "minLength": 1,
-          "description": "Where the authoritative copy lives, e.g. /dmidata/archive/ocean/… or /dmidata/projects/… (REQ-CAT-004). For database or third-party storage, give the database or external location."
+          "description": "Where the authoritative copy lives, e.g. /dmidata/archive/ocean/… or /dmidata/projects/… (REQ-CAT-004): an absolute path without a trailing slash, host:/path on another server, or for database or third-party storage a URL (scheme://…)."
         },
         "description": {
           "type": "string",
@@ -136,11 +145,13 @@
       "allOf": [
         {
           "if": { "properties": { "kind": { "const": "date" } }, "required": ["kind"] },
-          "then": { "required": ["until"] }
+          "then": { "required": ["until"] },
+          "else": { "not": { "required": ["until"] } }
         },
         {
           "if": { "properties": { "kind": { "const": "condition" } }, "required": ["kind"] },
-          "then": { "required": ["condition"] }
+          "then": { "required": ["condition"] },
+          "else": { "not": { "required": ["condition"] } }
         },
         {
           "if": { "properties": { "kind": { "const": "indefinite" } }, "required": ["kind"] },
@@ -174,7 +185,12 @@
       "allOf": [
         {
           "if": { "properties": { "id": { "const": "restricted" } }, "required": ["id"] },
-          "then": { "required": ["reason", "decided_by"], "properties": { "reason": { "minLength": 1 } } }
+          "then": { "required": ["reason", "decided_by"], "properties": { "reason": { "minLength": 1 } } },
+          "else": { "not": { "required": ["decided_by"] } }
+        },
+        {
+          "if": { "properties": { "id": { "enum": ["restricted", "DMI-internal"] } }, "required": ["id"] },
+          "else": { "not": { "required": ["reason"] } }
         }
       ]
     },
@@ -348,8 +364,8 @@
         "secondary_locations": {
           "type": "array",
           "title": "Secondary locations",
-          "description": "Other places the dataset is duplicated, if any (REQ-CAT-004).",
-          "items": { "type": "string", "minLength": 1 }
+          "description": "Other places the dataset is duplicated, if any (REQ-CAT-004), written like the primary location.",
+          "items": { "$ref": "#/definitions/location" }
         },
         "checksums": {
           "type": "string",
@@ -360,7 +376,8 @@
       "allOf": [
         {
           "if": { "properties": { "lossy": { "const": true } }, "required": ["lossy"] },
-          "then": { "required": ["lossy_settings", "lossy_approved_by"] }
+          "then": { "required": ["lossy_settings", "lossy_approved_by"] },
+          "else": { "allOf": [{ "not": { "required": ["lossy_settings"] } }, { "not": { "required": ["lossy_approved_by"] } }] }
         },
         {
           "if": { "properties": { "formats": { "contains": { "const": "other" } } }, "required": ["formats"] },
@@ -455,7 +472,8 @@
       "allOf": [
         {
           "if": { "properties": { "automated": { "const": true } }, "required": ["automated"] },
-          "then": { "required": ["pipeline", "owning_team"] }
+          "then": { "required": ["pipeline", "owning_team"] },
+          "else": { "allOf": [{ "not": { "required": ["pipeline"] } }, { "not": { "required": ["owning_team"] } }] }
         }
       ]
     },
@@ -550,13 +568,11 @@
             "description": "Human-readable product name."
           },
           "dir": {
-            "type": "string",
-            "minLength": 1,
+            "$ref": "#/definitions/relativePath",
             "description": "Path relative to dataset.path holding this product: usually a sub-directory, but a nested path (v0.6.0/analysis.zarr) or a single file or container (.sqfs image, Zarr store) also works."
           },
           "dir_pattern": {
-            "type": "string",
-            "minLength": 1,
+            "$ref": "#/definitions/relativePath",
             "description": "Shell glob pattern matching multiple subdirectories under dataset.path (e.g. 'n[0-9][0-9][0-4]'). Use instead of dir when a product spans many directories with a naming convention."
           },
           "category": {

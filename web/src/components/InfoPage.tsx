@@ -130,7 +130,8 @@ const SCREEN: [string, ReactNode][] = [
     "Cards",
     <>
       One per section. <em>How to fill this in</em> opens the guidance from the DMI documents. Fields that only apply
-      to another choice are hidden, and changing the choice removes what was entered in them.
+      to another choice are hidden and not saved; changing the choice back during the same visit brings back what you
+      typed.
     </>,
   ],
   [
@@ -170,6 +171,15 @@ const ROLES: [string, string, string][] = [
 ];
 
 const CONVENTIONS: [string, ReactNode][] = [
+  [
+    "Locations",
+    <>
+      An absolute path without a trailing slash (<code>/dmidata/archive/ocean/nemo</code>),{" "}
+      <code>host:/path</code> on another server, or a URL for a database or external store. Product directories are
+      relative to it, without a slash at either end. Spaces at the start or end of any value are removed when you leave
+      the field, and a pasted <code>https://doi.org/</code> link becomes a bare DOI.
+    </>,
+  ],
   [
     "Catalogue ID",
     <>

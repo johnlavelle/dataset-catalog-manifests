@@ -30,6 +30,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { PRODUCT_CATEGORIES, PRODUCT_TYPE_OPTIONS } from "../guidance";
 import type { EditorContext } from "./widgets";
 import { asText, isMapping } from "../compliance";
+import { REVEAL_FIELD_EVENT, pathParts } from "../navigation";
 
 interface Product {
   name?: string;
@@ -103,6 +104,19 @@ export default function ProductsField(props: FieldProps) {
   const update = (newProducts: ProductsMap) => {
     props.onChange(newProducts);
   };
+
+  // A jump from the checklist to a field inside a product opens its card
+  useEffect(() => {
+    const open = (e: Event) => {
+      const [top, key] = pathParts((e as CustomEvent<string>).detail);
+      if (top === "products" && key) setExpanded((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
+    };
+    window.addEventListener(REVEAL_FIELD_EVENT, open);
+    return () => window.removeEventListener(REVEAL_FIELD_EVENT, open);
+  }, []);
+
+  /** The id of a product's input, as the checklist builds it from a path: root_products_<key>_<field>. */
+  const inputId = (key: string, field: string) => `${props.idSchema.$id}_${key}_${field}`;
 
   const addProduct = () => {
     let n = entries.length + 1;
@@ -226,6 +240,7 @@ export default function ProductsField(props: FieldProps) {
                       onCommit={(k) => renameKey(key, k)}
                     />
                     <TextField
+                      id={inputId(key, "name")}
                       label="Name"
                       value={asText(product.name)}
                       onChange={(e) => updateProduct(key, "name", e.target.value)}
@@ -276,6 +291,7 @@ export default function ProductsField(props: FieldProps) {
                       </RadioGroup>
                     </FormControl>
                     <TextField
+                      id={inputId(key, dirMode)}
                       label={dirMode === "dir" ? "dir" : "dir_pattern"}
                       value={
                         dirMode === "dir"
@@ -300,6 +316,7 @@ export default function ProductsField(props: FieldProps) {
                       }
                     />
                     <Autocomplete
+                      id={inputId(key, "category")}
                       freeSolo
                       options={PRODUCT_CATEGORIES}
                       inputValue={asText(product.category)}
@@ -309,6 +326,7 @@ export default function ProductsField(props: FieldProps) {
                       )}
                     />
                     <TextField
+                      id={inputId(key, "type")}
                       select
                       label="Type"
                       value={asText(product.type)}
@@ -328,6 +346,7 @@ export default function ProductsField(props: FieldProps) {
                       ))}
                     </TextField>
                     <TextField
+                      id={inputId(key, "model_component")}
                       label="Model Component"
                       value={asText(product.model_component)}
                       onChange={(e) =>
@@ -338,6 +357,7 @@ export default function ProductsField(props: FieldProps) {
                       placeholder="e.g. NEMO, ERGOM, SI3"
                     />
                     <TextField
+                      id={inputId(key, "domain")}
                       label="Domain"
                       value={asText(product.domain)}
                       onChange={(e) =>
@@ -348,6 +368,7 @@ export default function ProductsField(props: FieldProps) {
                       placeholder="e.g. Baltic, Nordic+Baltic"
                     />
                     <TextField
+                      id={inputId(key, "notes")}
                       label="Notes"
                       value={asText(product.notes)}
                       onChange={(e) =>

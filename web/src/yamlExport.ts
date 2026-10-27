@@ -4,8 +4,9 @@ import { asText, orderManifest, structureProblems, upgradeLegacy, type Manifest 
 /** Lets VS Code (YAML extension) validate the manifest against the schema while editing. */
 const SCHEMA_HINT = "# yaml-language-server: $schema=../schemas/dataset_manifest.schema.json\n";
 
-/** Remove empty strings, empty objects, and undefined values recursively. */
+/** Remove empty strings, empty objects, and undefined values recursively; text loses surrounding spaces. */
 export function stripEmpty(obj: unknown): unknown {
+  if (typeof obj === "string") return obj.trim() || undefined;
   if (Array.isArray(obj)) {
     const filtered = obj.map(stripEmpty).filter((v) => v !== undefined);
     return filtered.length ? filtered : undefined;

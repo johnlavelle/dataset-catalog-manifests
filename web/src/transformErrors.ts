@@ -10,6 +10,8 @@ const PATTERN_HINTS: Record<string, string> = {
   [defs.dateOrTbd.pattern]: "Use a date, or 'Not known yet'",
   [defs.urlOrTbd.pattern]: "Use a full link starting with https://, or 'Not known yet'",
   [defs.textOrTbd.pattern]: "Placeholders must read 'TBD by YYYY-MM-DD' — use 'Not known yet'",
+  [defs.location.pattern]: "An absolute path without a trailing slash (/dmidata/…), host:/path, or a URL (scheme://…)",
+  [defs.relativePath.pattern]: "A path relative to the dataset location, without a slash at the start or end",
   [rawSchema.properties.id.pattern]: "Lower-case letters, digits, '-' and '_' only, starting with a letter or digit",
   [rawSchema.properties.identifiers.properties.doi.pattern]:
     "A bare DOI such as 10.48670/moi-00013 (without https://doi.org/), or 'Not known yet'",
@@ -48,7 +50,9 @@ export default function transformErrors(errors: RJSFValidationError[]): RJSFVali
       }
 
       if (error.name === "not") {
-        error.message = "Placeholders are not allowed once a dataset is archived (REQ-ARC-001)";
+        error.message = error.schemaPath?.includes("/else/")
+          ? "Only applies to another choice: remove it, or change the choice it depends on"
+          : "Placeholders are not allowed once a dataset is archived (REQ-ARC-001)";
       }
 
       // Only the rule for archived datasets allows just the archive tier

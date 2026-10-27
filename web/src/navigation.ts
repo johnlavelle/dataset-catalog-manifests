@@ -6,6 +6,9 @@ export const OPEN_SECTION_EVENT = "manifest-editor:open-section";
 /** The header card holding status and catalogue ID. */
 export const ENTRY_SECTION = "entry";
 
+/** Fired with a field path before a jump, so that a collapsed part of the form (a product card) opens. */
+export const REVEAL_FIELD_EVENT = "manifest-editor:reveal-field";
+
 /** Accordion expand time (MUI default) plus a little slack. */
 const EXPAND_MS = 350;
 
@@ -23,7 +26,9 @@ export function sectionOf(path: string): string {
   return SECTIONS.find((s) => s.fields.includes(top))?.key ?? ENTRY_SECTION;
 }
 
-const isShown = (el: HTMLElement) => el.offsetParent !== null && (el as HTMLInputElement).type !== "hidden";
+// Inputs in a collapsed card are laid out but invisible
+const isShown = (el: HTMLElement) =>
+  el.offsetParent !== null && (el as HTMLInputElement).type !== "hidden" && getComputedStyle(el).visibility !== "hidden";
 
 /**
  * Fields the form shows only once another field has a certain value (showIf in uiSchema), with
@@ -96,7 +101,10 @@ export function goTo(field: string) {
   const card = document.getElementById(sectionDomId(key));
   const wasOpen = key === ENTRY_SECTION || !!card?.classList.contains("Mui-expanded");
   window.dispatchEvent(new CustomEvent(OPEN_SECTION_EVENT, { detail: key }));
-  if (wasOpen) reveal(path);
+  window.dispatchEvent(new CustomEvent(REVEAL_FIELD_EVENT, { detail: path }));
+  // A field inside a product may first have to wait for its card to open
+  const inProduct = pathParts(path)[0] === "products" && pathParts(path).length > 1;
+  if (wasOpen && !inProduct) reveal(path);
   else setTimeout(() => reveal(path), EXPAND_MS);
 }
 

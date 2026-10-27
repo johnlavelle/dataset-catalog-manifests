@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef, type FocusEvent } from "react";
 import {
   Alert,
   Badge,
@@ -46,9 +46,11 @@ import {
   checklist,
   customValidate,
   emptyManifest,
+  keepHidden,
   missingCount,
   normalise,
   schema,
+  trimField,
   type Manifest,
   asText,
 } from "./compliance";
@@ -91,6 +93,8 @@ export default function App() {
   const [pending, setPending] = useState<{ title: string; confirm: string; run: () => void } | null>(null);
   const [message, setMessage] = useState<{ text: string; severity: "success" | "error" } | null>(null);
   const [panelWidth, setPanelWidth] = useState(loadPanelWidth);
+  /** Values hidden because they belong to another choice, kept for this session (see keepHidden). */
+  const hidden = useRef<Record<string, unknown>>({});
   const panel = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -114,8 +118,18 @@ export default function App() {
 
   const handleChange = useCallback((e: IChangeEvent) => {
     if (!e.formData) return;
-    const data = normalise(e.formData);
+    const data = keepHidden(e.formData, normalise(e.formData), hidden.current);
     setDraft((d) => ({ key: d.key, data }));
+  }, []);
+
+  /** Leaving a field trims it: values are stored without spaces at either end. */
+  const trimOnLeave = useCallback((e: FocusEvent<HTMLElement>) => {
+    const { id } = e.target;
+    if (!id) return;
+    setDraft((d) => {
+      const data = trimField(d.data, id);
+      return data === d.data ? d : { key: d.key, data };
+    });
   }, []);
 
   /**
@@ -123,6 +137,7 @@ export default function App() {
    * manifest, if any). The manifest it replaces stays under Recent.
    */
   const show = useCallback((data: Manifest, key = findSaved(data)?.key ?? newKey()) => {
+    hidden.current = {};
     setDraft({ key, data });
     setShowInfo(false);
     return key;
@@ -265,7 +280,7 @@ export default function App() {
       ) : (
         <ErrorBoundary formData={formData} onReset={() => show(emptyManifest(), newKey())}>
           <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
-            <Box sx={{ flex: 1, minWidth: 0, overflow: "auto" }}>
+            <Box sx={{ flex: 1, minWidth: 0, overflow: "auto" }} onBlur={trimOnLeave}>
               <SectionNav formData={formData} errors={errors} />
               <Box sx={{ maxWidth: 960, mx: "auto", p: { xs: 2, md: 3 }, pb: 8 }}>
                 <ManifestForm formData={formData} onChange={handleChange} />
@@ -309,7 +324,10 @@ export default function App() {
                 {tab === "yaml" && (
                   <YamlPreview
                     formData={formData}
-                    onImport={(data) => setDraft((d) => ({ key: d.key, data: prepareImport(data) }))}
+                    onImport={(data) => {
+                      hidden.current = {};
+                      setDraft((d) => ({ key: d.key, data: prepareImport(data) }));
+                    }}
                   />
                 )}
               </Box>

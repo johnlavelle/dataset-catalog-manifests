@@ -91,6 +91,8 @@ PATTERN_HINTS = {
     "dateOrTbd": "use YYYY-MM-DD, or 'TBD by YYYY-MM-DD' if not yet known",
     "urlOrTbd": "use an http(s) link, or 'TBD by YYYY-MM-DD' if not yet known",
     "textOrTbd": "write 'TBD by YYYY-MM-DD' if not yet known",
+    "location": "use an absolute path without a trailing slash (/dmidata/...), host:/path, or a URL (scheme://...)",
+    "relativePath": "use a path relative to dataset.path, without a slash at the start or end",
 }
 
 
@@ -98,6 +100,12 @@ def schema_message(error, schema):
     """Turn a jsonschema error into a readable message."""
     if error.validator == "not" and isinstance(error.instance, str) and error.instance.startswith("TBD"):
         return "TBD placeholders are not allowed once a dataset is archived (REQ-ARC-001)"
+    if error.validator == "not" and isinstance(error.validator_value, dict):
+        fields = error.validator_value.get("required", [])
+        if set(fields) == {"dir", "dir_pattern"}:
+            return "use either dir or dir_pattern, not both"
+        if "else" in error.schema_path:
+            return f"{', '.join(fields)} only applies to another choice: remove it, or change the choice it depends on"
     if error.validator == "required":
         return error.message.replace("is a required property", "is required")
     if error.validator == "pattern":
@@ -173,6 +181,13 @@ def cross_checks(path, manifest, today, owners=frozenset()):
     names = [roles.get(r) for r in ROLES]
     if all(names) and len(set(names)) == 1 and not roles.get("single_person"):
         errors.append("Owner, Steward and Custodian are the same person: set roles.single_person: true (Standard §3)")
+    if roles.get("single_person") and all(names) and len(set(names)) > 1:
+        errors.append("roles.single_person is set, but Owner, Steward and Custodian are not the same person: remove it")
+
+    # Values are stored without surrounding spaces, so that they compare and join as written
+    for field, value in iter_strings(manifest):
+        if value != value.strip():
+            errors.append(f"{field}: remove the spaces or line breaks at the start or end")
 
     # Standard §3.1: the Owner is one of the approved Data Owners (the examples are fictional,
     # and a deleted entry keeps the Owner who approved the deletion)
