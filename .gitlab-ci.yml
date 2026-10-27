@@ -1,3 +1,13 @@
+# Jobs run on the Matrix cluster, which reaches PyPI and npm only through DMI's proxy
+# (Confluence: IT Network - Basale Services). DMI hosts, GitLab included, are reached directly.
+variables:
+  HTTP_PROXY: http://squid1.dmi.dk:3128
+  HTTPS_PROXY: http://squid1.dmi.dk:3128
+  NO_PROXY: localhost,127.0.0.1,.dmi.dk
+  http_proxy: http://squid1.dmi.dk:3128
+  https_proxy: http://squid1.dmi.dk:3128
+  no_proxy: localhost,127.0.0.1,.dmi.dk
+
 validate:
   image: python:3.11-slim
   before_script:
