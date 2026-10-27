@@ -16,6 +16,7 @@ import { CacheProvider } from "@emotion/react";
 import validator from "@rjsf/validator-ajv8";
 import ManifestForm from "../src/components/ManifestForm";
 import ChecklistPanel from "../src/components/ChecklistPanel";
+import StepsPanel from "../src/components/StepsPanel";
 import YamlPreview from "../src/components/YamlPreview";
 import { checklist, customValidate, hasContent, missingCount, normalise, placeholders, schema, type Manifest } from "../src/compliance";
 import transformErrors from "../src/transformErrors";
@@ -96,6 +97,7 @@ function exercise(input: Manifest): boolean {
   const noop = () => {};
   render(<ManifestForm formData={data} onChange={noop} />);
   render(<ChecklistPanel formData={data} errors={errors} />);
+  render(<StepsPanel formData={data} />);
   render(<YamlPreview formData={data} onImport={noop} />);
   return refused;
 }

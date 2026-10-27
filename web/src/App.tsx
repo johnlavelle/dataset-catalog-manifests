@@ -33,6 +33,7 @@ import validator from "@rjsf/validator-ajv8";
 import ManifestForm from "./components/ManifestForm";
 import YamlPreview from "./components/YamlPreview";
 import ChecklistPanel from "./components/ChecklistPanel";
+import StepsPanel from "./components/StepsPanel";
 import SectionNav from "./components/SectionNav";
 import InfoPage from "./components/InfoPage";
 import LlmDialog from "./components/LlmDialog";
@@ -72,7 +73,7 @@ function loadPanelWidth(): number {
 export default function App() {
   const [formData, setFormData] = useState<Manifest>(loadDraft);
   const [showInfo, setShowInfo] = useState(false);
-  const [tab, setTab] = useState<"checklist" | "yaml">("checklist");
+  const [tab, setTab] = useState<"checklist" | "steps" | "yaml">("checklist");
   const [showLlm, setShowLlm] = useState(false);
   const [pending, setPending] = useState<{ title: string; confirm: string; run: () => void } | null>(null);
   const [message, setMessage] = useState<{ text: string; severity: "success" | "error" } | null>(null);
@@ -260,14 +261,13 @@ export default function App() {
                     </Badge>
                   }
                 />
+                <Tab value="steps" label="Steps" />
                 <Tab value="yaml" label="YAML" />
               </Tabs>
               <Box sx={{ flex: 1, overflow: "auto" }}>
-                {tab === "checklist" ? (
-                  <ChecklistPanel formData={formData} errors={errors} />
-                ) : (
-                  <YamlPreview formData={formData} onImport={(data) => handleImport(data)} />
-                )}
+                {tab === "checklist" && <ChecklistPanel formData={formData} errors={errors} />}
+                {tab === "steps" && <StepsPanel formData={formData} />}
+                {tab === "yaml" && <YamlPreview formData={formData} onImport={(data) => handleImport(data)} />}
               </Box>
             </Box>
           </Box>

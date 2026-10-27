@@ -197,7 +197,9 @@ export default function InfoPage() {
         </Table>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           Each card in the form has a “How to fill this in” section with the relevant guidance, and the checklist cites
-          the requirement behind each item.
+          the requirement behind each item. The Steps tab lists the work behind the chosen status in order — who does
+          what, from registration to packaging data as squashfs, checksums and deletion — with commands filled in from
+          the manifest.
         </Typography>
       </Paper>
 

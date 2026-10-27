@@ -7,7 +7,7 @@ Dataset stewards add and update manifests through merge requests. `examples/` ho
 ## Adding a New Dataset
 
 1. Write the manifest in one of three ways:
-   - **Web editor** — fill in the [form](https://johnlavelle.github.io/dataset-catalog-manifests/). It shows what is mandatory for the chosen status, explains each section and keeps a checklist.
+   - **Web editor** — fill in the [form](https://johnlavelle.github.io/dataset-catalog-manifests/). It shows what is mandatory for the chosen status, explains each section, keeps a checklist, and lists the steps for the chosen stage (e.g. packaging data as squashfs for the archive).
    - **AI assistant** — the editor's **AI prompt** button downloads `dataset-manifest-prompt.md`. Upload it unchanged to an AI assistant and send "Start"; it interviews you a few questions at a time and ends with the YAML. In a command-line assistant (e.g. Claude Code), copy the downloaded file into your clone of this repository (it is git-ignored) and run `claude "Follow the instructions in dataset-manifest-prompt.md"` there; it can then look at the dataset directory itself, write `manifests/<id>.yaml` and run the validator. Tick *Include the current form* to have it complete a half-filled form.
    - **By hand** — copy an existing manifest or [`examples/example-archived.yaml`](examples/example-archived.yaml).
 2. Save it as `manifests/<id>.yaml` — the file name must equal the manifest's `id`. (In the editor, *Open* loads a file and the YAML tab shows and downloads the result.)
@@ -186,7 +186,7 @@ It also reports comments (which the editor drops) and formatting that differs fr
 
 ## Web Editor
 
-The editor renders the form from the JSON Schema and adds the DMI guidance, status-dependent requirements, a checklist, YAML import and export, and the AI prompt. It runs entirely in the browser; nothing is sent anywhere.
+The editor renders the form from the JSON Schema and adds the DMI guidance, status-dependent requirements, a checklist, the steps for each lifecycle stage (from the Procedures, with commands filled in from the manifest; practical tips from Confluence are marked as such), YAML import and export, and the AI prompt. It runs entirely in the browser; nothing is sent anywhere.
 
 ```bash
 cd web
