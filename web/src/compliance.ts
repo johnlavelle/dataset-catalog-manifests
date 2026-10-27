@@ -1,6 +1,6 @@
 import type { FormValidation, RJSFSchema } from "@rjsf/utils";
 import rawSchema from "../../schemas/dataset_manifest.schema.json";
-import { REGISTERED, statusOf } from "./guidance";
+import { REGISTERED, statusOf, type Status } from "./guidance";
 import { EXAMPLE_ID, OWNERS, isApprovedOwner } from "./owners";
 
 export type Manifest = Record<string, any>;
@@ -53,16 +53,25 @@ export function hasContent(value: unknown): boolean {
 
 export const isTbd =(v: unknown) => typeof v === "string" && v.startsWith("TBD");
 
-export const today = () => new Date().toISOString().slice(0, 10);
+/** YYYY-MM-DD in local time: toISOString gives UTC, which is still yesterday just after midnight in Denmark. */
+const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+export const today = () => ymd(new Date());
 
 export function addDays(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return ymd(d);
 }
 
 export function slugify(text: string): string {
   return text
+    .toLowerCase()
+    // Danish letters that do not decompose into a letter and an accent
+    .replace(/æ/g, "ae")
+    .replace(/ø/g, "oe")
+    .replace(/å/g, "aa")
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
@@ -210,7 +219,8 @@ export function normalise(data: Manifest): Manifest {
   prune("license", ["decided_by"], lic === "restricted");
   prune("storage", ["lossy_settings", "lossy_approved_by"], out.storage.lossy === true);
   prune("archiving", ["pipeline", "owning_team"], out.archiving.automated === true);
-  prune("roles", ["single_person"], sameRoleHolder(out.roles));
+  // roles.single_person is kept when the names differ: they often do for a moment while one is being
+  // edited, and the box stays visible while ticked, so it can be unticked
   return out;
 }
 
@@ -322,13 +332,21 @@ function valueAt(data: Manifest, path: string): unknown {
   return path.split(".").reduce<unknown>((v, k) => (isMapping(v) ? v[k] : undefined), data);
 }
 
-function evaluate(data: Manifest, rules: Rule[], relation: CheckGroup["relation"]): CheckItem[] {
+/**
+ * Placeholders are accepted until a dataset is archived (REQ-ARC-001), so whether one counts depends
+ * on the status a group leads to.
+ */
+function evaluate(data: Manifest, rules: Rule[], relation: CheckGroup["relation"], leadsTo: Status): CheckItem[] {
   return rules.map(({ label, ref, level, value, ok, fields }) => {
     const target = fields && (fields.find((f) => !has(valueAt(data, f))) ?? fields[0]);
     const item = (state: CheckState): CheckItem => ({ label, ref, state, target, mandatory: level === "shall" });
     if (level === "manual") return item("manual");
     const satisfied = ok ?? has(value);
-    if (satisfied && isTbd(value)) return item(relation === "now" ? "tbd" : "todo");
+    if (satisfied && isTbd(value)) {
+      if (leadsTo !== "archived") return item("tbd");
+      if (relation !== "now") return item("todo");
+      return item(level === "shall" ? "missing" : "warn");
+    }
     if (satisfied) return item("ok");
     if (level === "optional") return item("optional");
     if (relation !== "now") return item("todo");
@@ -449,24 +467,25 @@ export function checklist(data: Manifest): CheckGroup[] {
   ];
 
   const groups: CheckGroup[] = [];
-  const add = (key: string, title: string, relation: CheckGroup["relation"], rules: Rule[]) =>
-    groups.push({ key, title, relation, items: evaluate(data, rules, relation) });
+  // The last argument is the status the group leads to
+  const add = (key: string, title: string, relation: CheckGroup["relation"], rules: Rule[], leadsTo: Status) =>
+    groups.push({ key, title, relation, items: evaluate(data, rules, relation, leadsTo) });
 
-  add("basics", "Basics (every entry)", "now", basics);
+  add("basics", "Basics (every entry)", "now", basics, status);
   if (status === "proposed") {
-    add("register", "Register the dataset (Procedure A)", "next", register);
-    add("archive", "Archive the dataset (Procedures B–C)", "later", archive);
+    add("register", "Register the dataset (Procedure A)", "next", register, "active");
+    add("archive", "Archive the dataset (Procedures B–C)", "later", archive, "archived");
   } else if (status === "active") {
-    add("register", "Registration (Procedure A)", "now", register);
-    add("archive", "Archive the dataset (Procedures B–C)", "next", archive);
+    add("register", "Registration (Procedure A)", "now", register, "active");
+    add("archive", "Archive the dataset (Procedures B–C)", "next", archive, "archived");
   } else if (status === "archived") {
-    add("register", "Registration (Procedure A)", "now", register);
-    add("archive", "Archiving (Procedures B–C, checklist §11)", "now", archive);
+    add("register", "Registration (Procedure A)", "now", register, "archived");
+    add("archive", "Archiving (Procedures B–C, checklist §11)", "now", archive, "archived");
   } else if (status === "deprecated") {
-    add("register", "Registration (Procedure A)", "now", register);
-    add("delete", "Delete the dataset (Procedure G)", "next", remove);
+    add("register", "Registration (Procedure A)", "now", register, "deprecated");
+    add("delete", "Delete the dataset (Procedure G)", "next", remove, "deleted");
   } else {
-    add("delete", "Deletion (Procedure G)", "now", remove);
+    add("delete", "Deletion (Procedure G)", "now", remove, "deleted");
   }
 
   // Recommendations (SHOULD / Guidelines) that apply now

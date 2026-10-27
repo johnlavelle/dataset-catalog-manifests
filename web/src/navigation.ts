@@ -57,6 +57,9 @@ function jumpTarget(path: string): string {
  */
 function findTarget(path: string): HTMLElement | null {
   const parts = pathParts(path);
+  // A list with nothing in it yet, e.g. the products: its add button
+  const add = document.getElementById(`root_${parts.join("_")}_add`);
+  if (add && isShown(add) && add.dataset.empty === "true") return add;
   for (let n = parts.length; n > 0; n--) {
     const id = `root_${parts.slice(0, n).join("_")}`;
     const el = document.getElementById(id);

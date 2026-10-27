@@ -20,7 +20,8 @@ export const STATUS_INFO: Record<Status, { label: string; short: string; detail:
     label: "Proposed",
     short: "not yet registered",
     detail:
-      "Draft entry: the dataset is planned, or is legacy data under triage. Only the dataset basics and products are mandatory. " +
+      "Draft entry: the dataset is planned, or is legacy data under triage. Only the dataset basics and products are mandatory, " +
+      "plus what a choice already made needs (e.g. the date for retention until a date). " +
       "To register it, name the three roles, decide retention and licence, and add the identifiers, links and release date.",
   },
   active: {
@@ -420,7 +421,7 @@ export const SECTIONS: SectionInfo[] = [
         "Before archiving: decide scope (only data of lasting relevance), verify quality, decide filtering, aggregation period, tooling and compression — and record them in the archiving guide (Procedure B).",
         "Clean the source first, then pick an aggregation window (daily, monthly, yearly) that lands files in the target size. If that fails, split by domain or variable group instead of time.",
         "Scheduled production data is archived automatically with the DMI archive tool (gitlab.dmi.dk/hpc/dmi-data-archive) — don't build your own. Keep raw source on disk for at least one aggregation period, and alert on empty output or oversized files (Procedure D).",
-        "Custodian steps not recorded here: write-protection applied and tested (REQ-PRT-001), checksums stored (C.5), source copy removed only after all checks pass (C.8).",
+        "Custodian steps not recorded here: write-protection applied and tested (REQ-PRT-001), source copy removed only after all checks pass (C.8). Where the checksums are kept (C.5) is recorded under Storage.",
       ],
       source: "Standard §6–7, Procedures B–D, Guidelines §6 and §9",
     },

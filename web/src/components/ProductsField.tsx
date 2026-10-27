@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ErrorSchema, FieldProps } from "@rjsf/utils";
 import {
+  Alert,
   Autocomplete,
   Box,
   Button,
@@ -137,6 +138,14 @@ export default function ProductsField(props: FieldProps) {
     update({ ...products, [key]: product });
   };
 
+  /** A product with both dir and dir_pattern (CI refuses it) keeps one. */
+  const keepOnly = (key: string, keep: "dir" | "dir_pattern") => {
+    const product: Product = { ...(isMapping(products[key]) ? products[key] : {}) };
+    if (keep === "dir") delete product.dir_pattern;
+    else delete product.dir;
+    update({ ...products, [key]: product });
+  };
+
   const setDirMode = (key: string, mode: "dir" | "dir_pattern") => {
     const product: Product = { ...(isMapping(products[key]) ? products[key] : {}) };
     if (mode === "dir") {
@@ -164,7 +173,9 @@ export default function ProductsField(props: FieldProps) {
         {entries.map(([key, product]) => {
           const isOpen = expanded[key] ?? false;
           const dirMode = product.dir_pattern !== undefined ? "dir_pattern" : "dir";
-          const errorCount = ["name", "dir", "dir_pattern"].reduce((n, f) => n + fieldErrors(errorSchema, key, f).length, 0);
+          const bothDirs = product.dir !== undefined && product.dir_pattern !== undefined;
+          const errorCount =
+            ["name", "dir", "dir_pattern"].reduce((n, f) => n + fieldErrors(errorSchema, key, f).length, 0) + (bothDirs ? 1 : 0);
           const extras = Object.keys(product).filter((k) => !KNOWN_FIELDS.has(k));
           const archiveWarning = product.type === "intermediate file" && (status === "active" || status === "archived");
           const dirErrors = fieldErrors(errorSchema, key, dirMode);
@@ -225,6 +236,24 @@ export default function ProductsField(props: FieldProps) {
                       helperText={nameErrors[0]}
                       placeholder="Human-readable product name"
                     />
+                    {bothDirs && (
+                      <Alert
+                        severity="error"
+                        action={
+                          <Stack direction="row" spacing={0.5}>
+                            <Button color="inherit" size="small" onClick={() => keepOnly(key, "dir")}>
+                              Keep dir
+                            </Button>
+                            <Button color="inherit" size="small" onClick={() => keepOnly(key, "dir_pattern")}>
+                              Keep pattern
+                            </Button>
+                          </Stack>
+                        }
+                      >
+                        Both dir (<code>{asText(product.dir)}</code>) and dir_pattern (
+                        <code>{asText(product.dir_pattern)}</code>) are set; a product has one or the other.
+                      </Alert>
+                    )}
                     <FormControl>
                       <FormLabel>Directory type</FormLabel>
                       <RadioGroup
@@ -353,8 +382,9 @@ export default function ProductsField(props: FieldProps) {
         })}
       </Stack>
       <Button
-        // The field's own id: the checklist jumps here while there are no products
-        id={props.idSchema.$id}
+        // The checklist jumps here for the products list itself while there are none
+        id={`${props.idSchema.$id}_add`}
+        data-empty={entries.length === 0}
         variant="outlined"
         startIcon={<AddIcon />}
         onClick={addProduct}

@@ -5,7 +5,7 @@
  * in from the manifest; anything not in the DMI documents is marked as a tip.
  */
 
-import { asText, has, isMapping, isTbd, type Manifest } from "./compliance";
+import { asText, checklist, has, isMapping, isTbd, type Manifest } from "./compliance";
 import { STATUSES, WIS2_OPTIONS, statusOf, type Status } from "./guidance";
 import { pathParts } from "./navigation";
 
@@ -26,9 +26,16 @@ export interface Step {
   /** Where the step comes from. */
   ref: string;
   link?: { href: string; label: string };
-  /** Manifest fields that record the step; it counts as done when all are filled. */
+  /** Manifest fields that record the step; it counts as done when all are filled and valid. */
   fields?: string[];
+  /** Sections or fields beyond `fields` that must be valid too, e.g. the retention date that goes with its kind. */
+  covers?: string[];
+  /** The field to fill in next, while something beyond `fields` is still missing. */
+  next?: (data: Manifest) => string | undefined;
 }
+
+/** A validation error; rjsf names its field ".retention.until". */
+export type FieldError = { property?: string };
 
 export interface Stage {
   key: string;
@@ -54,14 +61,32 @@ function valueAt(data: Manifest, path: string): unknown {
   return node;
 }
 
-/** Every field the step records is filled; placeholders do not count once archived. */
-export function stepDone(data: Manifest, step: Step): boolean {
+/** The errors in the step's fields and in what it covers, as paths ("retention.until"). */
+function stepErrors(step: Step, errors: FieldError[]): string[] {
+  const paths = [...(step.fields ?? []), ...(step.covers ?? [])];
+  return errors
+    .map((e) => pathParts(e.property ?? "").join("."))
+    .filter((p) => paths.some((f) => p === f || p.startsWith(`${f}.`)));
+}
+
+/**
+ * Every field the step records is filled and valid, and nothing else it needs is missing;
+ * placeholders do not count once archived.
+ */
+export function stepDone(data: Manifest, step: Step, errors: FieldError[] = []): boolean {
   if (!step.fields?.length) return false;
   const archived = statusOf(data.status) === "archived";
-  return step.fields.every((f) => {
+  const filled = step.fields.every((f) => {
     const v = valueAt(data, f);
     return has(v) && !(archived && isTbd(v));
   });
+  return filled && !stepErrors(step, errors).length && !step.next?.(data);
+}
+
+/** Where "Fill in" goes: the first empty field, else the first error, else what is still missing. */
+export function stepTarget(data: Manifest, step: Step, errors: FieldError[] = []): string | undefined {
+  const fields = step.fields ?? [];
+  return fields.find((f) => !has(valueAt(data, f))) ?? stepErrors(step, errors)[0] ?? step.next?.(data) ?? fields[0];
 }
 
 /** Single-quoted for the shell, so spaces and $ in a path are taken literally. */
@@ -108,6 +133,7 @@ function registerStage(): Stage {
         text: "A named Owner, Steward and Custodian with reachable contacts. One person may hold all three — then say so.",
         ref: "Procedure A.1, Standard §3",
         fields: ["roles.owner", "roles.steward", "roles.custodian"],
+        covers: ["roles"],
       },
       {
         title: "Decide purpose and retention",
@@ -115,6 +141,7 @@ function registerStage(): Stage {
         text: "Until a date, a condition, or indefinitely with a written reason: 'We keep X until Y because Z'.",
         ref: "Procedure A.2, REQ-RET-001",
         fields: ["retention.kind"],
+        covers: ["retention"],
       },
       {
         title: "Choose the licence",
@@ -122,13 +149,14 @@ function registerStage(): Stage {
         text: "When in doubt, CC-BY 4.0. A restricted licence needs the reason and who decided it.",
         ref: "Procedure A.3, REQ-LIC-001/002",
         fields: ["license.id"],
+        covers: ["license"],
       },
       {
         title: "Get a persistent identifier",
         who: ["Steward", "Custodian"],
         text:
           "Every entry gets a local PID; a dataset that will be published or cited also gets a DOI via DataCite. Both arrangements are " +
-          "still being confirmed — ask the Data Custodian, and record 'TBD by' a date meanwhile.",
+          "still being confirmed — ask the Data Custodian, and meanwhile switch on 'Not known yet' with the date by which it will be known.",
         ref: "Procedure A.4, REQ-CAT-008/009",
         fields: ["identifiers.pid"],
       },
@@ -138,16 +166,21 @@ function registerStage(): Stage {
         text:
           "Metadata page: what the dataset is, how it was produced (configuration, code version, processing), what the variables mean " +
           "(units, ranges, encoding) and its known limitations. The archiving guide follows once the archiving decisions are made; " +
-          "until then 'TBD by' a date.",
+          "until then switch on 'Not known yet'.",
         ref: "Procedure A.6, Guidelines §8, REQ-STW-001",
         fields: ["links.metadata", "links.archiving_guide"],
       },
       {
         title: "Fill in the remaining fields",
         who: ["Steward"],
-        text: "Every field the Checklist marks as required for Active. Facts not known yet may be 'TBD by YYYY-MM-DD'; decisions may not.",
+        text: "Every field the Checklist marks as required for Active. Facts not known yet may be marked 'Not known yet'; decisions may not.",
         ref: "Procedure A.5, REQ-CAT-004",
         fields: ["dates.released"],
+        next: (data) =>
+          checklist({ ...data, status: "active" })
+            .filter((g) => g.relation === "now")
+            .flatMap((g) => g.items)
+            .find((i) => i.state === "missing" && i.target)?.target,
       },
       {
         title: "Get the Owner's approval, then register",

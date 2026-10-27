@@ -305,7 +305,7 @@ export default function App() {
               </Tabs>
               <Box sx={{ flex: 1, overflow: "auto" }}>
                 {tab === "checklist" && <ChecklistPanel formData={formData} errors={errors} />}
-                {tab === "steps" && <StepsPanel formData={formData} />}
+                {tab === "steps" && <StepsPanel formData={formData} errors={errors} />}
                 {tab === "yaml" && (
                   <YamlPreview
                     formData={formData}

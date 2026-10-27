@@ -21,7 +21,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import type { Manifest } from "../compliance";
 import { STATUS_INFO, statusOf } from "../guidance";
 import { goTo } from "../navigation";
-import { stagesFor, stepDone, type Command, type Stage, type Step } from "../steps";
+import { stagesFor, stepDone, stepTarget, type Command, type FieldError, type Stage, type Step } from "../steps";
 
 const ROLE_COLOUR = { Owner: "secondary", Steward: "primary", Custodian: "success" } as const;
 
@@ -77,8 +77,8 @@ function CommandBlock({ command }: { command: Command }) {
   );
 }
 
-function StepItem({ step, index, data }: { step: Step; index: number; data: Manifest }) {
-  const done = stepDone(data, step);
+function StepItem({ step, index, data, errors }: { step: Step; index: number; data: Manifest; errors: FieldError[] }) {
+  const done = stepDone(data, step, errors);
   return (
     <Box sx={{ display: "flex", gap: 1.25, py: 1.25, "&:not(:last-of-type)": { borderBottom: 1, borderColor: "divider" } }}>
       <Box sx={{ flex: "none", width: 24, pt: 0.1, textAlign: "center" }}>
@@ -128,7 +128,7 @@ function StepItem({ step, index, data }: { step: Step; index: number; data: Mani
             <Link
               component="button"
               variant="caption"
-              onClick={() => goTo(step.fields![0])}
+              onClick={() => goTo(stepTarget(data, step, errors) ?? step.fields![0])}
               sx={{ display: "inline-flex", alignItems: "center" }}
             >
               {done ? "See in form" : "Fill in"}
@@ -141,9 +141,9 @@ function StepItem({ step, index, data }: { step: Step; index: number; data: Mani
   );
 }
 
-function StageCard({ stage, data }: { stage: Stage; data: Manifest }) {
+function StageCard({ stage, data, errors }: { stage: Stage; data: Manifest; errors: FieldError[] }) {
   const recordable = stage.steps.filter((s) => s.fields?.length).length;
-  const doneCount = stage.steps.filter((s) => stepDone(data, s)).length;
+  const doneCount = stage.steps.filter((s) => stepDone(data, s, errors)).length;
   return (
     <Accordion
       defaultExpanded={!stage.later}
@@ -179,14 +179,15 @@ function StageCard({ stage, data }: { stage: Stage; data: Manifest }) {
           </Typography>
         )}
         {stage.steps.map((step, i) => (
-          <StepItem key={step.title} step={step} index={i} data={data} />
+          <StepItem key={step.title} step={step} index={i} data={data} errors={errors} />
         ))}
       </AccordionDetails>
     </Accordion>
   );
 }
 
-export default function StepsPanel({ formData }: { formData: Manifest }) {
+/** `errors`: the form's validation errors, so that a step with an invalid field is not ticked. */
+export default function StepsPanel({ formData, errors = [] }: { formData: Manifest; errors?: FieldError[] }) {
   const status = statusOf(formData.status);
   return (
     <Box sx={{ p: 2 }}>
@@ -199,7 +200,7 @@ export default function StepsPanel({ formData }: { formData: Manifest }) {
       </Paper>
       {stagesFor(formData).map((stage) => (
         // A stage moving from Later to Now remounts, so that it opens
-        <StageCard key={`${stage.key}-${stage.later ? "later" : "now"}`} stage={stage} data={formData} />
+        <StageCard key={`${stage.key}-${stage.later ? "later" : "now"}`} stage={stage} data={formData} errors={errors} />
       ))}
     </Box>
   );

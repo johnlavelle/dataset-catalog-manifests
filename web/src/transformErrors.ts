@@ -11,7 +11,12 @@ const PATTERN_HINTS: Record<string, string> = {
   [defs.urlOrTbd.pattern]: "Use a full link starting with https://, or 'Not known yet'",
   [defs.textOrTbd.pattern]: "Placeholders must read 'TBD by YYYY-MM-DD' — use 'Not known yet'",
   [rawSchema.properties.id.pattern]: "Lower-case letters, digits, '-' and '_' only, starting with a letter or digit",
-  [rawSchema.properties.identifiers.properties.doi.pattern]: "A bare DOI such as 10.48670/moi-00013, or 'Not known yet'",
+  [rawSchema.properties.identifiers.properties.doi.pattern]:
+    "A bare DOI such as 10.48670/moi-00013 (without https://doi.org/), or 'Not known yet'",
+  [rawSchema.properties.identifiers.properties.related.items.properties.doi.pattern]:
+    "A bare DOI such as 10.48670/moi-00013, without https://doi.org/",
+  [rawSchema.properties.exceptions.items.properties.id.pattern]: "Starts with EXC-, e.g. EXC-2026-001",
+  [rawSchema.properties.exceptions.items.properties.requirement.pattern]: "A requirement ID such as REQ-CMP-001",
 };
 
 export default function transformErrors(errors: RJSFValidationError[]): RJSFValidationError[] {
@@ -19,16 +24,23 @@ export default function transformErrors(errors: RJSFValidationError[]): RJSFVali
     .map((error) => {
       // Suppress cryptic combinator errors: the concrete error is reported separately
       if (error.name === "if" || error.name === "allOf") return null;
-      if (
-        error.property?.includes("products") &&
-        (error.name === "anyOf" || error.name === "not" || error.name === "oneOf")
-      ) {
-        return null;
+      if (error.property?.includes("products")) {
+        // A product has dir or dir_pattern: neither is reported as a missing field; both, here
+        if (error.name === "not") {
+          error.message = "Use either dir or dir_pattern, not both";
+          return error;
+        }
+        if (error.name === "anyOf" || error.name === "oneOf") return null;
       }
 
       if (error.name === "required" || error.name === "minLength") {
         const field = error.params?.missingProperty;
         error.message = field === "dir" || field === "dir_pattern" ? "Either dir or dir_pattern is required" : "Required";
+      }
+
+      // A line just added to a list of texts (e.g. Secondary locations) is empty until filled in
+      if (error.name === "type" && error.params?.type === "string" && /\.\d+$/.test(error.property ?? "")) {
+        error.message = "Fill this in, or remove the line";
       }
 
       if (error.name === "pattern") {
@@ -39,8 +51,12 @@ export default function transformErrors(errors: RJSFValidationError[]): RJSFVali
         error.message = "Placeholders are not allowed once a dataset is archived (REQ-ARC-001)";
       }
 
-      if (error.name === "enum" && error.property === ".storage.tier") {
+      // Only the rule for archived datasets allows just the archive tier
+      const allowed = error.params?.allowedValues;
+      if (error.name === "enum" && error.property === ".storage.tier" && Array.isArray(allowed) && allowed.join() === "archive") {
         error.message = "An archived dataset lives in the archive tier";
+      } else if (error.name === "enum" && error.property === ".storage.tier") {
+        error.message = "Choose a tier from the list";
       }
 
       if (error.name === "minItems" && error.property === ".appraisal.users") {

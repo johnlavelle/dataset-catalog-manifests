@@ -130,7 +130,7 @@ const SCREEN: [string, ReactNode][] = [
     "Cards",
     <>
       One per section. <em>How to fill this in</em> opens the guidance from the DMI documents. Fields that only apply
-      to another choice stay hidden.
+      to another choice are hidden, and changing the choice removes what was entered in them.
     </>,
   ],
   [

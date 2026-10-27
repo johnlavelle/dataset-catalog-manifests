@@ -97,7 +97,7 @@ function exercise(input: Manifest): boolean {
   const noop = () => {};
   render(<ManifestForm formData={data} onChange={noop} />);
   render(<ChecklistPanel formData={data} errors={errors} />);
-  render(<StepsPanel formData={data} />);
+  render(<StepsPanel formData={data} errors={errors} />);
   render(<YamlPreview formData={data} onImport={noop} />);
   return refused;
 }

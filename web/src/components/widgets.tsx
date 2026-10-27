@@ -19,7 +19,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { addDays, asText, slugify, type Manifest } from "../compliance";
+import { TBD_RE, addDays, asText, slugify, today, type Manifest } from "../compliance";
 import { STATUSES, STATUS_INFO, statusOf, type Option } from "../guidance";
 
 /** Shared with every widget through rjsf's formContext. */
@@ -86,9 +86,10 @@ export function IdWidget(props: WidgetProps) {
         value={asText(value)}
         onChange={(e) => onChange(e.target.value || undefined)}
         disabled={disabled || readonly}
-        // Suggest the title's slug without filling it in: the ID must not follow later title edits
-        placeholder={suggestion || placeholder || "e.g. danra-data"}
-        InputLabelProps={suggestion ? { shrink: true } : undefined}
+        placeholder={placeholder || "e.g. danra-data"}
+        // Suggested, not filled in: the ID must not follow later title edits. As helper text, since a
+        // suggestion inside the box looks like a value
+        helperText={!asText(value) && suggestion ? `Suggested from the title: ${suggestion}` : undefined}
         error={hasErrors(props)}
         fullWidth
       />
@@ -210,9 +211,10 @@ export function PersonWidget(props: WidgetProps) {
 export function TbdWidget(props: WidgetProps) {
   const { id, value, onChange, label, required, disabled, readonly, options, placeholder } = props;
   const inputType = (options.inputType as string) || "text";
-  const isTbd = typeof value === "string" && value.startsWith("TBD");
+  // Only a complete placeholder: typing "TBD" in the box must not turn it into a date picker
+  const due = typeof value === "string" ? (TBD_RE.exec(value)?.[1] ?? "") : "";
+  const isTbd = due !== "";
   const archived = ctxOf(props).formData?.status === "archived";
-  const due = isTbd ? value.replace(/^TBD by\s*/, "") : "";
 
   const toggle = (on: boolean) => onChange(on ? `TBD by ${addDays(30)}` : undefined);
 
@@ -225,16 +227,17 @@ export function TbdWidget(props: WidgetProps) {
           label={`${label} — not known yet`}
           required={required}
           value={due}
-          onChange={(e) => onChange(`TBD by ${e.target.value}`)}
+          // Clearing the date keeps the previous one: a placeholder needs a date
+          onChange={(e) => e.target.value && onChange(`TBD by ${e.target.value}`)}
           disabled={disabled || readonly}
           error={hasErrors(props)}
           InputLabelProps={{ shrink: true }}
           InputProps={{ startAdornment: <InputAdornment position="start">Decide by</InputAdornment> }}
           helperText={
             <>
-              The date by which it will be known (Procedure A.5); 30 days ahead unless you change it. Saved as{" "}
-              <span style={{ whiteSpace: "nowrap" }}>&ldquo;TBD by {due || "YYYY-MM-DD"}&rdquo;</span> and listed in the
-              checklist until filled in.
+              {due < today() ? `Overdue since ${due}: fill it in, or set a new date. ` : ""}The date by which it will be
+              known (Procedure A.5). Saved as <span style={{ whiteSpace: "nowrap" }}>&ldquo;TBD by {due}&rdquo;</span> and
+              listed in the checklist until filled in.
             </>
           }
           fullWidth
@@ -258,7 +261,7 @@ export function TbdWidget(props: WidgetProps) {
         title={
           archived && !isTbd
             ? "Placeholders are not allowed once a dataset is archived (REQ-ARC-001)"
-            : "Not known yet? Record a placeholder with the date it will be decided by (Procedure A.5)"
+            : "Not known yet? Record a placeholder with the date by which it will be known (Procedure A.5); 30 days ahead is suggested"
         }
       >
         <FormControlLabel
