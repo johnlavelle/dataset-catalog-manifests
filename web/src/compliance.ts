@@ -25,7 +25,6 @@ const OBJECT_KEYS = [
   "archiving",
   "deletion",
   "extensions",
-  "stac",
   "products",
 ];
 
@@ -115,10 +114,49 @@ export function sameRoleHolder(roles: Manifest = {}): boolean {
 const joinText = (...parts: unknown[]) => parts.filter((p) => typeof p === "string" && p).join("; ");
 
 /**
+ * The stac section, dropped in October 2026: its DOIs become related DOIs (titled with their
+ * product code), the model system fills an empty dataset.model, and whatever else it held
+ * moves to extensions.stac. The STAC catalogue is generated from the rest of the manifest
+ * and a scan of the files.
+ */
+function upgradeStac(out: Manifest) {
+  const { stac, ...rest } = out;
+  const extensions = rest.extensions ?? {};
+  const leftover: Manifest = {};
+  if (isMapping(stac)) {
+    const identifiers = rest.identifiers ?? {};
+    const related = isMapping(identifiers) ? (identifiers.related ?? []) : undefined;
+    const dois = isMapping(stac.dois) ? stac.dois : {};
+    for (const [key, value] of Object.entries(stac)) {
+      if (key === "dois" && Array.isArray(related) && isMapping(value)) {
+        const known = new Set(related.map((r: unknown) => (isMapping(r) ? r.doi : undefined)));
+        const added = Object.entries(value)
+          .filter(([, doi]) => typeof doi === "string" && doi && !known.has(doi))
+          .map(([title, doi]) => ({ doi, title }));
+        const odd = Object.entries(value).filter(([, doi]) => !(typeof doi === "string" && doi));
+        if (odd.length) leftover.dois = Object.fromEntries(odd);
+        if (added.length) rest.identifiers = { ...identifiers, related: [...related, ...added] };
+      } else if (key === "cmems_product_code" && typeof value === "string" && Object.keys(dois).includes(value)) {
+        // Kept as the title of its related DOI
+      } else if (key === "model_system" && isMapping(rest.dataset) && !has(rest.dataset.model) && typeof value === "string") {
+        rest.dataset = { ...rest.dataset, model: value };
+      } else if (has(value)) {
+        leftover[key] = value;
+      }
+    }
+  }
+  const moved = isMapping(stac) ? leftover : stac;
+  if (!hasContent(moved)) return rest;
+  // An existing extensions.stac is never overwritten: the section then stays where it is, flagged by the schema
+  if (!isMapping(extensions) || "stac" in extensions) return out;
+  return { ...rest, extensions: { ...extensions, stac: moved } };
+}
+
+/**
  * Fields replaced in October 2026, so that older files and saved drafts open without losing
  * anything: the free-text storage.format and storage.compression move to the details fields
- * (the values are then picked from the lists again), and dataset.contact moves to
- * extensions.contact.
+ * (the values are then picked from the lists again), dataset.contact moves to
+ * extensions.contact, and the stac section is taken apart (upgradeStac).
  */
 export function upgradeLegacy(data: Manifest): Manifest {
   const out: Manifest = { ...data };
@@ -140,7 +178,7 @@ export function upgradeLegacy(data: Manifest): Manifest {
     out.dataset = dataset;
     if (has(contact)) out.extensions = { ...extensions, contact };
   }
-  return out;
+  return "stac" in out ? upgradeStac(out) : out;
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   LICENSE_OPTIONS,
   PRODUCT_TYPE_OPTIONS,
   REGENERABLE_OPTIONS,
+  RELATION_OPTIONS,
   REQUIRED_BY_STATUS,
   RETENTION_OPTIONS,
   SECTIONS,
@@ -81,7 +82,7 @@ ${hasDraft ? OPENING_FROM_DRAFT : OPENING_QUESTIONS}
        : ""
    }
    4. **Retention and licence** — how long it must be kept (until a date, until a condition, or indefinitely) and why; the licence (show the options). For \`proposed\`, ask once and record what is known.
-   5. **Identifiers, links and dates** — \`active\` and beyond: the local PID, the metadata page, the archiving guide and the release date; optionally a DOI and the last review date.
+   5. **Identifiers, links and dates** — \`active\` and beyond: the local PID, the metadata page, the archiving guide and the release date; optionally the dataset's own DOI and the last review date. At any status, ask for DOIs of related works — a product published from this data (e.g. a Copernicus Marine product), a paper describing it, its input data — and record each under \`identifiers.related\` with what it is; never put such a DOI in \`identifiers.doi\`.
    6. **Storage** — the storage tier (every status; show the options). For \`archived\` also the WIS2 discipline, the file formats (every one, from the list; the edition or conventions go in \`format_notes\`), any containers such as squashfs, the compression algorithms (\`none\` if uncompressed) with the tool and settings in \`compression_settings\` (and the settings and approver if lossy), and any secondary copies or checksums. A container such as squashfs or tar is not a format and not a compression.
    7. **Appraisal and archiving process** — \`archived\` only: lasting value, users, whether it can be regenerated, obligations, the Owner's approval and its date, the quality-check date, the archiving date and how it was archived.
    8. **Deletion** — \`deleted\` only: the date, who approved it and the reference.
@@ -146,6 +147,7 @@ ${
 
 - \`license.id\`:\n${optionList(LICENSE_OPTIONS)}
 - \`retention.kind\`:\n${optionList(RETENTION_OPTIONS)}
+- \`identifiers.related[].relation\` (optional; how this dataset relates to the DOI):\n${optionList(RELATION_OPTIONS)}
 - \`storage.tier\`:\n${optionList(TIER_OPTIONS)}
 - \`storage.wis2_discipline\`:\n${optionList(WIS2_OPTIONS)}
 - \`storage.formats\` (list):\n${optionList(FORMAT_OPTIONS)}

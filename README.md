@@ -75,8 +75,9 @@ Facts and links that are not known yet (`identifiers.pid`, `identifiers.doi`, `l
 - **People**: `"Full Name <name@dmi.dk>"` (a team name and mailbox is fine for the Custodian). The Data Owner must be on the approved list once it has entries (below).
 - **Dates**: ISO 8601, quoted — `"2024-05-22"`.
 - **Formats, containers, compression** are separate lists: yearly squashfs images of zstd-compressed netCDF and PNG files are `formats: [netCDF, image]`, `containers: [squashfs]`, `compression: [zstd]`. A GRIB edition, conventions or a format the list lacks go in `format_notes`; tool options in `compression_settings`. Files and editor drafts from before these lists (free-text `format` and `compression`, and `dataset.contact`) still open in the editor: the old text moves to `format_notes`, `compression_settings` and `extensions.contact`.
+- **DOIs**: `identifiers.doi` is this dataset's own DOI (DataCite, REQ-CAT-009). DOIs of other things — a Copernicus Marine product published from the data, a paper describing it, its input data — go in `identifiers.related` as `doi`, `title` (what it is) and optionally `relation`. Files and drafts with the former `stac` section still open in the editor: its `dois` become related DOIs titled with their product codes, `model_system` fills an empty `dataset.model`, and anything else moves to `extensions.stac`.
 - **No comments**: the web editor does not keep YAML comments, so put notes in fields — `designated_community_notes`, a product's `notes`, or `extensions`.
-- **Enumerations**: `license.id` — `CC-BY-4.0`, `CC0-1.0`, `WMO-UDP-core`, `WMO-UDP-recommended`, `DMI-internal`, `restricted`; `storage.tier` — `project_space`, `archive`, `database`, `third_party`, `legacy`; `storage.wis2_discipline` — `atmospheric-composition`, `climate`, `cryosphere`, `hydrology`, `ocean`, `space-weather`, `weather`; `storage.formats` (list) — `netCDF`, `GRIB`, `BUFR`, `Zarr`, `HDF5`, `GeoTIFF`, `Parquet`, `CSV`, `text`, `shapefile`, `image`, `scripts`, `binary`, `other`; `storage.containers` (list) — `squashfs`, `tar`, `zip`; `storage.compression` (list) — `none`, `zstd`, `xz`, `zlib`, `gzip`, `ccsds`, `other`; `appraisal.users` — `dmi_staff`, `wmo_nmhs`, `copernicus`, `danish_researchers`, `public`; `appraisal.regenerable` — `impossible`, `expensive`, `cheap`.
+- **Enumerations**: `license.id` — `CC-BY-4.0`, `CC0-1.0`, `WMO-UDP-core`, `WMO-UDP-recommended`, `DMI-internal`, `restricted`; `identifiers.related[].relation` (DataCite relation types) — `IsSourceOf`, `IsVariantFormOf`, `IsDescribedBy`, `IsDerivedFrom`, `IsCitedBy`; `storage.tier` — `project_space`, `archive`, `database`, `third_party`, `legacy`; `storage.wis2_discipline` — `atmospheric-composition`, `climate`, `cryosphere`, `hydrology`, `ocean`, `space-weather`, `weather`; `storage.formats` (list) — `netCDF`, `GRIB`, `BUFR`, `Zarr`, `HDF5`, `GeoTIFF`, `Parquet`, `CSV`, `text`, `shapefile`, `image`, `scripts`, `binary`, `other`; `storage.containers` (list) — `squashfs`, `tar`, `zip`; `storage.compression` (list) — `none`, `zstd`, `xz`, `zlib`, `gzip`, `ccsds`, `other`; `appraisal.users` — `dmi_staff`, `wmo_nmhs`, `copernicus`, `danish_researchers`, `public`; `appraisal.regenerable` — `impossible`, `expensive`, `cheap`.
 
 ### Sections
 
@@ -86,7 +87,7 @@ Facts and links that are not known yet (`identifiers.pid`, `identifiers.doi`, `l
 | `roles` | Data Owner, Data Steward, Data Custodian (Standard §3) |
 | `retention` | Retain until a date, a condition, or indefinitely — with rationale (REQ-RET-001) |
 | `license` | Licence and, for restricted data, the reason and decision-maker (REQ-LIC-001/002) |
-| `identifiers` | Local PID (REQ-CAT-008) and DOI (REQ-CAT-009) |
+| `identifiers` | Local PID (REQ-CAT-008), the dataset's own DOI (REQ-CAT-009), DOIs of related works |
 | `links` | Metadata page, archiving guide, supplier contract |
 | `dates` | Release, archiving, planned deletion, last review, last update |
 | `storage` | Tier, WIS2 discipline (one per archive folder, REQ-NAME-005), file formats, containers, compression and its settings, lossy settings, secondary locations, checksums |
@@ -96,7 +97,6 @@ Facts and links that are not known yet (`identifiers.pid`, `identifiers.doi`, `l
 | `designated_community_notes` | Anything a future user needs to interpret the data |
 | `exceptions` | Registered exceptions (`id`, `requirement`, `expires`, `note`) |
 | `extensions` | Free-form information with no field of its own — any keys and values (text, lists, mappings). Not checked; use the defined fields, product `notes` or `designated_community_notes` where they fit |
-| `stac` | STAC catalog metadata: `institution`, `purpose`, `dois`, etc. |
 | `products` | Map of product key to metadata (below) |
 
 Apart from `extensions` and product entries, only the fields defined in the schema are allowed.
@@ -116,6 +116,24 @@ Each entry in `products` has:
 \* Each product must have exactly one of `dir` or `dir_pattern`, not both.
 
 Additional product fields are allowed — different datasets may need domain-specific metadata (e.g. CMIP6 manifests use `experiment_id`, `realization`, `modules`).
+
+### STAC catalogue
+
+A manifest holds what only people know. A STAC catalogue is generated from it plus a scan of the files, so there is nothing STAC-specific to fill in by hand. The mapping a generator follows:
+
+| STAC Collection | From |
+|-----------------|------|
+| `id`, `title`, `description` | `id`, `dataset.name`, `dataset.description` |
+| `license` | `license.id` — `CC-BY-4.0` and `CC0-1.0` are SPDX ids; anything else is `other`, with a link to the metadata page |
+| `providers` | DMI as producer and host |
+| `keywords` | `storage.wis2_discipline`, `dataset.model`, `dataset.domain` |
+| `sci:doi`, `sci:citation`, `cite-as` link | `identifiers.doi` |
+| `sci:publications`, `related` links | `identifiers.related` |
+| `describedby` link | `links.metadata` |
+| Items, one per product | `products` — `dir` / `dir_pattern` say which files to scan; `name`, `category`, `type` describe them |
+| `extent` (bounding box, time span), variables, file counts and sizes | the scan |
+
+Only if a scan cannot find something a catalogue needs (a dataset in binary files, say) does the manifest need a new field for it.
 
 ## Approved Data Owners
 

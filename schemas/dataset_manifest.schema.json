@@ -190,9 +190,38 @@
         },
         "doi": {
           "type": "string",
-          "title": "DOI",
+          "title": "DOI of this dataset",
           "pattern": "^(10\\.\\d{4,9}/\\S+|TBD by \\d{4}-\\d{2}-\\d{2})$",
-          "description": "Recommended for datasets that are cited, published or meant for long-term reuse, via DataCite (REQ-CAT-009). Bare DOI, e.g. 10.48670/moi-00013."
+          "description": "This dataset's own DOI, registered via DataCite (REQ-CAT-009). Recommended for datasets that are cited, published or meant for long-term reuse. Bare DOI, without https://doi.org/. A DOI of something else — a product published from this data, a paper — goes under Related DOIs."
+        },
+        "related": {
+          "type": "array",
+          "title": "Related DOIs",
+          "description": "DOIs of related works: products published from this data (e.g. a Copernicus Marine product), papers or reports describing it, or the data it was made from.",
+          "items": {
+            "type": "object",
+            "required": ["doi"],
+            "additionalProperties": false,
+            "properties": {
+              "doi": {
+                "type": "string",
+                "title": "DOI",
+                "pattern": "^10\\.\\d{4,9}/\\S+$",
+                "description": "Bare DOI, e.g. 10.48670/moi-00013."
+              },
+              "title": {
+                "type": "string",
+                "title": "What it is",
+                "description": "Short name or product code, e.g. 'BALTICSEA_MULTIYEAR_PHY_003_011' or 'Larsen et al. (2024)'."
+              },
+              "relation": {
+                "type": "string",
+                "title": "Relation",
+                "enum": ["IsSourceOf", "IsVariantFormOf", "IsDescribedBy", "IsDerivedFrom", "IsCitedBy"],
+                "description": "How this dataset relates to the DOI, in DataCite terms."
+              }
+            }
+          }
         }
       }
     },
@@ -499,24 +528,6 @@
       "title": "Other information",
       "description": "Free-form information that has no field of its own (any keys and values). Not checked. Use the defined fields, product notes or designated_community_notes where they fit.",
       "additionalProperties": true
-    },
-    "stac": {
-      "type": "object",
-      "title": "STAC metadata",
-      "additionalProperties": false,
-      "properties": {
-        "institution": { "type": "string", "title": "Institution" },
-        "purpose": { "type": "string", "title": "Purpose" },
-        "model_system": { "type": "string", "title": "Model system" },
-        "cmems_product_code": { "type": "string", "title": "CMEMS product code" },
-        "period": { "type": "string", "title": "Period" },
-        "dois": {
-          "type": "object",
-          "title": "Product DOIs",
-          "additionalProperties": { "type": "string" },
-          "description": "Map of product ID to DOI string."
-        }
-      }
     },
     "products": {
       "type": "object",

@@ -202,6 +202,27 @@ export const REGENERABLE_OPTIONS: Record<string, Option> = {
   },
 };
 
+/** DataCite relation types (this dataset → the related DOI) that fit DMI datasets. */
+export const RELATION_OPTIONS: Record<string, Option> = {
+  IsSourceOf: {
+    label: "Was used to make it",
+    description: "The DOI is a product made from this data, e.g. a Copernicus Marine product published from these model runs.",
+  },
+  IsVariantFormOf: {
+    label: "Same data in another form",
+    description: "The DOI is the same data published elsewhere or in another format.",
+  },
+  IsDescribedBy: {
+    label: "Is described by it",
+    description: "The DOI is a paper or report describing this dataset or how it was produced.",
+  },
+  IsDerivedFrom: {
+    label: "Was made from it",
+    description: "The DOI is input data this dataset was made from, e.g. forcing or observations.",
+  },
+  IsCitedBy: { label: "Is cited by it", description: "The DOI is a publication that uses this data." },
+};
+
 export const USER_OPTIONS: Record<string, Option> = {
   dmi_staff: { label: "DMI scientists, forecasters and operational staff" },
   wmo_nmhs: { label: "Other WMO member meteorological and hydrological services" },
@@ -343,6 +364,7 @@ export const SECTIONS: SectionInfo[] = [
         "Not known yet? Record 'TBD by YYYY-MM-DD' (Procedure A.5) — in the form, the 'Not known yet' switch does this. CI lists open placeholders and flags overdue ones; all must be resolved before archiving.",
       points: [
         "Every entry carries a local persistent identifier (REQ-CAT-008). Published or externally cited datasets also get a DOI via DataCite (REQ-CAT-009) — the DMI DataCite arrangement is being set up; ask the Data Custodian.",
+        "The DOI field holds only this dataset's own DOI. DOIs of other things — a Copernicus Marine product published from this data, a paper describing it, its input data — go under Related DOIs, with what each one is.",
         "Link, don't duplicate: the metadata page explains what the dataset is, how it was produced, what the variables mean and its known limitations.",
         "The archiving guide records the preparation decisions (Procedure B.0–B.7) so the next person does not have to ask.",
         "Review the entry at least yearly and record the date (REQ-CAT-006).",
@@ -435,13 +457,6 @@ export const SECTIONS: SectionInfo[] = [
       source: "Standard §9–10, Policy §6.2 and §7",
     },
   },
-  {
-    key: "stac",
-    title: "STAC metadata",
-    fields: ["stac"],
-    summary: "Optional extras for the generated STAC catalogue.",
-    requiredFor: [],
-  },
 ];
 
 /** Keys of top-level schema objects rendered as card sections. */
@@ -457,7 +472,6 @@ export const SECTION_OBJECT_KEYS = new Set([
   "appraisal",
   "archiving",
   "deletion",
-  "stac",
 ]);
 
 /** Sub-headings used when a card holds more than one schema object. */

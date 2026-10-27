@@ -60,7 +60,10 @@ function schemaPaths(productKey: string): Path[] {
   }
   const product = props.products.additionalProperties.properties as Record<string, unknown>;
   for (const field of Object.keys(product)) found.push(["products", productKey, field]);
-  found.push(["products", productKey], ["exceptions", 0], ["exceptions", 0, "expires"], ["stac", "dois", "x"]);
+  found.push(["products", productKey], ["exceptions", 0], ["exceptions", 0, "expires"]);
+  found.push(["identifiers", "related", 0], ["identifiers", "related", 0, "doi"], ["identifiers", "related", 0, "relation"]);
+  // The legacy stac section, which is taken apart on load
+  found.push(["stac"], ["stac", "dois"], ["stac", "dois", "x"], ["stac", "model_system"]);
   return found;
 }
 

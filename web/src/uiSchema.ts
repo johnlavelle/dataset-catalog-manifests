@@ -7,6 +7,7 @@ import {
   FORMAT_OPTIONS,
   LICENSE_OPTIONS,
   REGENERABLE_OPTIONS,
+  RELATION_OPTIONS,
   RETENTION_OPTIONS,
   TIER_OPTIONS,
   USER_OPTIONS,
@@ -65,7 +66,6 @@ export default function buildUiSchema(data: Manifest): UiSchema {
       "designated_community_notes",
       "exceptions",
       "extensions",
-      "stac",
     ],
     id: { "ui:widget": "IdWidget" },
     status: { "ui:widget": "StatusWidget" },
@@ -98,9 +98,18 @@ export default function buildUiSchema(data: Manifest): UiSchema {
       decided_by: showIf(licence === "restricted", person),
     },
     identifiers: {
-      "ui:order": ["pid", "doi"],
+      "ui:order": ["pid", "doi", "related"],
       pid: tbd("text"),
-      doi: tbd("text", "e.g. 10.48670/moi-00013"),
+      doi: tbd("text", "Only this dataset's own DOI, e.g. 10.xxxx/…"),
+      related: {
+        "ui:options": { orderable: false },
+        items: {
+          "ui:order": ["doi", "title", "relation"],
+          doi: { "ui:placeholder": "e.g. 10.48670/moi-00013" },
+          title: { "ui:placeholder": "e.g. BALTICSEA_MULTIYEAR_PHY_003_011" },
+          relation: select(RELATION_OPTIONS),
+        },
+      },
     },
     links: {
       "ui:order": ["metadata", "archiving_guide", "contract"],
@@ -189,15 +198,6 @@ export default function buildUiSchema(data: Manifest): UiSchema {
     },
     extensions: {
       "ui:field": "ExtensionsField",
-    },
-    stac: {
-      "ui:order": ["institution", "purpose", "model_system", "cmems_product_code", "period", "dois"],
-      institution: { "ui:placeholder": "e.g. Danish Meteorological Institute (DMI)" },
-      purpose: { "ui:placeholder": "e.g. Copernicus Marine Service - Baltic Sea Reanalysis" },
-      model_system: { "ui:placeholder": "e.g. NEMO 4.0 + ERGOM + SI3 + PDAF" },
-      cmems_product_code: { "ui:placeholder": "e.g. BALTICSEA_MULTIYEAR_PHY_003_011" },
-      period: { "ui:placeholder": "e.g. 1993-01-01 to 2024-05-22" },
-      dois: { "ui:field": "DoisField" },
     },
   };
 }
