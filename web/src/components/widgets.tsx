@@ -5,6 +5,7 @@ import {
   Autocomplete,
   Box,
   Button,
+  Checkbox,
   FormControlLabel,
   ListItemText,
   MenuItem,
@@ -301,10 +302,52 @@ export function DescribedSelectWidget(props: WidgetProps) {
   );
 }
 
+/** Several values from a list (an array of enum values), each with a label and an explanation (ui:options.choices). */
+export function MultiSelectWidget(props: WidgetProps) {
+  const { id, value, onChange, label, required, disabled, readonly, options } = props;
+  const choices = (options.choices ?? {}) as Record<string, Option>;
+  const values = (options.enumOptions ?? []).map((o) => String(o.value));
+  // Values outside the list stay visible as chips, so the schema error can be seen and fixed
+  const selected = Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
+  return (
+    <Autocomplete
+      // On the Autocomplete, not the TextField: it sets the input's id (the checklist jumps to it)
+      id={id}
+      multiple
+      disableCloseOnSelect
+      options={values}
+      value={selected}
+      onChange={(_, next) => onChange(next.length ? next : undefined)}
+      getOptionLabel={(v) => choices[v]?.label ?? v}
+      disabled={disabled || readonly}
+      renderOption={(optionProps, v, { selected: isSelected }) => (
+        <li {...optionProps}>
+          <Checkbox size="small" checked={isSelected} sx={{ mr: 1 }} />
+          <ListItemText
+            primary={choices[v]?.label ?? v}
+            secondary={choices[v]?.description}
+            secondaryTypographyProps={{ sx: { whiteSpace: "normal" } }}
+          />
+        </li>
+      )}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={label}
+          required={required}
+          error={hasErrors(props)}
+          placeholder={selected.length ? undefined : "Choose one or more"}
+        />
+      )}
+    />
+  );
+}
+
 export const widgets = {
   StatusWidget,
   IdWidget,
   PersonWidget,
   TbdWidget,
   DescribedSelectWidget,
+  MultiSelectWidget,
 };

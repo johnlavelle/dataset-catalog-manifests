@@ -61,7 +61,7 @@ export const REQUIRED_BY_STATUS: [string, string][] = [
   ],
   [
     "Archived",
-    "Appraisal approved by the Owner; WIS2 discipline; format; compression; quality check date; archiving date. No TBD placeholders.",
+    "Appraisal approved by the Owner; WIS2 discipline; file formats; compression; quality check date; archiving date. No TBD placeholders.",
   ],
   ["Deleted", "Deletion date and the Owner's approval. The entry is never removed."],
   [
@@ -134,6 +134,48 @@ export const WIS2_OPTIONS: Record<string, Option> = {
   ocean: { label: "ocean" },
   "space-weather": { label: "space-weather" },
   weather: { label: "weather" },
+};
+
+/** File formats (storage.formats); the archive takes only open, documented ones (REQ-FMT-001). */
+export const FORMAT_OPTIONS: Record<string, Option> = {
+  netCDF: { label: "netCDF", description: "netCDF classic or netCDF-4. Name the conventions (CF, GHRSST) in the details." },
+  GRIB: { label: "GRIB", description: "GRIB edition 1 or 2. Give the edition in the details." },
+  BUFR: { label: "BUFR", description: "WMO BUFR, e.g. observations." },
+  Zarr: { label: "Zarr", description: "Zarr stores (directories or zipped)." },
+  HDF5: { label: "HDF5", description: "HDF5 that is not netCDF-4." },
+  GeoTIFF: { label: "GeoTIFF", description: "GeoTIFF and Cloud-Optimised GeoTIFF rasters." },
+  Parquet: { label: "Parquet", description: "Apache Parquet tables." },
+  CSV: { label: "CSV", description: "CSV and other delimited text tables." },
+  text: { label: "Text", description: "Plain text and ASCII: logs, namelists, READMEs, ASCII model output." },
+  shapefile: { label: "Shapefile", description: "Esri shapefiles." },
+  image: { label: "Images", description: "PNG, JPEG and other images, e.g. plots." },
+  scripts: { label: "Scripts and code", description: "Scripts and source code, e.g. sh, py, F90." },
+  binary: {
+    label: "Model-specific binary",
+    description: "e.g. HYCOM .a/.b or Fortran unformatted files. Only in the archive if documented well enough to read back (REQ-FMT-001).",
+  },
+  other: { label: "Other", description: "Name it in the details, and check it is open and documented (REQ-FMT-001)." },
+};
+
+/** Containers that pack files together (storage.containers). */
+export const CONTAINER_OPTIONS: Record<string, Option> = {
+  squashfs: {
+    label: "squashfs",
+    description: "Compressed read-only image (.sqfs); the container for mixed file types and kept structure (REQ-CMP-002).",
+  },
+  tar: { label: "tar", description: "tar archives, including .tar.gz / .tgz (give gzip under compression)." },
+  zip: { label: "zip", description: "zip archives." },
+};
+
+/** Compression algorithms (storage.compression), inside files or containers (REQ-CMP-001–003). */
+export const COMPRESSION_OPTIONS: Record<string, Option> = {
+  none: { label: "None", description: "Uncompressed." },
+  zstd: { label: "zstd", description: "Zstandard. The default for squashfs, and for netCDF where supported (REQ-CMP-001)." },
+  xz: { label: "xz", description: "xz / LZMA. Can win on few large files, e.g. GRIB archives (REQ-CMP-003)." },
+  zlib: { label: "zlib", description: "Deflate inside netCDF-4 or HDF5, e.g. level 1." },
+  gzip: { label: "gzip", description: "gzip files (.gz, .tgz). Avoid when a better algorithm is available (REQ-CMP-001)." },
+  ccsds: { label: "CCSDS (GRIB2)", description: "Lossless CCSDS/AEC packing inside GRIB2 (packingType grid_ccsds)." },
+  other: { label: "Other", description: "Name it in the compression settings." },
 };
 
 export const RETENTION_OPTIONS: Record<string, Option> = {

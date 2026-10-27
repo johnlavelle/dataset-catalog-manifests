@@ -2,6 +2,9 @@ import type { UiSchema } from "@rjsf/utils";
 import type { Manifest } from "./compliance";
 import { sameRoleHolder } from "./compliance";
 import {
+  COMPRESSION_OPTIONS,
+  CONTAINER_OPTIONS,
+  FORMAT_OPTIONS,
   LICENSE_OPTIONS,
   REGENERABLE_OPTIONS,
   RETENTION_OPTIONS,
@@ -21,6 +24,10 @@ const textarea = (rows: number, placeholder?: string) => ({
 });
 const select = (choices: Record<string, unknown>) => ({
   "ui:widget": "DescribedSelectWidget",
+  "ui:options": { choices },
+});
+const multiSelect = (choices: Record<string, unknown>) => ({
+  "ui:widget": "MultiSelectWidget",
   "ui:options": { choices },
 });
 const tbd = (inputType: "text" | "url" | "date", placeholder?: string) => ({
@@ -63,13 +70,12 @@ export default function buildUiSchema(data: Manifest): UiSchema {
     id: { "ui:widget": "IdWidget" },
     status: { "ui:widget": "StatusWidget" },
     dataset: {
-      "ui:order": ["name", "path", "description", "model", "domain", "contact"],
+      "ui:order": ["name", "path", "description", "model", "domain"],
       name: { "ui:placeholder": "e.g. DANRA Reanalysis — Zarr Data Collection" },
       path: { "ui:placeholder": "e.g. /dmidata/projects/<project>/… or /dmidata/archive/<discipline>/…" },
       description: textarea(3, "What it contains, what it is for, period and resolution, how to interpret it…"),
       model: { "ui:placeholder": "e.g. NEMO, WAM, EC-Earth3" },
       domain: { "ui:placeholder": "e.g. North Sea - Baltic Sea" },
-      contact: person,
     },
     roles: {
       "ui:order": ["owner", "steward", "custodian", "single_person"],
@@ -114,8 +120,11 @@ export default function buildUiSchema(data: Manifest): UiSchema {
       "ui:order": [
         "tier",
         "wis2_discipline",
-        "format",
+        "formats",
+        "format_notes",
+        "containers",
         "compression",
+        "compression_settings",
         "lossy",
         "lossy_settings",
         "lossy_approved_by",
@@ -124,8 +133,11 @@ export default function buildUiSchema(data: Manifest): UiSchema {
       ],
       tier: select(TIER_OPTIONS),
       wis2_discipline: select(WIS2_OPTIONS),
-      format: { "ui:placeholder": "e.g. netCDF4, GRIB2, Zarr, squashfs (of netCDF)" },
-      compression: { "ui:placeholder": "e.g. zstd, mksquashfs -b 1M" },
+      formats: multiSelect(FORMAT_OPTIONS),
+      format_notes: { "ui:placeholder": "e.g. GRIB2; CF-1.8; mostly netCDF" },
+      containers: multiSelect(CONTAINER_OPTIONS),
+      compression: multiSelect(COMPRESSION_OPTIONS),
+      compression_settings: { "ui:placeholder": "e.g. mksquashfs -comp zstd -b 1M; netCDF zlib level 1" },
       lossy_settings: showIf(storage.lossy === true, {}),
       lossy_approved_by: showIf(storage.lossy === true, person),
       secondary_locations: { "ui:options": { orderable: false } },

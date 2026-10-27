@@ -50,7 +50,7 @@ The `status` follows the dataset lifecycle in Standard §4 (Figure 1):
 |--------|------------------|
 | any | `id`, `status`, `dataset.name`, `dataset.path`, `dataset.description`, `products` (at least one) |
 | `active`, `archived`, `deprecated` | `roles.owner`, `roles.steward`, `roles.custodian`, `retention.kind` (+ `until` / `condition` / `rationale`), `license.id`, `identifiers.pid`, `links.metadata`, `links.archiving_guide`, `dates.released` |
-| `archived` | additionally `appraisal` (`lasting_value`, `users`, `regenerable`, `approved_by`, `approved_on`), `storage.wis2_discipline`, `storage.format`, `storage.compression`, `archiving.quality_verified_on`, `dates.archived`; `storage.tier`, if set, must be `archive`; **no `TBD` placeholders** (REQ-ARC-001) |
+| `archived` | additionally `appraisal` (`lasting_value`, `users`, `regenerable`, `approved_by`, `approved_on`), `storage.wis2_discipline`, `storage.formats`, `storage.compression` (each at least one value; `none` for uncompressed data), `archiving.quality_verified_on`, `dates.archived`; `storage.tier`, if set, must be `archive`; **no `TBD` placeholders** (REQ-ARC-001) |
 | `deleted` | `deletion.date`, `deletion.approved_by` — the entry is kept, never removed (REQ-CAT-007) |
 
 Conditional rules that apply at any status:
@@ -60,6 +60,7 @@ Conditional rules that apply at any status:
 | `retention.kind: date` / `condition` / `indefinite` | `retention.until` / `retention.condition` / `retention.rationale` |
 | `license.id: restricted` | `license.reason`, `license.decided_by` (REQ-LIC-002) |
 | `storage.lossy: true` | `storage.lossy_settings`, `storage.lossy_approved_by` (REQ-FMT-003) |
+| `other` among `storage.formats` / `storage.compression` | `storage.format_notes` / `storage.compression_settings` naming it |
 | `archiving.automated: true` | `archiving.pipeline`, `archiving.owning_team` (REQ-OPS-002) |
 | `storage.tier: third_party` | `links.contract` (REQ-TPY-003) |
 | Owner, Steward and Custodian are the same person | `roles.single_person: true` (Standard §3) |
@@ -73,21 +74,22 @@ Facts and links that are not known yet (`identifiers.pid`, `identifiers.doi`, `l
 
 - **People**: `"Full Name <name@dmi.dk>"` (a team name and mailbox is fine for the Custodian). The Data Owner must be on the approved list once it has entries (below).
 - **Dates**: ISO 8601, quoted — `"2024-05-22"`.
+- **Formats, containers, compression** are separate lists: yearly squashfs images of zstd-compressed netCDF and PNG files are `formats: [netCDF, image]`, `containers: [squashfs]`, `compression: [zstd]`. A GRIB edition, conventions or a format the list lacks go in `format_notes`; tool options in `compression_settings`. Files and editor drafts from before these lists (free-text `format` and `compression`, and `dataset.contact`) still open in the editor: the old text moves to `format_notes`, `compression_settings` and `extensions.contact`.
 - **No comments**: the web editor does not keep YAML comments, so put notes in fields — `designated_community_notes`, a product's `notes`, or `extensions`.
-- **Enumerations**: `license.id` — `CC-BY-4.0`, `CC0-1.0`, `WMO-UDP-core`, `WMO-UDP-recommended`, `DMI-internal`, `restricted`; `storage.tier` — `project_space`, `archive`, `database`, `third_party`, `legacy`; `storage.wis2_discipline` — `atmospheric-composition`, `climate`, `cryosphere`, `hydrology`, `ocean`, `space-weather`, `weather`; `appraisal.users` — `dmi_staff`, `wmo_nmhs`, `copernicus`, `danish_researchers`, `public`; `appraisal.regenerable` — `impossible`, `expensive`, `cheap`.
+- **Enumerations**: `license.id` — `CC-BY-4.0`, `CC0-1.0`, `WMO-UDP-core`, `WMO-UDP-recommended`, `DMI-internal`, `restricted`; `storage.tier` — `project_space`, `archive`, `database`, `third_party`, `legacy`; `storage.wis2_discipline` — `atmospheric-composition`, `climate`, `cryosphere`, `hydrology`, `ocean`, `space-weather`, `weather`; `storage.formats` (list) — `netCDF`, `GRIB`, `BUFR`, `Zarr`, `HDF5`, `GeoTIFF`, `Parquet`, `CSV`, `text`, `shapefile`, `image`, `scripts`, `binary`, `other`; `storage.containers` (list) — `squashfs`, `tar`, `zip`; `storage.compression` (list) — `none`, `zstd`, `xz`, `zlib`, `gzip`, `ccsds`, `other`; `appraisal.users` — `dmi_staff`, `wmo_nmhs`, `copernicus`, `danish_researchers`, `public`; `appraisal.regenerable` — `impossible`, `expensive`, `cheap`.
 
 ### Sections
 
 | Section | Contents |
 |---------|----------|
-| `dataset` | Title, primary location, description; optional model, domain, general contact |
+| `dataset` | Title, primary location, description; optional model and domain |
 | `roles` | Data Owner, Data Steward, Data Custodian (Standard §3) |
 | `retention` | Retain until a date, a condition, or indefinitely — with rationale (REQ-RET-001) |
 | `license` | Licence and, for restricted data, the reason and decision-maker (REQ-LIC-001/002) |
 | `identifiers` | Local PID (REQ-CAT-008) and DOI (REQ-CAT-009) |
 | `links` | Metadata page, archiving guide, supplier contract |
 | `dates` | Release, archiving, planned deletion, last review, last update |
-| `storage` | Tier, WIS2 discipline, format, compression, lossy settings, secondary locations, checksums |
+| `storage` | Tier, WIS2 discipline (one per archive folder, REQ-NAME-005), file formats, containers, compression and its settings, lossy settings, secondary locations, checksums |
 | `appraisal` | Why it has lasting value, who will use it, whether it can be regenerated, obligations, Owner's approval (REQ-APP-001–004) |
 | `archiving` | Quality check date, aggregation, automated archiving job and owning team |
 | `deletion` | Deletion date, approver, reference, Rigsarkivet authorisation |
@@ -138,7 +140,7 @@ python scripts/validate_manifests.py --strict  # warnings fail too
 This runs the same checks as the CI pipeline on `manifests/` and `examples/`:
 
 - **Errors** (SHALL requirements): the JSON Schema; `id` equals the file name and is unique; the single-person flag; duplicate product directories; the Owner is an approved Data Owner (when `registry/owners.yaml` has entries); a malformed owners list.
-- **Warnings** (SHOULD requirements and housekeeping): open and overdue `TBD` placeholders, expired exceptions, legacy `/net/isilon` locations, archived data outside `/dmidata/archive/<discipline>/`, missing checksums, intermediate products in an archive, gzip compression, missing retention rationale, entries not reviewed for a year.
+- **Warnings** (SHOULD requirements and housekeeping): open and overdue `TBD` placeholders, expired exceptions, legacy `/net/isilon` locations, archived data outside `/dmidata/archive/<discipline>/`, missing checksums, intermediate products in an archive, gzip compression, `binary` or `other` formats in the archive (check they are open and documented), missing retention rationale, entries not reviewed for a year.
 - **Info**: for `proposed` entries, the fields still needed to register.
 
 ### Web editor compatibility

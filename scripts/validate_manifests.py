@@ -224,8 +224,16 @@ def cross_checks(path, manifest, today, owners=frozenset()):
             if isinstance(product, dict) and product.get("type") == "intermediate file":
                 warnings.append(f"Product '{key}' is an intermediate file — filter it out before archiving (REQ-ARC-005)")
 
-    if "gzip" in (storage.get("compression") or "").lower():
+    compression = storage.get("compression")
+    if isinstance(compression, list) and "gzip" in compression:
         warnings.append("gzip compression: prefer zstd (or xz / zlib) (REQ-CMP-001)")
+    formats = storage.get("formats")
+    named = {f for f in formats if isinstance(f, str)} if isinstance(formats, list) else set()
+    unchecked = sorted({"binary", "other"} & named)
+    if unchecked and (status == "archived" or storage.get("tier") == "archive"):
+        warnings.append(
+            f"Format {' and '.join(unchecked)}: check it is open and documented, see format_notes (REQ-FMT-001)"
+        )
 
     lic = manifest.get("license") or {}
     if lic.get("id") == "DMI-internal" and not lic.get("reason"):

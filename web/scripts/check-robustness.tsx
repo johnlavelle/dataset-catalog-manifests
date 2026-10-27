@@ -119,9 +119,10 @@ for (const path of paths) {
 for (const value of [...WRONG, "activeqwerty", "ACTIVE"]) cases.push({ label: `status = ${JSON.stringify(value)}`, doc: { ...base, status: value } });
 cases.push({ label: "empty manifest", doc: {} });
 
-// React reports prop-type warnings for odd values on console.error; only exceptions count here
-const consoleError = console.error;
-console.error = () => {};
+// React and MUI report odd values (prop types, values not among the options) on console.error
+// and console.warn; only exceptions count here
+const { error: consoleError, warn: consoleWarn } = console;
+console.error = console.warn = () => {};
 const failures = new Map<string, string[]>();
 let refused = 0;
 const started = Date.now();
@@ -135,6 +136,7 @@ for (const [i, { label, doc }] of cases.entries()) {
   }
 }
 console.error = consoleError;
+console.warn = consoleWarn;
 
 for (const [message, labels] of failures) {
   console.log(`FAIL  ${message}\n      ${labels.length} case(s), e.g.\n      ${labels.slice(0, 6).join("\n      ")}`);

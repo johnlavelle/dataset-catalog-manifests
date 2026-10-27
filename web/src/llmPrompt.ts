@@ -14,6 +14,9 @@ import {
   TIER_OPTIONS,
   USER_OPTIONS,
   WIS2_OPTIONS,
+  COMPRESSION_OPTIONS,
+  CONTAINER_OPTIONS,
+  FORMAT_OPTIONS,
   type Option,
 } from "./guidance";
 
@@ -70,7 +73,7 @@ The colleague has probably not read the Storage and Archiving documents. The ess
 ${hasDraft ? OPENING_FROM_DRAFT : OPENING_QUESTIONS}
 2. **Target status.** (a) → \`proposed\`, (b) → \`active\`, (c) → \`archived\`, (d) → \`deprecated\`, (e) → \`deleted\`. An entry can only be \`active\` or beyond when the Owner, Steward, Custodian, retention and licence are all decided. Ask about them first (rounds 3 and 4); only if one turns out to be undecided, say so briefly and keep it \`proposed\`; it can be updated later. If a \`proposed\` entry turns out to have all of them, offer \`active\`.
 3. **Rounds**, in this order, one or two topics per message. Skip anything already known. Which rounds apply: \`proposed\` 1, 2, 3 and 4 (asked together, once), 6 (the tier only) and 9; \`active\` and \`deprecated\` 1–6 and 9; \`archived\` 1–7 and 9; \`deleted\` 1, 2, 8 and 9.
-   1. **Dataset** — the title, the description (offer your draft, written for a colleague in three years who knows the science but not the project), the \`id\` (offer one), and optionally the model, domain and a contact.
+   1. **Dataset** — the title, the description (offer your draft, written for a colleague in three years who knows the science but not the project), the \`id\` (offer one), and optionally the model and domain.
    2. **Products** — the parts users think of separately. For each: the directory or file (\`dir\`), or a pattern for a family of directories (\`dir_pattern\`); a short name; optionally the type, category and notes. Offer entries from a listing. Ask whether any directory holds intermediate files that need not be kept.
    3. **Roles** — Owner (decides on retention, licence and deletion), Steward (keeps the metadata right), Custodian (runs the storage; a team and its mailbox is fine). Name and e-mail for each. For \`proposed\`, ask once and record what is known.${
      OWNERS.length
@@ -79,7 +82,7 @@ ${hasDraft ? OPENING_FROM_DRAFT : OPENING_QUESTIONS}
    }
    4. **Retention and licence** — how long it must be kept (until a date, until a condition, or indefinitely) and why; the licence (show the options). For \`proposed\`, ask once and record what is known.
    5. **Identifiers, links and dates** — \`active\` and beyond: the local PID, the metadata page, the archiving guide and the release date; optionally a DOI and the last review date.
-   6. **Storage** — the storage tier (every status; show the options). For \`archived\` also the WIS2 discipline, format and compression (with the settings and approver if lossy), and any secondary copies or checksums.
+   6. **Storage** — the storage tier (every status; show the options). For \`archived\` also the WIS2 discipline, the file formats (every one, from the list; the edition or conventions go in \`format_notes\`), any containers such as squashfs, the compression algorithms (\`none\` if uncompressed) with the tool and settings in \`compression_settings\` (and the settings and approver if lossy), and any secondary copies or checksums. A container such as squashfs or tar is not a format and not a compression.
    7. **Appraisal and archiving process** — \`archived\` only: lasting value, users, whether it can be regenerated, obligations, the Owner's approval and its date, the quality-check date, the archiving date and how it was archived.
    8. **Deletion** — \`deleted\` only: the date, who approved it and the reference.
    9. **Last question** — any exceptions to the Standard agreed with the Owner, or notes on who the data is for? Optional.
@@ -145,6 +148,9 @@ ${
 - \`retention.kind\`:\n${optionList(RETENTION_OPTIONS)}
 - \`storage.tier\`:\n${optionList(TIER_OPTIONS)}
 - \`storage.wis2_discipline\`:\n${optionList(WIS2_OPTIONS)}
+- \`storage.formats\` (list):\n${optionList(FORMAT_OPTIONS)}
+- \`storage.containers\` (list):\n${optionList(CONTAINER_OPTIONS)}
+- \`storage.compression\` (list):\n${optionList(COMPRESSION_OPTIONS)}
 - \`appraisal.users\` (list):\n${optionList(USER_OPTIONS)}
 - \`appraisal.regenerable\`:\n${optionList(REGENERABLE_OPTIONS)}
 - \`products.<key>.type\`:\n${optionList(PRODUCT_TYPE_OPTIONS)}

@@ -73,11 +73,6 @@
           "type": "string",
           "title": "Domain",
           "description": "Geographic domain (e.g. North Sea - Baltic Sea, Global)."
-        },
-        "contact": {
-          "$ref": "#/definitions/person",
-          "title": "General contact",
-          "description": "Optional point of contact for users, e.g. a team mailbox. Accountability is recorded under Roles."
         }
       }
     },
@@ -273,15 +268,39 @@
           "enum": ["atmospheric-composition", "climate", "cryosphere", "hydrology", "ocean", "space-weather", "weather"],
           "description": "Top-level folder under /dmidata/archive (REQ-NAME-004). One discipline per archive folder (REQ-NAME-005). Mandatory once archived."
         },
-        "format": {
+        "formats": {
+          "type": "array",
+          "title": "File formats",
+          "description": "Every format of the files in the dataset, inside any containers. Open, documented formats only in the archive (REQ-FMT-001). Mandatory once archived.",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["netCDF", "GRIB", "BUFR", "Zarr", "HDF5", "GeoTIFF", "Parquet", "CSV", "text", "shapefile", "image", "scripts", "binary", "other"]
+          }
+        },
+        "format_notes": {
           "type": "string",
-          "title": "Primary file format",
-          "description": "e.g. netCDF4, GRIB2, Zarr, squashfs (of netCDF). Open, documented formats only in the archive (REQ-FMT-001). Mandatory once archived."
+          "title": "Format details",
+          "description": "What the list does not say: edition, conventions, proportions, or the name of an 'other' format, e.g. 'GRIB2', 'GHRSST L2P', 'mostly netCDF'. Mandatory when 'other' is chosen."
+        },
+        "containers": {
+          "type": "array",
+          "title": "Containers",
+          "description": "How files are packed together, if at all. squashfs is the container for mixed file types and when names and structure must be kept (REQ-CMP-002). Leave empty for plain files.",
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["squashfs", "tar", "zip"] }
         },
         "compression": {
+          "type": "array",
+          "title": "Compression",
+          "description": "The algorithms used, inside files or containers; 'none' if uncompressed. zstd or zlib for netCDF, zstd for squashfs, xz case by case, gzip avoided (REQ-CMP-001–003). Mandatory once archived.",
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["none", "zstd", "xz", "zlib", "gzip", "ccsds", "other"] }
+        },
+        "compression_settings": {
           "type": "string",
-          "title": "Compression and settings",
-          "description": "e.g. 'zstd, mksquashfs -b 1M' or 'zlib level 1'. Write 'none' if uncompressed. Mandatory once archived (REQ-CMP-001–003)."
+          "title": "Compression settings",
+          "description": "Tool and settings, e.g. 'mksquashfs -comp zstd -b 1M' or 'netCDF zlib level 1'. Mandatory when 'other' is chosen."
         },
         "lossy": {
           "type": "boolean",
@@ -313,6 +332,14 @@
         {
           "if": { "properties": { "lossy": { "const": true } }, "required": ["lossy"] },
           "then": { "required": ["lossy_settings", "lossy_approved_by"] }
+        },
+        {
+          "if": { "properties": { "formats": { "contains": { "const": "other" } } }, "required": ["formats"] },
+          "then": { "required": ["format_notes"], "properties": { "format_notes": { "minLength": 1 } } }
+        },
+        {
+          "if": { "properties": { "compression": { "contains": { "const": "other" } } }, "required": ["compression"] },
+          "then": { "required": ["compression_settings"], "properties": { "compression_settings": { "minLength": 1 } } }
         }
       ]
     },
@@ -582,8 +609,12 @@
             "properties": { "users": { "minItems": 1 } }
           },
           "storage": {
-            "required": ["wis2_discipline", "format", "compression"],
-            "properties": { "tier": { "enum": ["archive"] } }
+            "required": ["wis2_discipline", "formats", "compression"],
+            "properties": {
+              "tier": { "enum": ["archive"] },
+              "formats": { "minItems": 1 },
+              "compression": { "minItems": 1 }
+            }
           },
           "archiving": {
             "required": ["quality_verified_on"],

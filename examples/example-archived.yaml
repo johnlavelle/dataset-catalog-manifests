@@ -11,7 +11,6 @@ dataset:
     their original folder structure in one squashfs container per campaign year.
   model: Field observations (IMB buoys, AWS, drill transects)
   domain: Qaanaaq, NW Greenland
-  contact: Sea-ice research group <seaice@dmi.dk>
 
 roles:
   owner: Example Owner <owner@dmi.dk>
@@ -43,8 +42,16 @@ dates:
 storage:
   tier: archive
   wis2_discipline: cryosphere
-  format: squashfs (CSV, netCDF4, text)
-  compression: zstd, mksquashfs -comp zstd -b 1M -no-xattrs -noappend
+  formats:
+    - netCDF
+    - CSV
+    - text
+  format_notes: netCDF-4
+  containers:
+    - squashfs
+  compression:
+    - zstd
+  compression_settings: mksquashfs -comp zstd -b 1M -no-xattrs -noappend
   lossy: false
   checksums: sha256 file next to each .sqfs container
 

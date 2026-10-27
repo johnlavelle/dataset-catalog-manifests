@@ -1,5 +1,5 @@
 import yaml from "js-yaml";
-import { orderManifest, structureProblems } from "./compliance";
+import { orderManifest, structureProblems, upgradeLegacy } from "./compliance";
 
 /** Lets VS Code (YAML extension) validate the manifest against the schema while editing. */
 const SCHEMA_HINT = "# yaml-language-server: $schema=../schemas/dataset_manifest.schema.json\n";
@@ -70,12 +70,13 @@ export function parseYaml(text: string): Record<string, unknown> {
   if (!doc || typeof doc !== "object" || Array.isArray(doc)) {
     throw new Error("YAML must be a mapping (key-value object), not a scalar or list");
   }
-  const problems = structureProblems(doc as Record<string, unknown>);
+  const manifest = upgradeLegacy(doc as Record<string, unknown>);
+  const problems = structureProblems(manifest);
   if (problems.length) {
     const more = problems.length > 3 ? ` (and ${problems.length - 3} more)` : "";
     throw new Error(`The form cannot hold this YAML: ${problems.slice(0, 3).join("; ")}${more}`);
   }
-  return doc as Record<string, unknown>;
+  return manifest;
 }
 
 export function downloadYaml(content: string, filename: string): void {

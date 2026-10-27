@@ -112,13 +112,44 @@ export function sameRoleHolder(roles: Manifest = {}): boolean {
   return has(roles.owner) && roles.owner === roles.steward && roles.owner === roles.custodian;
 }
 
+const joinText = (...parts: unknown[]) => parts.filter((p) => typeof p === "string" && p).join("; ");
+
+/**
+ * Fields replaced in October 2026, so that older files and saved drafts open without losing
+ * anything: the free-text storage.format and storage.compression move to the details fields
+ * (the values are then picked from the lists again), and dataset.contact moves to
+ * extensions.contact.
+ */
+export function upgradeLegacy(data: Manifest): Manifest {
+  const out: Manifest = { ...data };
+  if (isMapping(out.storage)) {
+    const storage: Manifest = { ...out.storage };
+    if (typeof storage.format === "string") {
+      storage.format_notes = joinText(storage.format_notes, storage.format);
+      delete storage.format;
+    }
+    if (typeof storage.compression === "string") {
+      storage.compression_settings = joinText(storage.compression_settings, storage.compression);
+      delete storage.compression;
+    }
+    out.storage = storage;
+  }
+  const extensions = out.extensions ?? {};
+  if (isMapping(out.dataset) && "contact" in out.dataset && isMapping(extensions) && !("contact" in extensions)) {
+    const { contact, ...dataset } = out.dataset;
+    out.dataset = dataset;
+    if (has(contact)) out.extensions = { ...extensions, contact };
+  }
+  return out;
+}
+
 /**
  * Bring form data into the shape the editor expects: every section present (possibly empty)
  * and fields that only apply to another choice removed (e.g. retention.until when the
  * retention is indefinite). Empty values are stripped again when exporting YAML.
  */
 export function normalise(data: Manifest): Manifest {
-  const out: Manifest = { ...data };
+  const out: Manifest = upgradeLegacy(data);
   for (const key of OBJECT_KEYS) {
     if (out[key] === undefined || out[key] === null) out[key] = {};
   }
@@ -343,8 +374,8 @@ export function checklist(data: Manifest): CheckGroup[] {
     { label: "Appraisal approved by the Owner, with date", ref: "REQ-APP-003", level: "shall", ok: person(appraisal.approved_by) && has(appraisal.approved_on), fields: ["appraisal.approved_by", "appraisal.approved_on"] },
     { label: "Data quality verified", ref: "REQ-ARC-004", level: "shall", value: archiving.quality_verified_on, fields: ["archiving.quality_verified_on"] },
     { label: "WIS2 discipline chosen", ref: "REQ-NAME-004", level: "shall", value: discipline, fields: ["storage.wis2_discipline"] },
-    { label: "Primary file format recorded", ref: "REQ-FMT-001", level: "shall", value: storage.format, fields: ["storage.format"] },
-    { label: "Compression and settings recorded", ref: "Procedure C.7", level: "shall", value: storage.compression, fields: ["storage.compression"] },
+    { label: "File formats recorded", ref: "REQ-FMT-001", level: "shall", value: storage.formats, fields: ["storage.formats"] },
+    { label: "Compression recorded ('None' if uncompressed)", ref: "Procedure C.7", level: "shall", value: storage.compression, fields: ["storage.compression"] },
     ...(storage.lossy
       ? [{ label: "Lossy compression approved by the Owner", ref: "REQ-FMT-003", level: "shall" as const, ok: has(storage.lossy_settings) && person(storage.lossy_approved_by), fields: ["storage.lossy_settings", "storage.lossy_approved_by"] }]
       : []),
@@ -410,6 +441,12 @@ export function checklist(data: Manifest): CheckGroup[] {
     recs.push({ label: "Plan migration off legacy /net/isilon", ref: "REQ-TIER-002", state: "warn", target: "dataset.path" });
   if (has(appraisal.approved_by) && has(roles.owner) && appraisal.approved_by !== roles.owner)
     recs.push({ label: "Appraisal should be approved by the Data Owner", ref: "REQ-APP-003", state: "warn", target: "appraisal.approved_by" });
+  const compression = Array.isArray(storage.compression) ? storage.compression : [];
+  if (compression.includes("gzip"))
+    recs.push({ label: "Prefer zstd or xz to gzip", ref: "REQ-CMP-001", state: "warn", target: "storage.compression" });
+  const formats: unknown[] = Array.isArray(storage.formats) ? storage.formats : [];
+  if ((status === "archived" || storage.tier === "archive") && formats.some((f) => f === "binary" || f === "other"))
+    recs.push({ label: "Check that every format is open and documented", ref: "REQ-FMT-001", state: "warn", target: "storage.formats" });
   const reviewed = dates.reviewed;
   if (REGISTERED.includes(status) && (!has(reviewed) || reviewed < addDays(-366)))
     recs.push({ label: "Review the entry at least yearly (set 'Last reviewed')", ref: "REQ-CAT-006", state: "warn", target: "dates.reviewed" });
