@@ -154,7 +154,7 @@ const SCREEN: [string, ReactNode][] = [
     <>
       Every manifest you edit is saved in this browser as you type, and nothing is sent anywhere. <em>Recent</em> lists
       them to open again, download or remove, so <em>New</em>, <em>Open</em> and <em>Example</em> lose nothing. The
-      list is kept only in this browser: download the YAML to keep or share a manifest.
+      list is kept only in this browser, which may clear it: download the YAML to keep or share a manifest.
     </>,
   ],
 ];
@@ -256,8 +256,9 @@ const FAQ: [string, ReactNode][] = [
     <>
       Under <em>Recent</em>, if you edited it in this browser: every manifest is saved there as you type, even if you
       never downloaded it. The list is not shared with other computers, other browsers or the editor at another
-      address, and clearing the browser&rsquo;s site data (or a private window closing) removes it. Download the YAML
-      to keep a manifest for good, and submit it to the catalogue to register it.
+      address. Clearing the browser&rsquo;s site data or closing a private window removes it, and some browsers
+      clear it by themselves when the editor has not been used for a while. Download the YAML to keep a manifest for
+      good, and submit it to the catalogue to register it.
     </>,
   ],
   [

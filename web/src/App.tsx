@@ -125,29 +125,31 @@ export default function App() {
   const show = useCallback((data: Manifest, key = findSaved(data)?.key ?? newKey()) => {
     setDraft({ key, data });
     setShowInfo(false);
+    return key;
   }, []);
 
   const formHasContent = !isBlank(formData);
-  /** Said when the form is replaced, so that the user knows where the previous manifest went. */
-  const kept = formHasContent && stored ? " The previous manifest is under Recent." : "";
+  /** Said when another entry replaces the form, so that the user knows where the previous manifest went. */
+  const kept = (key: string) =>
+    formHasContent && stored && key !== draft.key ? " The previous manifest is under Recent." : "";
 
   const openFile = async (file: File) => {
     try {
-      show(prepareImport(parseYaml(await file.text()), file.name));
-      setMessage({ text: `Loaded ${file.name}.${kept}`, severity: "success" });
+      const key = show(prepareImport(parseYaml(await file.text()), file.name));
+      setMessage({ text: `Loaded ${file.name}.${kept(key)}`, severity: "success" });
     } catch (err) {
       setMessage({ text: err instanceof Error ? err.message : "Could not read the file", severity: "error" });
     }
   };
 
   const loadExample = () => {
-    show(prepareImport(parseYaml(exampleYaml)));
-    setMessage({ text: `Loaded an illustrative example of an archived dataset.${kept}`, severity: "success" });
+    const key = show(prepareImport(parseYaml(exampleYaml)));
+    setMessage({ text: `Loaded an illustrative example of an archived dataset.${kept(key)}`, severity: "success" });
   };
 
   const startNew = () => {
-    show(emptyManifest(), newKey());
-    if (kept) setMessage({ text: `Started a new manifest.${kept}`, severity: "success" });
+    const note = kept(show(emptyManifest(), newKey()));
+    if (note) setMessage({ text: `Started a new manifest.${note}`, severity: "success" });
   };
 
   const openSaved = (entry: SavedManifest) => {
@@ -158,7 +160,7 @@ export default function App() {
     }
     replaceForm("Open another manifest?", "Open", () => {
       show(normalise(entry.data), entry.key);
-      setMessage({ text: `Opened “${manifestTitle(entry.data)}”.${kept}`, severity: "success" });
+      setMessage({ text: `Opened “${manifestTitle(entry.data)}”.${kept(entry.key)}`, severity: "success" });
     });
   };
 

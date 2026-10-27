@@ -151,8 +151,9 @@ export default function RecentDialog({ open, onClose, currentKey, stored, onOpen
         )}
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
           Every manifest you edit is kept here as you type, so opening another one loses nothing. They are kept only
-          in this browser on this computer: the editor in another browser or at another address has its own list, and
-          clearing the browser&rsquo;s site data removes them. Download the YAML to keep a copy or to submit it.
+          in this browser on this computer: the editor in another browser or at another address has its own list.
+          Clearing the browser&rsquo;s site data removes them, and some browsers clear it by themselves when the page
+          has not been visited for a while. Download the YAML to keep a copy or to submit it.
         </Typography>
       </DialogContent>
       <DialogActions>

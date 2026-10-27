@@ -186,7 +186,7 @@ It also reports comments (which the editor drops) and formatting that differs fr
 
 ## Web Editor
 
-The editor renders the form from the JSON Schema and adds the DMI guidance, status-dependent requirements, a checklist, the steps for each lifecycle stage (from the Procedures, with commands filled in from the manifest; practical tips from Confluence are marked as such), YAML import and export, and the AI prompt. It runs entirely in the browser; nothing is sent anywhere. Every manifest edited is kept in the browser's local storage as you type and listed under *Recent*, so opening another one loses nothing; the list belongs to that browser and address only, so a manifest is kept for good by downloading it and submitting it.
+The editor renders the form from the JSON Schema and adds the DMI guidance, status-dependent requirements, a checklist, the steps for each lifecycle stage (from the Procedures, with commands filled in from the manifest; practical tips from Confluence are marked as such), YAML import and export, and the AI prompt. It runs entirely in the browser; nothing is sent anywhere. Every manifest edited is kept in the browser's local storage as you type and listed under *Recent*, so opening another one loses nothing; the list belongs to that browser and address only, and browsers may clear it, so a manifest is kept for good by downloading it and submitting it.
 
 ```bash
 cd web

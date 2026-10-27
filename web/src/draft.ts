@@ -5,6 +5,11 @@ import { toYaml } from "./yamlExport";
 export const SAVED_KEY = "dataset-manifest-editor:saved";
 /** Earlier versions kept a single draft under this key; it is moved into the list. */
 const DRAFT_KEY = "dataset-manifest-editor:draft";
+/**
+ * The entry it is moved to. Always the same one: a tab still running an earlier version writes the
+ * draft again on every change, which must not add an entry each time.
+ */
+const EARLIER_DRAFT = "earlier-draft";
 /** The entry open in this tab, so that a reload reopens it. Per tab, hence sessionStorage. */
 const CURRENT_KEY = "dataset-manifest-editor:current";
 
@@ -57,7 +62,10 @@ function readList(): SavedManifest[] {
   const list = Array.isArray(stored) ? stored.filter(isEntry) : [];
   const draft = readJson(DRAFT_KEY);
   if (isMapping(draft) && !isBlank(draft)) {
-    list.push({ key: newKey(), saved: Date.now(), data: draft });
+    const entry = { key: EARLIER_DRAFT, saved: Date.now(), data: draft };
+    const i = list.findIndex((e) => e.key === EARLIER_DRAFT);
+    if (i >= 0) list[i] = entry;
+    else list.push(entry);
     if (!writeList(list)) return list;
   }
   try {
