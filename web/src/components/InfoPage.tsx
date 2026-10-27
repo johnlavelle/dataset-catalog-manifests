@@ -406,8 +406,9 @@ export default function InfoPage() {
             </li>
             <li>
               <strong>Not known yet?</strong> For facts and links (PID, DOI, pages, release date) switch on{" "}
-              <em>Not known yet</em> to record <code>TBD by YYYY-MM-DD</code> (Procedure A.5). CI lists open
-              placeholders and flags overdue ones. Decisions — roles, retention, licence — cannot be postponed, and no
+              <em>Not known yet</em> and pick the date by which it will be known (30 days ahead unless you change
+              it): it is recorded as <code>TBD by YYYY-MM-DD</code> (Procedure A.5). The checklist and CI list open
+              placeholders and flag overdue ones. Decisions — roles, retention, licence — cannot be postponed, and no
               placeholder may remain once a dataset is archived.
             </li>
             <li>

@@ -7,6 +7,7 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
+  InputAdornment,
   ListItemText,
   MenuItem,
   Stack,
@@ -201,7 +202,9 @@ export function PersonWidget(props: WidgetProps) {
 
 /**
  * A text, URL or date input that can instead hold a "TBD by YYYY-MM-DD" placeholder
- * (Procedure A.5). Placeholders are refused once the dataset is archived.
+ * (Procedure A.5). Placeholders are refused once the dataset is archived. While it holds one,
+ * the input asks for the date by which the value will be known, so it says so plainly: a date
+ * appearing where a link was is otherwise easily read as part of the link.
  */
 export function TbdWidget(props: WidgetProps) {
   const { id, value, onChange, label, required, disabled, readonly, options, placeholder } = props;
@@ -218,14 +221,21 @@ export function TbdWidget(props: WidgetProps) {
         <TextField
           id={id}
           type="date"
-          label={`${label} — to be decided by`}
+          label={`${label} — not known yet`}
           required={required}
           value={due}
           onChange={(e) => onChange(`TBD by ${e.target.value}`)}
           disabled={disabled || readonly}
           error={hasErrors(props)}
           InputLabelProps={{ shrink: true }}
-          helperText={`Saved as "TBD by ${due || "YYYY-MM-DD"}"`}
+          InputProps={{ startAdornment: <InputAdornment position="start">Decide by</InputAdornment> }}
+          helperText={
+            <>
+              The date by which it will be known (Procedure A.5); 30 days ahead unless you change it. Saved as{" "}
+              <span style={{ whiteSpace: "nowrap" }}>&ldquo;TBD by {due || "YYYY-MM-DD"}&rdquo;</span> and listed in the
+              checklist until filled in.
+            </>
+          }
           fullWidth
         />
       ) : (
