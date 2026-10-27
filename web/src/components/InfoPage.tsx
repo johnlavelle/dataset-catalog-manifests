@@ -150,8 +150,12 @@ const SCREEN: [string, ReactNode][] = [
   ],
   ["Divider", "Drag the line between the form and the side panel to resize it; double-click to reset."],
   [
-    "Your draft",
-    "Saved in this browser as you type, and nothing is sent anywhere. New, Open and Example ask before replacing it. Download the YAML to keep or share it.",
+    "Recent",
+    <>
+      Every manifest you edit is saved in this browser as you type, and nothing is sent anywhere. <em>Recent</em> lists
+      them to open again, download or remove, so <em>New</em>, <em>Open</em> and <em>Example</em> lose nothing. The
+      list is kept only in this browser: download the YAML to keep or share a manifest.
+    </>,
   ],
 ];
 
@@ -248,10 +252,19 @@ const FAQ: [string, ReactNode][] = [
     </>,
   ],
   [
+    "Where is the manifest I was working on?",
+    <>
+      Under <em>Recent</em>, if you edited it in this browser: every manifest is saved there as you type, even if you
+      never downloaded it. The list is not shared with other computers, other browsers or the editor at another
+      address, and clearing the browser&rsquo;s site data (or a private window closing) removes it. Download the YAML
+      to keep a manifest for good, and submit it to the catalogue to register it.
+    </>,
+  ],
+  [
     "The editor says it cannot show this manifest.",
     <>
       The file or draft holds something the form cannot display. <em>Download draft</em> keeps a copy;{" "}
-      <em>Start a new manifest</em> clears it. Files that use older field names (free-text format or compression,{" "}
+      <em>Start a new manifest</em> opens an empty form and leaves the draft under <em>Recent</em>. Files that use older field names (free-text format or compression,{" "}
       <code>dataset.contact</code>, a <code>stac</code> section) are converted automatically when opened.
     </>,
   ],
@@ -299,8 +312,8 @@ export default function InfoPage() {
         <Typography component="div">
           <ol>
             <li>
-              <strong>Start</strong> with <em>New</em>, or <em>Open</em> an existing manifest. To see every field in
-              use, load the <em>Example</em>. Prefer a conversation? <em>AI prompt</em> gives you a file to upload to
+              <strong>Start</strong> with <em>New</em>, <em>Open</em> an existing manifest, or pick up one you worked
+              on before under <em>Recent</em>. To see every field in use, load the <em>Example</em>. Prefer a conversation? <em>AI prompt</em> gives you a file to upload to
               an AI assistant, which interviews you and writes the YAML.
             </li>
             <li>

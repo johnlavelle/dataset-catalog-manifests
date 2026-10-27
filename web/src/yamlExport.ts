@@ -1,5 +1,5 @@
 import yaml from "js-yaml";
-import { orderManifest, structureProblems, upgradeLegacy } from "./compliance";
+import { asText, orderManifest, structureProblems, upgradeLegacy, type Manifest } from "./compliance";
 
 /** Lets VS Code (YAML extension) validate the manifest against the schema while editing. */
 const SCHEMA_HINT = "# yaml-language-server: $schema=../schemas/dataset_manifest.schema.json\n";
@@ -119,4 +119,15 @@ export async function copyToClipboard(text: string): Promise<void> {
   const ok = document.execCommand("copy");
   area.remove();
   if (!ok) throw new Error("Copy failed");
+}
+
+/** Save a manifest as <id>.yaml, as JSON if it cannot be written as YAML. */
+export function downloadManifest(data: Manifest): void {
+  let text: string;
+  try {
+    text = toYaml(data);
+  } catch {
+    text = JSON.stringify(data, null, 2);
+  }
+  downloadFile(text, `${asText(data.id) || "manifest-draft"}.yaml`, "text/yaml");
 }

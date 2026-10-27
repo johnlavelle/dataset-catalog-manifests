@@ -25,6 +25,7 @@ import {
   ArrowBack,
   NoteAddOutlined,
   FolderOpenOutlined,
+  HistoryOutlined,
   AutoStoriesOutlined,
   SmartToyOutlined,
   Inventory2Outlined,
@@ -37,6 +38,7 @@ import StepsPanel from "./components/StepsPanel";
 import SectionNav from "./components/SectionNav";
 import InfoPage from "./components/InfoPage";
 import LlmDialog from "./components/LlmDialog";
+import RecentDialog, { manifestTitle } from "./components/RecentDialog";
 import ErrorBoundary from "./components/ErrorBoundary";
 import SplitHandle, { FORM_MIN, PANEL_DEFAULT, PANEL_MIN, clampPanel } from "./components/SplitHandle";
 import type { IChangeEvent } from "@rjsf/core";
@@ -44,7 +46,6 @@ import {
   checklist,
   customValidate,
   emptyManifest,
-  hasContent,
   missingCount,
   normalise,
   schema,
@@ -52,7 +53,7 @@ import {
   asText,
 } from "./compliance";
 import { STATUS_INFO, statusOf } from "./guidance";
-import { loadDraft, saveDraft } from "./draft";
+import { findSaved, isBlank, loadDraft, newKey, saveDraft, type Draft, type SavedManifest } from "./draft";
 import transformErrors from "./transformErrors";
 import { parseYaml } from "./yamlExport";
 import exampleYaml from "../../examples/example-archived.yaml?raw";
@@ -70,9 +71,21 @@ function loadPanelWidth(): number {
   return PANEL_DEFAULT;
 }
 
+/** A file or pasted YAML as the form holds it: named after the file if it has no ID, Proposed if it has no status. */
+function prepareImport(data: Manifest, source?: string): Manifest {
+  const imported = { ...data };
+  if (!imported.id && source) imported.id = source.replace(/\.ya?ml$/i, "");
+  if (!imported.status) imported.status = "proposed";
+  return normalise(imported);
+}
+
 export default function App() {
-  const [formData, setFormData] = useState<Manifest>(loadDraft);
+  const [draft, setDraft] = useState<Draft>(loadDraft);
+  const formData = draft.data;
+  /** Whether the browser keeps the form: false in some private windows, or when its storage is full. */
+  const [stored, setStored] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
+  const [showRecent, setShowRecent] = useState(false);
   const [tab, setTab] = useState<"checklist" | "steps" | "yaml">("checklist");
   const [showLlm, setShowLlm] = useState(false);
   const [pending, setPending] = useState<{ title: string; confirm: string; run: () => void } | null>(null);
@@ -81,7 +94,9 @@ export default function App() {
   const panel = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  useEffect(() => saveDraft(formData), [formData]);
+  useEffect(() => {
+    setStored(saveDraft(draft));
+  }, [draft]);
 
   useEffect(() => {
     try {
@@ -98,39 +113,61 @@ export default function App() {
   const missing = useMemo(() => missingCount(checklist(formData)), [formData]);
 
   const handleChange = useCallback((e: IChangeEvent) => {
-    if (e.formData) setFormData(normalise(e.formData));
+    if (!e.formData) return;
+    const data = normalise(e.formData);
+    setDraft((d) => ({ key: d.key, data }));
   }, []);
 
-  const handleImport = useCallback((data: Manifest, source?: string) => {
-    const imported = { ...data };
-    if (!imported.id && source) imported.id = source.replace(/\.ya?ml$/i, "");
-    if (!imported.status) imported.status = "proposed";
-    setFormData(normalise(imported));
+  /**
+   * Put another manifest in the form, under an entry of its own (the one already holding the same
+   * manifest, if any). The manifest it replaces stays under Recent.
+   */
+  const show = useCallback((data: Manifest, key = findSaved(data)?.key ?? newKey()) => {
+    setDraft({ key, data });
     setShowInfo(false);
   }, []);
 
+  const formHasContent = !isBlank(formData);
+  /** Said when the form is replaced, so that the user knows where the previous manifest went. */
+  const kept = formHasContent && stored ? " The previous manifest is under Recent." : "";
+
   const openFile = async (file: File) => {
     try {
-      handleImport(parseYaml(await file.text()), file.name);
-      setMessage({ text: `Loaded ${file.name}`, severity: "success" });
+      show(prepareImport(parseYaml(await file.text()), file.name));
+      setMessage({ text: `Loaded ${file.name}.${kept}`, severity: "success" });
     } catch (err) {
       setMessage({ text: err instanceof Error ? err.message : "Could not read the file", severity: "error" });
     }
   };
 
   const loadExample = () => {
-    handleImport(parseYaml(exampleYaml));
-    setMessage({ text: "Loaded an illustrative example of an archived dataset", severity: "success" });
+    show(prepareImport(parseYaml(exampleYaml)));
+    setMessage({ text: `Loaded an illustrative example of an archived dataset.${kept}`, severity: "success" });
   };
 
-  const formHasContent = useMemo(() => {
-    const { status: _, ...rest } = formData;
-    return Object.values(rest).some(hasContent);
-  }, [formData]);
+  const startNew = () => {
+    show(emptyManifest(), newKey());
+    if (kept) setMessage({ text: `Started a new manifest.${kept}`, severity: "success" });
+  };
 
-  /** Ask before replacing a form that holds anything beyond the defaults. */
+  const openSaved = (entry: SavedManifest) => {
+    setShowRecent(false);
+    if (entry.key === draft.key) {
+      setShowInfo(false);
+      return;
+    }
+    replaceForm("Open another manifest?", "Open", () => {
+      show(normalise(entry.data), entry.key);
+      setMessage({ text: `Opened “${manifestTitle(entry.data)}”.${kept}`, severity: "success" });
+    });
+  };
+
+  /**
+   * Replacing the form loses nothing while the browser keeps it under Recent; otherwise ask
+   * before replacing a form that holds anything beyond the defaults.
+   */
   const replaceForm = (title: string, confirm: string, run: () => void) => {
-    if (formHasContent) setPending({ title, confirm, run });
+    if (formHasContent && !stored) setPending({ title, confirm, run });
     else run();
   };
 
@@ -168,12 +205,7 @@ export default function App() {
             <Button
               color="inherit"
               startIcon={<NoteAddOutlined />}
-              onClick={() =>
-                replaceForm("Start a new manifest?", "Clear form", () => {
-                  setFormData(emptyManifest());
-                  setShowInfo(false);
-                })
-              }
+              onClick={() => replaceForm("Start a new manifest?", "Clear form", startNew)}
             >
               New
             </Button>
@@ -185,6 +217,11 @@ export default function App() {
               onClick={() => replaceForm("Open another manifest?", "Choose file", () => fileInput.current?.click())}
             >
               Open
+            </Button>
+          </Tooltip>
+          <Tooltip title="Manifests you have edited in this browser">
+            <Button color="inherit" startIcon={<HistoryOutlined />} onClick={() => setShowRecent(true)}>
+              Recent
             </Button>
           </Tooltip>
           <Tooltip title="Load a fully filled-in example">
@@ -224,7 +261,7 @@ export default function App() {
       {showInfo ? (
         <InfoPage />
       ) : (
-        <ErrorBoundary formData={formData} onReset={() => setFormData(emptyManifest())}>
+        <ErrorBoundary formData={formData} onReset={() => show(emptyManifest(), newKey())}>
           <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
             <Box sx={{ flex: 1, minWidth: 0, overflow: "auto" }}>
               <SectionNav formData={formData} errors={errors} />
@@ -267,7 +304,12 @@ export default function App() {
               <Box sx={{ flex: 1, overflow: "auto" }}>
                 {tab === "checklist" && <ChecklistPanel formData={formData} errors={errors} />}
                 {tab === "steps" && <StepsPanel formData={formData} />}
-                {tab === "yaml" && <YamlPreview formData={formData} onImport={(data) => handleImport(data)} />}
+                {tab === "yaml" && (
+                  <YamlPreview
+                    formData={formData}
+                    onImport={(data) => setDraft((d) => ({ key: d.key, data: prepareImport(data) }))}
+                  />
+                )}
               </Box>
             </Box>
           </Box>
@@ -278,7 +320,8 @@ export default function App() {
         <DialogTitle>{pending?.title}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This replaces what is in the form now. Download or copy the current YAML first if you want to keep it.
+            This browser is not keeping what you type (some private windows do not, or its storage is full), so this
+            replaces what is in the form now. Download or copy the current YAML first if you want to keep it.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -294,6 +337,14 @@ export default function App() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <RecentDialog
+        open={showRecent}
+        onClose={() => setShowRecent(false)}
+        currentKey={draft.key}
+        stored={stored}
+        onOpen={openSaved}
+      />
 
       <LlmDialog open={showLlm} onClose={() => setShowLlm(false)} formData={formData} hasDraft={formHasContent} />
 

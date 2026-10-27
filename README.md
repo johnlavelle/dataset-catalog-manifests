@@ -186,7 +186,7 @@ It also reports comments (which the editor drops) and formatting that differs fr
 
 ## Web Editor
 
-The editor renders the form from the JSON Schema and adds the DMI guidance, status-dependent requirements, a checklist, the steps for each lifecycle stage (from the Procedures, with commands filled in from the manifest; practical tips from Confluence are marked as such), YAML import and export, and the AI prompt. It runs entirely in the browser; nothing is sent anywhere.
+The editor renders the form from the JSON Schema and adds the DMI guidance, status-dependent requirements, a checklist, the steps for each lifecycle stage (from the Procedures, with commands filled in from the manifest; practical tips from Confluence are marked as such), YAML import and export, and the AI prompt. It runs entirely in the browser; nothing is sent anywhere. Every manifest edited is kept in the browser's local storage as you type and listed under *Recent*, so opening another one loses nothing; the list belongs to that browser and address only, so a manifest is kept for good by downloading it and submitting it.
 
 ```bash
 cd web
@@ -199,7 +199,7 @@ npm run check:robustness   # malformed manifests must not crash the editor
 Bad input never leaves a blank page:
 - **Import:** a file or pasted YAML whose sections have the wrong shape (a list where `dataset:` should be key–value lines, a product that is plain text) is refused with a message naming the fields.
 - **Field values:** wrong values, such as an unknown status or a number where text belongs, load and are listed as errors in the checklist.
-- **Recovery:** if the form still cannot show a draft, it offers to download the draft or start a new one.
+- **Recovery:** if the form still cannot show a draft, it offers to download the draft or start a new one; the draft stays under *Recent*.
 
 `check:robustness` (CI job `editor-robustness`) replaces each field of the example with values of the wrong type and renders the editor with every variant.
 
