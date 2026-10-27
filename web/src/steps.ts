@@ -40,11 +40,11 @@ export interface Stage {
 }
 
 const ARCHIVE = "/dmidata/archive/";
-const ARCHIVE_TOOL = "https://gitlab.dmi.dk/hpc/dmi-data-archive";
-const CONFLUENCE_PROCESS = "https://confluence.dmi.dk/pages/viewpage.action?pageId=247772730";
-const CONFLUENCE_FAQ = "https://confluence.dmi.dk/pages/viewpage.action?pageId=280937053";
-const CONFLUENCE_STORAGE = "https://confluence.dmi.dk/pages/viewpage.action?pageId=186692195";
-const CONFLUENCE_QMS_ARCHIVING = "https://confluence.dmi.dk/pages/viewpage.action?pageId=149489205";
+export const ARCHIVE_TOOL = "https://gitlab.dmi.dk/hpc/dmi-data-archive";
+export const CONFLUENCE_PROCESS = "https://confluence.dmi.dk/pages/viewpage.action?pageId=247772730";
+export const CONFLUENCE_FAQ = "https://confluence.dmi.dk/pages/viewpage.action?pageId=280937053";
+export const CONFLUENCE_STORAGE = "https://confluence.dmi.dk/pages/viewpage.action?pageId=186692195";
+export const CONFLUENCE_QMS_ARCHIVING = "https://confluence.dmi.dk/pages/viewpage.action?pageId=149489205";
 const NOT_IN_DOCS = "Practical tip, not in the DMI Procedures.";
 const TARBALL = "archive.tar.gz";
 
