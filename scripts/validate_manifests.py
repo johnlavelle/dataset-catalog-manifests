@@ -187,7 +187,10 @@ def cross_checks(path, manifest, today, owners=frozenset()):
     # Values are stored without surrounding spaces, so that they compare and join as written
     for field, value in iter_strings(manifest):
         if value != value.strip():
-            errors.append(f"{field}: remove the spaces or line breaks at the start or end")
+            if value.endswith("\n") and value.rstrip("\n") == value.strip():
+                errors.append(f"{field}: ends with a line break — write the text as '>-' (or '|-') instead of '>' (or '|')")
+            else:
+                errors.append(f"{field}: remove the spaces or line breaks at the start or end")
 
     # Standard §3.1: the Owner is one of the approved Data Owners (the examples are fictional,
     # and a deleted entry keeps the Owner who approved the deletion)

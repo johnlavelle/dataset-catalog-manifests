@@ -73,5 +73,7 @@ export default function transformErrors(errors: RJSFValidationError[]): RJSFVali
 
       return error;
     })
-    .filter((e): e is RJSFValidationError => e !== null);
+    .filter((e): e is RJSFValidationError => e !== null)
+    // An empty field is "Required"; its format does not matter yet
+    .filter((e, _, all) => e.name !== "pattern" || !all.some((o) => o.name === "minLength" && o.property === e.property));
 }

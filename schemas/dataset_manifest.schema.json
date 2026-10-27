@@ -28,11 +28,13 @@
     },
     "location": {
       "type": "string",
+      "minLength": 1,
       "description": "An absolute path (/dmidata/…), a path on another server (host:/path), or a URL (scheme://…) for a database or external store. No trailing slash on a path, no spaces at either end.",
       "pattern": "^(?:[A-Za-z][A-Za-z0-9+.-]*://\\S+|(?:[A-Za-z0-9][A-Za-z0-9.-]*:)?/(?:\\S(?:.*[^\\s/])?)?)$"
     },
     "relativePath": {
       "type": "string",
+      "minLength": 1,
       "description": "A path relative to dataset.path: no slash at the start or end, no spaces at either end.",
       "pattern": "^[^\\s/](?:.*[^\\s/])?$"
     }
