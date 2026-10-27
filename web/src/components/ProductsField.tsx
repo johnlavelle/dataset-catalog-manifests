@@ -353,6 +353,8 @@ export default function ProductsField(props: FieldProps) {
         })}
       </Stack>
       <Button
+        // The field's own id: the checklist jumps here while there are no products
+        id={props.idSchema.$id}
         variant="outlined"
         startIcon={<AddIcon />}
         onClick={addProduct}

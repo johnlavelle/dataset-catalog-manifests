@@ -26,6 +26,31 @@ export function sectionOf(path: string): string {
 const isShown = (el: HTMLElement) => el.offsetParent !== null && (el as HTMLInputElement).type !== "hidden";
 
 /**
+ * Fields the form shows only once another field has a certain value (showIf in uiSchema), with
+ * that field. While such a field is hidden, a jump to it goes to the field that reveals it: its
+ * neighbours (Release date for the archiving date) would suggest the wrong thing.
+ */
+const REVEALED_BY: Record<string, string> = {
+  "retention.until": "retention.kind",
+  "retention.condition": "retention.kind",
+  "license.reason": "license.id",
+  "license.decided_by": "license.id",
+  "links.contract": "storage.tier",
+  "dates.archived": "status",
+  "storage.lossy_settings": "storage.lossy",
+  "storage.lossy_approved_by": "storage.lossy",
+  "archiving.pipeline": "archiving.automated",
+  "archiving.owning_team": "archiving.automated",
+};
+
+/** The field to jump to for a path: the field revealing it while it is hidden, else itself. */
+function jumpTarget(path: string): string {
+  const key = pathParts(path).join(".");
+  const field = document.getElementById(`root_${pathParts(path).join("_")}`) as HTMLInputElement | null;
+  return REVEALED_BY[key] && (!field || field.type === "hidden") ? REVEALED_BY[key] : path;
+}
+
+/**
  * The nearest element on the page for a path: the field itself or, while it is hidden
  * (e.g. retention.until before a kind is chosen), the first shown input of its closest
  * parent (here the retention kind that reveals it), then the card.
@@ -62,7 +87,8 @@ function reveal(path: string) {
 }
 
 /** Open the card holding a field, scroll the field into view, focus it and highlight it briefly. */
-export function goTo(path: string) {
+export function goTo(field: string) {
+  const path = jumpTarget(field);
   const key = sectionOf(path);
   const card = document.getElementById(sectionDomId(key));
   const wasOpen = key === ENTRY_SECTION || !!card?.classList.contains("Mui-expanded");

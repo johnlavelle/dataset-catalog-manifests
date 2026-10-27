@@ -31,12 +31,13 @@ const ctxOf = (props: WidgetProps) => (props.registry.formContext ?? { formData:
 const hasErrors = (props: WidgetProps) => (props.rawErrors?.length ?? 0) > 0;
 
 /** Lifecycle status as a clickable stepper (Standard §4, Figure 1). */
-export function StatusWidget({ value, onChange, disabled, readonly }: WidgetProps) {
+export function StatusWidget({ id, value, onChange, disabled, readonly }: WidgetProps) {
   const status = statusOf(value);
   const unknown = value !== undefined && value !== status;
   const index = STATUSES.indexOf(status);
   return (
-    <Box>
+    // The id lets the checklist jump here, e.g. for the archiving date, which the status reveals
+    <Box id={id}>
       <Typography variant="subtitle2" gutterBottom>
         Lifecycle status
       </Typography>

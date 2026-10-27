@@ -22,9 +22,9 @@ import HandymanOutlinedIcon from "@mui/icons-material/HandymanOutlined";
 import RemoveIcon from "@mui/icons-material/Remove";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
-import { checklist, missingCount, placeholders, type CheckState, type Manifest } from "../compliance";
+import { checklist, missingCount, placeholders, schema, type CheckState, type Manifest } from "../compliance";
 import { STATUS_INFO, statusOf } from "../guidance";
-import { goTo } from "../navigation";
+import { goTo, pathParts } from "../navigation";
 
 const ICONS: Record<CheckState, { icon: JSX.Element; hint: string }> = {
   ok: { icon: <CheckCircleIcon color="success" fontSize="small" />, hint: "Done" },
@@ -41,8 +41,33 @@ const RELATION_LABEL = { now: "Required now", next: "Next step", later: "Later" 
 /** Rows needing attention get a faint tint in their state's colour. */
 const ROW_TINT: Partial<Record<CheckState, string>> = { missing: "error.light", warn: "warning.light", tbd: "warning.light" };
 
-function prettyPath(property: string | undefined): string {
-  return (property ?? "").replace(/^\./, "").replace(/\./g, " › ") || "manifest";
+type SchemaNode = { title?: string; $ref?: string; properties?: Record<string, SchemaNode>; items?: SchemaNode; additionalProperties?: unknown };
+
+const definitions = (schema as { definitions?: Record<string, SchemaNode> }).definitions ?? {};
+const resolve = (node: SchemaNode | undefined) => (node?.$ref ? definitions[node.$ref.split("/").pop() ?? ""] : node);
+
+/**
+ * A field path as the form labels it: ".dataset.path" as "Dataset › Location (primary path)".
+ * Product keys stay as they are; list items are numbered from 1.
+ */
+function fieldTitle(path: string | undefined): string {
+  const titles: string[] = [];
+  let node: SchemaNode | undefined = schema as SchemaNode;
+  for (const part of pathParts(path ?? "")) {
+    const parent = resolve(node);
+    const extra = parent?.additionalProperties;
+    if (parent?.properties?.[part]) {
+      node = parent.properties[part];
+      titles.push(node.title ?? part);
+    } else if (/^\d+$/.test(part) && parent?.items) {
+      node = parent.items;
+      titles.push(`no. ${Number(part) + 1}`);
+    } else {
+      node = extra && typeof extra === "object" ? (extra as SchemaNode) : undefined;
+      titles.push(part);
+    }
+  }
+  return titles.join(" › ") || "Manifest";
 }
 
 interface RowProps {
@@ -208,7 +233,7 @@ export default function ChecklistPanel({ formData, errors }: ChecklistPanelProps
             <Row
               key={t.path}
               icon={<ScheduleIcon color={t.overdue ? "error" : "warning"} fontSize="small" />}
-              primary={t.path}
+              primary={fieldTitle(t.path)}
               secondary={t.overdue ? `overdue since ${t.due}` : `to be decided by ${t.due}`}
               secondaryColor={t.overdue ? "error" : undefined}
               target={t.path}
@@ -223,7 +248,7 @@ export default function ChecklistPanel({ formData, errors }: ChecklistPanelProps
             <Row
               key={`${e.property}-${i}`}
               icon={<ErrorIcon color="error" fontSize="small" />}
-              primary={prettyPath(e.property)}
+              primary={fieldTitle(e.property)}
               secondary={e.message}
               tint="error.light"
               target={e.property || undefined}
