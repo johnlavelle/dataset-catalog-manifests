@@ -32,7 +32,8 @@ export default function LlmDialog({ open, onClose, formData, hasDraft }: LlmDial
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const copied = copyState === "copied";
 
-  const prompt = () => buildPrompt(hasDraft && includeDraft ? toYaml(formData) : undefined);
+  const prompt = () =>
+    hasDraft && includeDraft ? buildPrompt(toYaml(formData), formData) : buildPrompt();
 
   const handleCopy = async () => {
     try {

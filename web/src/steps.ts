@@ -6,7 +6,7 @@
  */
 
 import { asText, has, isMapping, isTbd, type Manifest } from "./compliance";
-import { WIS2_OPTIONS, statusOf } from "./guidance";
+import { STATUSES, WIS2_OPTIONS, statusOf, type Status } from "./guidance";
 import { pathParts } from "./navigation";
 
 export type Role = "Owner" | "Steward" | "Custodian";
@@ -541,6 +541,19 @@ function deleteStage(later: boolean): Stage {
       },
     ],
   };
+}
+
+/** Every stage once, with the statuses it is shown for (for the AI prompt). */
+export function allStages(data: Manifest): { stage: Stage; statuses: Status[] }[] {
+  const found = new Map<string, { stage: Stage; statuses: Status[] }>();
+  for (const status of STATUSES) {
+    for (const stage of stagesFor({ ...data, status })) {
+      const entry = found.get(stage.key) ?? { stage, statuses: [] };
+      entry.statuses.push(status);
+      found.set(stage.key, entry);
+    }
+  }
+  return [...found.values()];
 }
 
 /** The stages to show for the manifest's status: the current work first, then a preview of what follows. */

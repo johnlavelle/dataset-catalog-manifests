@@ -1,6 +1,7 @@
 import schemaText from "../../schemas/dataset_manifest.schema.json?raw";
 import exampleYaml from "../../examples/example-archived.yaml?raw";
-import { addDays, today } from "./compliance";
+import { addDays, today, type Manifest } from "./compliance";
+import { allStages } from "./steps";
 import { OWNERS, ownerPerson } from "./owners";
 import {
   LICENSE_OPTIONS,
@@ -52,7 +53,7 @@ This file was created on ${created}. Use that as today's date unless you know a 
 
 ## What you are making
 
-You are helping a colleague at the Danish Meteorological Institute (DMI) write a **dataset manifest**: the catalogue entry for one dataset, required by DMI's Storage and Archiving Standard (STD-STOR-ARCH-001 v1.0). It is one YAML file, \`manifests/<id>.yaml\`, validated in CI against the JSON Schema at the end of this file and reviewed in a merge request. The manifest has no fields for sizes, file counts, variables or access times, so never ask for those.
+You are helping a colleague at the Danish Meteorological Institute (DMI) write a **dataset manifest**: the catalogue entry for one dataset, required by DMI's Storage and Archiving Standard (STD-STOR-ARCH-001 v1.0). It is one YAML file, \`manifests/<id>.yaml\`, validated in CI against the JSON Schema at the end of this file and reviewed in a merge request. The manifest holds only what a person has to know or decide: it has no fields for sizes, file counts, variables, time span, area or access times, so never ask for those (the period may still be mentioned in the description). There is no STAC section either: the STAC catalogue is generated from the manifest and a scan of the files.
 
 The colleague has probably not read the Storage and Archiving documents. The essentials are in this file: explain a term in a few words the first time you use it.
 
@@ -66,6 +67,7 @@ The colleague has probably not read the Storage and Archiving documents. The ess
 - **Never invent** people, e-mail addresses, licences, retention periods, PIDs, DOIs, links or approval dates. **Never construct an e-mail address from a name**: if you are given only a name, ask for the address.
 - Keep your messages short: a line of context at most, then the questions. Answer in the colleague's language (Danish or English); the manifest itself is always in English.
 - Go through every round of the plan that applies before you write the manifest, even where a placeholder would be allowed: the colleague often knows the release date or has a metadata page. If they say "finish", "that's all" or similar, go straight to *Writing the manifest* with what you know.
+- If they ask how to do the work itself — registering, packaging data as squashfs, converting a tar file, checksums, deleting — answer from *What happens at each stage* in the reference material, and say whether advice is a DMI procedure or a practical tip. Never run commands that write, move or delete data for them.
 - **If you can read files or run commands on the colleague's computer** (a command-line assistant): as soon as you know where the dataset is, look at it yourself (\`ls\`, \`tree -L 2\`, a README), read only, and tell them what you found instead of asking for a listing. A chat in a web browser cannot see their files, so don't offer this there.
 
 ## Interview plan
@@ -103,7 +105,7 @@ Reply with:
 1. One line: "Save this as \`manifests/<id>.yaml\`", with the real id.
 2. One \`\`\`yaml code block containing the complete manifest.
 3. **Open questions** — what is still TBD or missing, and who could answer it.
-4. **Next steps** — open the file in the manifest editor (*Open*) to check it against its checklist, then add it to the catalogue repository in a merge request, where CI validates it.
+4. **Next steps** — open the file in the manifest editor (*Open*) to check it against its checklist, then add it to the catalogue repository in a merge request, where CI validates it. Add the two or three most important practical steps for its status from *What happens at each stage* (e.g. for \`archived\`: package, store checksums, write-protect), and mention that the editor's *Steps* tab lists them all with the commands filled in.
 5. A last line asking whether anything should change.
 
 If you can create files, also save it. When the current directory is the catalogue repository (it contains \`scripts/validate_manifests.py\`), write \`manifests/<id>.yaml\`, run \`python scripts/validate_manifests.py\` and fix any errors it reports for your file; otherwise save \`<id>.yaml\` where they want it.
@@ -123,6 +125,7 @@ Before you write it, check that:
 - Only use the fields the schema defines. Products may carry extra keys (e.g. \`experiment_id\`). Something worth keeping that fits no field — not even a product's \`notes\` or \`designated_community_notes\` — goes under \`extensions\` as a short key and value instead of being dropped.
 - Products: \`dir\` is a path relative to \`dataset.path\`: a sub-directory, a nested path (\`v0.6.0/height_levels_analysis.zarr\`), or a single file or container such as a \`.sqfs\` image or Zarr store. Use \`dir_pattern\` (a shell glob) for a family of directories, never both. Product keys are unique: the directory name, or letters, digits and underscores when the name contains slashes or dots. Set \`type\` only when one of the descriptions under *Allowed values* clearly fits.
 - Keep \`dataset.description\` to a few sentences, written for a stranger.
+- Older manifests may use fields that no longer exist; CI rejects them, so convert them: a free-text \`storage.format\` becomes the \`storage.formats\` list, with the text in \`format_notes\`; a free-text \`storage.compression\` becomes the \`storage.compression\` list, with the text in \`compression_settings\`; \`dataset.contact\` moves to \`extensions.contact\`; in a \`stac\` section, the \`dois\` become \`identifiers.related\` entries titled with their product codes, \`model_system\` fills an empty \`dataset.model\`, and anything else is dropped if the description already says it, or kept under \`extensions\`.
 `;
 
 const REFERENCE = `# Reference material
@@ -168,18 +171,46 @@ ${SECTIONS.filter((s) => s.guidance)
   )
   .join("\n\n")}`;
 
+const indent = (text: string) =>
+  text
+    .split("\n")
+    .map((line) => `   ${line}`)
+    .join("\n");
+
+/** The editor's Steps tab as text, every stage once, with commands filled in from the draft where it has the values. */
+function stagesReference(data: Manifest): string {
+  const stages = allStages(data).map(({ stage, statuses }) => {
+    const steps = stage.steps.map((s, i) => {
+      const who = s.who?.length ? ` (${s.who.join(", ")})` : "";
+      const tip = s.tip ? ` *${s.tip}*` : "";
+      const link = s.link ? ` ${s.link.label}: ${s.link.href}` : "";
+      const head = `${i + 1}. **${s.title}**${who}${s.text ? ` — ${s.text}` : ""}${tip} [${s.ref}]${link}`;
+      const commands = (s.commands ?? []).map((c) => indent(`${c.label ? `${c.label}:\n` : ""}${fence("sh", c.code)}`));
+      return [head, ...commands].join("\n");
+    });
+    return `### ${stage.title} — for \`${statuses.join("`, `")}\`\n\n${stage.intro ? `${stage.intro}\n\n` : ""}${steps.join("\n")}`;
+  });
+  return `## What happens at each stage
+
+The steps of the editor's *Steps* tab, condensed from the DMI Procedures: who does each step in round brackets, the source in square brackets. In commands, values in <angle brackets> are placeholders; the rest comes from the draft, if one is included. Advice marked as a tip is not DMI policy.
+
+${stages.join("\n\n")}`;
+}
+
 /**
  * A self-contained file for an AI assistant: it interviews the user and writes the manifest.
- * Holds the interview, the rules, the DMI guidance, the JSON Schema and a complete example,
- * and optionally the current draft from the form. The user adds nothing to it.
+ * Holds the interview, the rules, the DMI guidance, the steps for each lifecycle stage, the
+ * JSON Schema and a complete example, and optionally the current draft from the form (as YAML,
+ * and as data to fill in the commands). The user adds nothing to it.
  */
-export function buildPrompt(draftYaml?: string): string {
+export function buildPrompt(draftYaml?: string, data: Manifest = {}): string {
   const parts = [behaviour(today(), `"TBD by ${addDays(30)}"`, !!draftYaml)];
   if (draftYaml) {
     parts.push(`## Current draft from the manifest editor\n\nKeep what is already filled in.\n\n${fence("yaml", draftYaml)}`);
   }
   parts.push(
     REFERENCE,
+    stagesReference(data),
     `## JSON Schema (schemas/dataset_manifest.schema.json)\n\n${fence("json", schemaText)}`,
     `## Complete example (fictional, archived)\n\n${fence("yaml", exampleYaml)}`
   );

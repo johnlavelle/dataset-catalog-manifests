@@ -91,7 +91,7 @@ function exercise(input: Manifest): boolean {
   const { status: _, ...rest } = data;
   Object.values(rest).some(hasContent);
   const text = toYaml(data);
-  buildPrompt(text);
+  buildPrompt(text, data);
   // What the editor writes can be opened again (unless the input was refused to begin with)
   if (text && !refused) parseYaml(text);
   const noop = () => {};
