@@ -75,7 +75,7 @@ function GuidanceBox({ guidance }: { guidance: Guidance }) {
   const [open, setOpen] = useState(false);
   return (
     <Box sx={{ mb: 2 }}>
-      <Button size="small" startIcon={<LightbulbOutlinedIcon />} onClick={() => setOpen((v) => !v)}>
+      <Button size="small" startIcon={<LightbulbOutlinedIcon />} onClick={() => setOpen((v) => !v)} data-tour="guidance">
         {open ? "Hide guidance" : "How to fill this in"}
       </Button>
       <Collapse in={open}>
@@ -143,7 +143,11 @@ function SectionCard({ section, number, props, formData, errorSchema }: SectionC
         "&.Mui-expanded": { boxShadow: "0 1px 3px rgba(16, 24, 40, 0.08)" },
       }}
     >
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        data-tour="card-header"
+        sx={{ "&:hover": { bgcolor: "action.hover" } }}
+      >
         <Avatar
           sx={{
             width: 30,

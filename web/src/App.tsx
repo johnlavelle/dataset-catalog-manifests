@@ -29,6 +29,7 @@ import {
   AutoStoriesOutlined,
   SmartToyOutlined,
   Inventory2Outlined,
+  TourOutlined,
 } from "@mui/icons-material";
 import validator from "@rjsf/validator-ajv8";
 import ManifestForm from "./components/ManifestForm";
@@ -39,6 +40,7 @@ import SectionNav from "./components/SectionNav";
 import InfoPage from "./components/InfoPage";
 import LlmDialog from "./components/LlmDialog";
 import RecentDialog, { manifestTitle } from "./components/RecentDialog";
+import Tour from "./components/Tour";
 import ErrorBoundary from "./components/ErrorBoundary";
 import SplitHandle, { FORM_MIN, PANEL_DEFAULT, PANEL_MIN, clampPanel } from "./components/SplitHandle";
 import type { IChangeEvent } from "@rjsf/core";
@@ -56,6 +58,8 @@ import {
 } from "./compliance";
 import { STATUS_INFO, statusOf } from "./guidance";
 import { findSaved, isBlank, loadDraft, newKey, saveDraft, type Draft, type SavedManifest } from "./draft";
+import { OPEN_SECTION_EVENT } from "./navigation";
+import { TOUR, firstVisit, setTourDone, type TourStep } from "./tour";
 import transformErrors from "./transformErrors";
 import { parseYaml } from "./yamlExport";
 import exampleYaml from "../../examples/example-archived.yaml?raw";
@@ -93,6 +97,9 @@ export default function App() {
   const [pending, setPending] = useState<{ title: string; confirm: string; run: () => void } | null>(null);
   const [message, setMessage] = useState<{ text: string; severity: "success" | "error" } | null>(null);
   const [panelWidth, setPanelWidth] = useState(loadPanelWidth);
+  const [touring, setTouring] = useState(firstVisit);
+  /** The side-panel tab to go back to when the tour ends. */
+  const tabBeforeTour = useRef(tab);
   /** Values hidden because they belong to another choice, kept for this session (see keepHidden). */
   const hidden = useRef<Record<string, unknown>>({});
   const panel = useRef<HTMLDivElement>(null);
@@ -188,6 +195,23 @@ export default function App() {
     else run();
   };
 
+  const startTour = () => {
+    tabBeforeTour.current = tab;
+    setShowInfo(false);
+    setTouring(true);
+  };
+
+  const endTour = () => {
+    setTouring(false);
+    setTab(tabBeforeTour.current);
+    setTourDone();
+  };
+
+  const showTourStep = useCallback((step: TourStep) => {
+    if (step.tab) setTab(step.tab);
+    if (step.section) window.dispatchEvent(new CustomEvent(OPEN_SECTION_EVENT, { detail: step.section }));
+  }, []);
+
   const title = asText(formData.dataset?.name) || asText(formData.id);
 
   return (
@@ -221,6 +245,7 @@ export default function App() {
           <Tooltip title="Start a new manifest">
             <Button
               color="inherit"
+              data-tour="start"
               startIcon={<NoteAddOutlined />}
               onClick={() => replaceForm("Start a new manifest?", "Clear form", startNew)}
             >
@@ -230,6 +255,7 @@ export default function App() {
           <Tooltip title="Open an existing manifest (.yaml)">
             <Button
               color="inherit"
+              data-tour="start"
               startIcon={<FolderOpenOutlined />}
               onClick={() => replaceForm("Open another manifest?", "Choose file", () => fileInput.current?.click())}
             >
@@ -237,13 +263,14 @@ export default function App() {
             </Button>
           </Tooltip>
           <Tooltip title="Manifests you have edited in this browser">
-            <Button color="inherit" startIcon={<HistoryOutlined />} onClick={() => setShowRecent(true)}>
+            <Button color="inherit" data-tour="start" startIcon={<HistoryOutlined />} onClick={() => setShowRecent(true)}>
               Recent
             </Button>
           </Tooltip>
           <Tooltip title="Load a fully filled-in example">
             <Button
               color="inherit"
+              data-tour="start"
               startIcon={<AutoStoriesOutlined />}
               onClick={() => replaceForm("Load the example?", "Load example", loadExample)}
             >
@@ -251,7 +278,7 @@ export default function App() {
             </Button>
           </Tooltip>
           <Tooltip title="Get a file that lets an AI assistant interview you and write the manifest">
-            <Button color="inherit" startIcon={<SmartToyOutlined />} onClick={() => setShowLlm(true)}>
+            <Button color="inherit" data-tour="start" startIcon={<SmartToyOutlined />} onClick={() => setShowLlm(true)}>
               AI prompt
             </Button>
           </Tooltip>
@@ -266,8 +293,14 @@ export default function App() {
               e.target.value = "";
             }}
           />
+          <Tooltip title="Take the guided tour">
+            <IconButton color="inherit" data-tour="help" onClick={startTour}>
+              <TourOutlined />
+            </IconButton>
+          </Tooltip>
           <IconButton
             color="inherit"
+            data-tour="help"
             onClick={() => setShowInfo((v) => !v)}
             title={showInfo ? "Back to editor" : "About the manifest and the archiving rules"}
           >
@@ -276,7 +309,7 @@ export default function App() {
         </Toolbar>
       </AppBar>
       {showInfo ? (
-        <InfoPage />
+        <InfoPage onTour={startTour} />
       ) : (
         <ErrorBoundary formData={formData} onReset={() => show(emptyManifest(), newKey())}>
           <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
@@ -289,6 +322,7 @@ export default function App() {
             <SplitHandle panelRef={panel} width={panelWidth} onChange={setPanelWidth} />
             <Box
               ref={panel}
+              data-tour="panel"
               style={{ width: panelWidth }}
               sx={{
                 flex: "none",
@@ -365,6 +399,8 @@ export default function App() {
         stored={stored}
         onOpen={openSaved}
       />
+
+      {touring && <Tour steps={TOUR} onStep={showTourStep} onClose={endTour} />}
 
       <LlmDialog open={showLlm} onClose={() => setShowLlm(false)} formData={formData} hasDraft={formHasContent} />
 

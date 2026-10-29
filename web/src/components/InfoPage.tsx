@@ -4,6 +4,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
   Chip,
   Container,
   Link,
@@ -17,6 +18,7 @@ import {
   Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import TourOutlinedIcon from "@mui/icons-material/TourOutlined";
 import mermaid from "mermaid";
 import { REQUIRED_BY_STATUS } from "../guidance";
 import { ARCHIVE_TOOL, CONFLUENCE_FAQ, CONFLUENCE_PROCESS, CONFLUENCE_QMS_ARCHIVING, CONFLUENCE_STORAGE } from "../steps";
@@ -119,7 +121,8 @@ const SCREEN: [string, ReactNode][] = [
     "Top bar",
     <>
       <em>New</em>, <em>Open</em> (a .yaml file), <em>Example</em> (a complete, fictional archived dataset) and{" "}
-      <em>AI prompt</em>. The <em>?</em> button opens this page and takes you back.
+      <em>AI prompt</em>. The flag button starts the guided tour of the screen; the <em>?</em> button opens this
+      page and takes you back.
     </>,
   ],
   [
@@ -301,7 +304,7 @@ const LINKS: [string, string, string][] = [
   ["Catalogue repository", REPOSITORY, "The manifests, the schema and this editor (GitLab)"],
 ];
 
-export default function InfoPage() {
+export default function InfoPage({ onTour }: { onTour: () => void }) {
   const jump = (id: string) => document.getElementById(`about-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   return (
     <Container maxWidth="md" sx={{ py: 4, overflow: "auto", height: "100%" }}>
@@ -313,6 +316,9 @@ export default function InfoPage() {
         kept, and — when the time comes — how it is archived. Everything stays in your browser until you download the
         YAML.
       </Typography>
+      <Button variant="contained" startIcon={<TourOutlinedIcon />} onClick={onTour} sx={{ mb: 2 }}>
+        Take the tour of the screen
+      </Button>
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 3 }}>
         {CONTENTS.map(([id, title]) => (
           <Chip key={id} label={title} onClick={() => jump(id)} variant="outlined" color="primary" />

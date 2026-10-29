@@ -24,6 +24,7 @@ export default function SectionNav({ formData, errors }: SectionNavProps) {
     <Box
       component="nav"
       aria-label="Sections"
+      data-tour="sections"
       sx={{
         position: "sticky",
         top: 0,
