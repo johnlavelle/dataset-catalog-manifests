@@ -48,7 +48,7 @@ export const TOUR: TourStep[] = [
     title: "The section bar",
     text:
       "One chip per card; click one to jump to it. The dot shows how the card stands: red has fields to fix, blue is " +
-      "required now, green is filled in, grey is not needed yet.",
+      "required now, green is filled in, grey is not needed yet. The button at its end collapses every card.",
   },
   {
     target: '#section-dataset [data-tour="card-header"], #section-dataset [data-tour="guidance"]',

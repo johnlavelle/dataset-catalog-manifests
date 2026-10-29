@@ -1,8 +1,9 @@
 import type { RJSFValidationError } from "@rjsf/utils";
-import { Box, ButtonBase, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, ButtonBase, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import { hasContent, type Manifest } from "../compliance";
 import { statusOf } from "../guidance";
-import { openSection, sectionOf } from "../navigation";
+import { collapseAll, openSection, sectionOf } from "../navigation";
 import { TONE_COLOR, requirement, sectionTone, visibleSections } from "./FormLayout";
 
 const TONE_HINT = {
@@ -17,7 +18,7 @@ interface SectionNavProps {
   errors: RJSFValidationError[];
 }
 
-/** A bar of all section cards, coloured like the cards, that jumps to one on click. */
+/** A bar of all section cards, coloured like the cards, that jumps to one on click; its last button closes them all. */
 export default function SectionNav({ formData, errors }: SectionNavProps) {
   const status = statusOf(formData.status);
   return (
@@ -37,40 +38,47 @@ export default function SectionNav({ formData, errors }: SectionNavProps) {
         py: 1,
       }}
     >
-      {/* One row that scrolls sideways, so its height (and the cards' scroll margin) stays fixed */}
-      <Stack
-        direction="row"
-        spacing={0.75}
-        sx={{ maxWidth: 960, mx: "auto", overflowX: "auto", scrollbarWidth: "thin", pb: 0.25 }}
-      >
-        {visibleSections(formData).map((s) => {
-          const count = errors.filter((e) => sectionOf(e.property ?? "") === s.key).length;
-          const filled = s.fields.some((f) => hasContent(formData[f]));
-          const tone = sectionTone(count, filled, requirement(s, status).label === "Required");
-          return (
-            <Tooltip key={s.key} title={TONE_HINT[tone]}>
-              <ButtonBase
-                onClick={() => openSection(s.key)}
-                sx={{
-                  gap: 0.75,
-                  px: 1.25,
-                  py: 0.5,
-                  borderRadius: 99,
-                  border: 1,
-                  borderColor: "divider",
-                  bgcolor: "background.paper",
-                  flex: "none",
-                  "&:hover, &.Mui-focusVisible": { borderColor: "primary.main", bgcolor: "primary.light" },
-                }}
-              >
-                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: TONE_COLOR[tone], flex: "none" }} />
-                <Typography variant="caption" sx={{ fontWeight: 500, whiteSpace: "nowrap" }}>
-                  {s.title}
-                </Typography>
-              </ButtonBase>
-            </Tooltip>
-          );
-        })}
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ maxWidth: 960, mx: "auto" }}>
+        {/* One row that scrolls sideways, so its height (and the cards' scroll margin) stays fixed */}
+        <Stack
+          direction="row"
+          spacing={0.75}
+          sx={{ flex: 1, minWidth: 0, overflowX: "auto", scrollbarWidth: "thin", pb: 0.25 }}
+        >
+          {visibleSections(formData).map((s) => {
+            const count = errors.filter((e) => sectionOf(e.property ?? "") === s.key).length;
+            const filled = s.fields.some((f) => hasContent(formData[f]));
+            const tone = sectionTone(count, filled, requirement(s, status).label === "Required");
+            return (
+              <Tooltip key={s.key} title={TONE_HINT[tone]}>
+                <ButtonBase
+                  onClick={() => openSection(s.key)}
+                  sx={{
+                    gap: 0.75,
+                    px: 1.25,
+                    py: 0.5,
+                    borderRadius: 99,
+                    border: 1,
+                    borderColor: "divider",
+                    bgcolor: "background.paper",
+                    flex: "none",
+                    "&:hover, &.Mui-focusVisible": { borderColor: "primary.main", bgcolor: "primary.light" },
+                  }}
+                >
+                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: TONE_COLOR[tone], flex: "none" }} />
+                  <Typography variant="caption" sx={{ fontWeight: 500, whiteSpace: "nowrap" }}>
+                    {s.title}
+                  </Typography>
+                </ButtonBase>
+              </Tooltip>
+            );
+          })}
+        </Stack>
+        <Tooltip title="Collapse all cards">
+          <IconButton size="small" onClick={collapseAll} sx={{ flex: "none", p: 0.5, mb: 0.25 }}>
+            <UnfoldLessIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Stack>
     </Box>
   );

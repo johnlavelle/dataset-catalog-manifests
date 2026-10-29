@@ -127,7 +127,7 @@ const SCREEN: [string, ReactNode][] = [
   ],
   [
     "Section bar",
-    "Jumps to a card. Each section shows whether it has fields to fix, is required now, is filled in, or is not needed yet.",
+    "Jumps to a card. Each section shows whether it has fields to fix, is required now, is filled in, or is not needed yet. The button at its end collapses every card.",
   ],
   [
     "Cards",

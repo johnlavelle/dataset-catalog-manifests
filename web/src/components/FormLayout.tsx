@@ -21,7 +21,7 @@ import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 import CheckIcon from "@mui/icons-material/Check";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 import { hasContent, type Manifest } from "../compliance";
-import { ENTRY_SECTION, OPEN_SECTION_EVENT, sectionDomId } from "../navigation";
+import { COLLAPSE_ALL_EVENT, ENTRY_SECTION, OPEN_SECTION_EVENT, sectionDomId } from "../navigation";
 import { SECTIONS, SECTION_OBJECT_KEYS, SUBSECTION_TITLES, statusOf, type Guidance, type SectionInfo, type Status } from "../guidance";
 import type { EditorContext } from "./widgets";
 
@@ -120,11 +120,16 @@ function SectionCard({ section, number, props, formData, errorSchema }: SectionC
   const multi = section.fields.length > 1;
   const tone = sectionTone(errors, filled, req.label === "Required");
 
-  // Opened from the checklist or the section bar
+  // Opened from the checklist or the section bar, closed by "Collapse all"
   useEffect(() => {
     const onOpen = (e: Event) => (e as CustomEvent<string>).detail === section.key && setOpen(true);
+    const onCollapse = () => setOpen(false);
     window.addEventListener(OPEN_SECTION_EVENT, onOpen);
-    return () => window.removeEventListener(OPEN_SECTION_EVENT, onOpen);
+    window.addEventListener(COLLAPSE_ALL_EVENT, onCollapse);
+    return () => {
+      window.removeEventListener(OPEN_SECTION_EVENT, onOpen);
+      window.removeEventListener(COLLAPSE_ALL_EVENT, onCollapse);
+    };
   }, [section.key]);
 
   return (

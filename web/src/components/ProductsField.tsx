@@ -30,7 +30,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { PRODUCT_CATEGORIES, PRODUCT_TYPE_OPTIONS } from "../guidance";
 import type { EditorContext } from "./widgets";
 import { asText, isMapping } from "../compliance";
-import { REVEAL_FIELD_EVENT, pathParts } from "../navigation";
+import { COLLAPSE_ALL_EVENT, REVEAL_FIELD_EVENT, pathParts } from "../navigation";
 
 interface Product {
   name?: string;
@@ -105,14 +105,19 @@ export default function ProductsField(props: FieldProps) {
     props.onChange(newProducts);
   };
 
-  // A jump from the checklist to a field inside a product opens its card
+  // A jump from the checklist to a field inside a product opens its card; "Collapse all" closes them all
   useEffect(() => {
     const open = (e: Event) => {
       const [top, key] = pathParts((e as CustomEvent<string>).detail);
       if (top === "products" && key) setExpanded((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
     };
+    const collapse = () => setExpanded({});
     window.addEventListener(REVEAL_FIELD_EVENT, open);
-    return () => window.removeEventListener(REVEAL_FIELD_EVENT, open);
+    window.addEventListener(COLLAPSE_ALL_EVENT, collapse);
+    return () => {
+      window.removeEventListener(REVEAL_FIELD_EVENT, open);
+      window.removeEventListener(COLLAPSE_ALL_EVENT, collapse);
+    };
   }, []);
 
   /** The id of a product's input, as the checklist builds it from a path: root_products_<key>_<field>. */

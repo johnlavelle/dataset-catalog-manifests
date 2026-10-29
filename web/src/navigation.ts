@@ -9,6 +9,9 @@ export const ENTRY_SECTION = "entry";
 /** Fired with a field path before a jump, so that a collapsed part of the form (a product card) opens. */
 export const REVEAL_FIELD_EVENT = "manifest-editor:reveal-field";
 
+/** Fired to close every card in the form, product cards included. */
+export const COLLAPSE_ALL_EVENT = "manifest-editor:collapse-all";
+
 /** Accordion expand time (MUI default) plus a little slack. */
 const EXPAND_MS = 350;
 
@@ -106,6 +109,11 @@ export function goTo(field: string) {
   const inProduct = pathParts(path)[0] === "products" && pathParts(path).length > 1;
   if (wasOpen && !inProduct) reveal(path);
   else setTimeout(() => reveal(path), EXPAND_MS);
+}
+
+/** Close every card in the form. */
+export function collapseAll() {
+  window.dispatchEvent(new Event(COLLAPSE_ALL_EVENT));
 }
 
 /** Open a card and scroll it to the top of the form. */
