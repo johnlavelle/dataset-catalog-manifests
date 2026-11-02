@@ -23,7 +23,6 @@ import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 import { hasContent, type Manifest } from "../compliance";
 import { COLLAPSE_ALL_EVENT, ENTRY_SECTION, OPEN_SECTION_EVENT, sectionDomId } from "../navigation";
 import { SECTIONS, SECTION_OBJECT_KEYS, SUBSECTION_TITLES, statusOf, type Guidance, type SectionInfo, type Status } from "../guidance";
-import type { EditorContext } from "./widgets";
 
 const MuiObjectFieldTemplate = Templates.ObjectFieldTemplate!;
 
@@ -202,8 +201,8 @@ function SectionCard({ section, number, props, formData, errorSchema }: SectionC
   );
 }
 
-function RootLayout({ properties, registry, errorSchema }: ObjectFieldTemplateProps) {
-  const formData = ((registry.formContext as EditorContext)?.formData ?? {}) as Manifest;
+function RootLayout({ properties, formData: data, errorSchema }: ObjectFieldTemplateProps) {
+  const formData = (data ?? {}) as Manifest;
   const byName = Object.fromEntries(properties.map((p) => [p.name, p]));
   const visible = visibleSections(formData);
 

@@ -31,7 +31,7 @@ import {
   Inventory2Outlined,
   TourOutlined,
 } from "@mui/icons-material";
-import validator from "@rjsf/validator-ajv8";
+import validator from "./formValidator";
 import ManifestForm from "./components/ManifestForm";
 import YamlPreview from "./components/YamlPreview";
 import ChecklistPanel from "./components/ChecklistPanel";

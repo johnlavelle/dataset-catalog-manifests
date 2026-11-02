@@ -1,15 +1,15 @@
 import { useMemo } from "react";
 import Form from "@rjsf/mui";
-import validator from "@rjsf/validator-ajv8";
+import validator, { formSchema } from "../formValidator";
 import type { IChangeEvent } from "@rjsf/core";
 import type { FieldProps } from "@rjsf/utils";
 import buildUiSchema from "../uiSchema";
 import transformErrors from "../transformErrors";
-import { customValidate, schema, type Manifest } from "../compliance";
+import { customValidate, type Manifest } from "../compliance";
 import ProductsField from "./ProductsField";
 import ExtensionsField from "./ExtensionsField";
 import ObjectFieldTemplate from "./FormLayout";
-import { widgets, type EditorContext } from "./widgets";
+import { widgets } from "./widgets";
 
 const fields: Record<string, React.ComponentType<FieldProps>> = {
   ProductsField,
@@ -23,14 +23,12 @@ interface ManifestFormProps {
 
 export default function ManifestForm({ formData, onChange }: ManifestFormProps) {
   const uiSchema = useMemo(() => buildUiSchema(formData), [formData]);
-  const formContext: EditorContext = { formData };
 
   return (
     <Form
-      schema={schema}
+      schema={formSchema}
       uiSchema={uiSchema}
       formData={formData}
-      formContext={formContext}
       onChange={onChange}
       validator={validator}
       fields={fields}

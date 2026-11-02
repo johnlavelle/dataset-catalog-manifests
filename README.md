@@ -208,4 +208,6 @@ Fields that products share need not be filled in one card at a time. With two or
 
 `check:robustness` (CI job `editor-robustness`) replaces each field of the example with values of the wrong type and renders the editor with every variant, and checks the rules of the bulk change above.
 
+A manifest can have many products, and an edit must stay quick whatever their number. So that an edit redraws only the field it changes, nothing that does not change may reach a field as a new value: a widget gets the single values it needs from elsewhere in the manifest through `ui:options` (`uiSchema.ts`), and never the manifest itself. A closed product card holds no fields, and the form validates through `formValidator.ts`, which explains how rjsf's own validator would otherwise recompile the schema on every keystroke. `check:robustness` compares what `formValidator.ts` reports with rjsf's validator, on every variant above and every manifest.
+
 It is deployed from `main`: to GitHub Pages by [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml), and to GitLab Pages by the `pages` job in [`.gitlab-ci.yml`](.gitlab-ci.yml) (default branch only). Both rebuild when `web/`, `schemas/`, `examples/` or `registry/` change.

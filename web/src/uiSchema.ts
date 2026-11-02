@@ -31,14 +31,14 @@ const multiSelect = (choices: Record<string, unknown>) => ({
   "ui:widget": "MultiSelectWidget",
   "ui:options": { choices },
 });
-const tbd = (inputType: "text" | "url" | "date", placeholder?: string) => ({
-  "ui:widget": "TbdWidget",
-  "ui:options": { inputType },
-  ...(placeholder ? { "ui:placeholder": placeholder } : {}),
-});
 const showIf = (condition: boolean, ui: UiSchema) => (condition ? ui : hidden);
 
-/** The uiSchema depends on the data: fields that only apply to another choice are hidden. */
+/**
+ * The uiSchema depends on the data: fields that only apply to another choice are hidden. A widget
+ * that needs a value from elsewhere in the manifest gets just that value here, in ui:options. rjsf
+ * compares a field's props to skip fields that did not change, so the whole manifest must not
+ * reach them (not through formContext either): any edit would then redraw the entire form.
+ */
 export default function buildUiSchema(data: Manifest): UiSchema {
   const roles = data.roles ?? {};
   const retentionKind = data.retention?.kind;
@@ -46,6 +46,12 @@ export default function buildUiSchema(data: Manifest): UiSchema {
   const storage = data.storage ?? {};
   const automated = data.archiving?.automated === true;
   const status = data.status;
+  const tbd = (inputType: "text" | "url" | "date", placeholder?: string) => ({
+    "ui:widget": "TbdWidget",
+    "ui:options": { inputType, archived: status === "archived" },
+    ...(placeholder ? { "ui:placeholder": placeholder } : {}),
+  });
+  const copyOwner = { ...person, "ui:options": { copyFrom: "owner", copySource: roles.owner } };
 
   return {
     "ui:order": [
@@ -67,7 +73,7 @@ export default function buildUiSchema(data: Manifest): UiSchema {
       "exceptions",
       "extensions",
     ],
-    id: { "ui:widget": "IdWidget" },
+    id: { "ui:widget": "IdWidget", "ui:options": { suggestFrom: data.dataset?.name } },
     status: { "ui:widget": "StatusWidget" },
     dataset: {
       "ui:order": ["name", "path", "description", "model", "domain"],
@@ -80,8 +86,8 @@ export default function buildUiSchema(data: Manifest): UiSchema {
     roles: {
       "ui:order": ["owner", "steward", "custodian", "single_person"],
       owner: OWNERS.length ? { ...person, "ui:options": { choices: OWNERS.map(ownerPerson) } } : person,
-      steward: { ...person, "ui:options": { copyFrom: "owner" } },
-      custodian: { ...person, "ui:options": { copyFrom: "owner" } },
+      steward: copyOwner,
+      custodian: copyOwner,
       single_person: showIf(sameRoleHolder(roles) || roles.single_person === true, {}),
     },
     retention: {
@@ -195,6 +201,7 @@ export default function buildUiSchema(data: Manifest): UiSchema {
     },
     products: {
       "ui:field": "ProductsField",
+      "ui:options": { status, manifestId: data.id },
     },
     extensions: {
       "ui:field": "ExtensionsField",

@@ -13,11 +13,15 @@ import { renderToString } from "react-dom/server";
 import yaml from "js-yaml";
 import createCache from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
-import validator from "@rjsf/validator-ajv8";
+import validator, { customizeValidator } from "@rjsf/validator-ajv8";
+import { createSchemaUtils, type RJSFSchema, type ValidationData } from "@rjsf/utils";
+import formValidator, { formSchema, onlyErrors } from "../src/formValidator";
 import ManifestForm from "../src/components/ManifestForm";
+import { ProductCard, type ProductActions } from "../src/components/ProductsField";
 import ChecklistPanel from "../src/components/ChecklistPanel";
 import StepsPanel from "../src/components/StepsPanel";
 import YamlPreview from "../src/components/YamlPreview";
+import { deepEquals as same } from "@rjsf/utils";
 import { checklist, customValidate, hasContent, isMapping, missingCount, normalise, placeholders, schema, type Manifest } from "../src/compliance";
 import { applyBulk, bulkPlan, sharedValues } from "../src/productBulk";
 import transformErrors from "../src/transformErrors";
@@ -69,6 +73,39 @@ function schemaPaths(productKey: string): Path[] {
   return found;
 }
 
+/** rjsf's own validator, with an Ajv of its own, and what the form holds is measured against it. */
+const reference = customizeValidator();
+const referenceUtils = createSchemaUtils(reference, schema as RJSFSchema);
+const formUtils = createSchemaUtils(formValidator, formSchema);
+const sorted = (errors: { property?: string; message?: string; stack: string }[]) =>
+  errors.map((e) => `${e.property} ${e.stack}`).sort();
+
+function compareResults(label: string, want: ValidationData<any>, got: ValidationData<any>) {
+  const wantTree = onlyErrors(want.errorSchema) ?? {};
+  const detail = JSON.stringify([sorted(want.errors), wantTree, sorted(got.errors), got.errorSchema]).slice(0, 400);
+  // The same errors in another order are the same errors
+  if (JSON.stringify(sorted(want.errors)) !== JSON.stringify(sorted(got.errors))) throw new Error(`${label}: errors differ: ${detail}`);
+  if (!same(wantTree, got.errorSchema)) throw new Error(`${label}: error trees differ: ${detail}`);
+}
+
+/** The form's validator must report exactly what rjsf's does, however it gets there. */
+function compareValidators(data: Manifest) {
+  // As the form validates: against the schema resolved for the data
+  compareResults(
+    "form",
+    reference.validateFormData(data, referenceUtils.retrieveSchema(schema as RJSFSchema, data), customValidate, transformErrors),
+    formValidator.validateFormData(data, formUtils.retrieveSchema(formSchema, data), customValidate, transformErrors)
+  );
+  // As App validates, for the checklist: against the schema itself
+  compareResults(
+    "checklist",
+    reference.validateFormData(data, schema as RJSFSchema, customValidate, transformErrors),
+    formValidator.validateFormData(data, schema as RJSFSchema, customValidate, transformErrors)
+  );
+}
+
+const noActions = new Proxy({}, { get: () => () => false }) as ProductActions;
+
 /** A fresh style cache per render: the default one keeps every style it has seen, and runs out of memory. */
 const render = (element: ReactElement) =>
   renderToString(<CacheProvider value={createCache({ key: "css" })}>{element}</CacheProvider>);
@@ -87,6 +124,7 @@ function exercise(input: Manifest): boolean {
   }
   const data = normalise(input);
   const errors = validator.validateFormData(data, schema, customValidate, transformErrors).errors;
+  compareValidators(data);
   missingCount(checklist(data));
   placeholders(data);
   const { status: _, ...rest } = data;
@@ -103,6 +141,24 @@ function exercise(input: Manifest): boolean {
   if (text && !refused) parseYaml(text);
   const noop = () => {};
   render(<ManifestForm formData={data} onChange={noop} />);
+  // Closed cards hold no fields, so each product is also shown open
+  if (isMapping(data.products)) {
+    for (const [key, product] of Object.entries(data.products)) {
+      render(
+        <ProductCard
+          productKey={key}
+          product={isMapping(product) ? product : {}}
+          fieldId="root_products"
+          open
+          ticked={false}
+          showTick
+          status={data.status}
+          errors={undefined}
+          actions={noActions}
+        />
+      );
+    }
+  }
   render(<ChecklistPanel formData={data} errors={errors} />);
   render(<StepsPanel formData={data} errors={errors} />);
   render(<YamlPreview formData={data} onImport={noop} />);
@@ -130,6 +186,8 @@ for (const path of paths) {
 }
 for (const value of [...WRONG, "activeqwerty", "ACTIVE"]) cases.push({ label: `status = ${JSON.stringify(value)}`, doc: { ...base, status: value } });
 cases.push({ label: "empty manifest", doc: {} });
+const manifests = import.meta.glob("../../manifests/*.yaml", { query: "?raw", import: "default", eager: true });
+for (const [path, text] of Object.entries(manifests)) cases.push({ label: path, doc: parseYaml(text as string) });
 
 // React and MUI report odd values (prop types, values not among the options) on console.error
 // and console.warn; only exceptions count here
@@ -160,22 +218,22 @@ function bulkRuleFailures(): string[] {
     broken: "plain text",
   };
   const none = new Set<string>();
-  const same = (label: string, got: unknown, want: unknown) =>
+  const check = (label: string, got: unknown, want: unknown) =>
     JSON.stringify(got) === JSON.stringify(want) ? [] : [`${label}: got ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`];
   const empty = bulkPlan(products, "type", " diagnostic ", "empty", none);
   const all = bulkPlan(products, "type", "diagnostic", "all", none);
   const ticked = bulkPlan(products, "type", "diagnostic", "ticked", new Set(["a", "b"]));
   const applied = applyBulk(products, "type", " diagnostic ", empty) as Record<string, any>;
   return [
-    ...same("Empty only leaves values alone", empty, { fill: ["b", "c"], replace: [] }),
-    ...same("All counts different values, not equal ones", all, { fill: ["b", "c"], replace: ["a"] }),
-    ...same("Ticked reaches only ticked products", ticked, { fill: ["b"], replace: ["a"] }),
-    ...same("A value is trimmed", applied.b.type, "diagnostic"),
-    ...same("Other values survive", [applied.a.type, applied.b.category], ["raw output", "Ice"]),
-    ...same("Order is kept", Object.keys(applied), Object.keys(products)),
-    ...same("A product that is not a mapping is left alone", applied.broken, "plain text"),
-    ...same("A new product takes only what all agree on", sharedValues(products), {}),
-    ...same("Type is not passed on", sharedValues({ a: products.a, b: products.b, x: { type: "raw output", category: "Ice" } }), { category: "Ice" }),
+    ...check("Empty only leaves values alone", empty, { fill: ["b", "c"], replace: [] }),
+    ...check("All counts different values, not equal ones", all, { fill: ["b", "c"], replace: ["a"] }),
+    ...check("Ticked reaches only ticked products", ticked, { fill: ["b"], replace: ["a"] }),
+    ...check("A value is trimmed", applied.b.type, "diagnostic"),
+    ...check("Other values survive", [applied.a.type, applied.b.category], ["raw output", "Ice"]),
+    ...check("Order is kept", Object.keys(applied), Object.keys(products)),
+    ...check("A product that is not a mapping is left alone", applied.broken, "plain text"),
+    ...check("A new product takes only what all agree on", sharedValues(products), {}),
+    ...check("Type is not passed on", sharedValues({ a: products.a, b: products.b, x: { type: "raw output", category: "Ice" } }), { category: "Ice" }),
   ];
 }
 const ruleFailures = bulkRuleFailures();

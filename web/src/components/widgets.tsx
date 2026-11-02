@@ -19,15 +19,9 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { TBD_RE, addDays, asText, slugify, today, type Manifest } from "../compliance";
+import { TBD_RE, addDays, asText, slugify, today } from "../compliance";
 import { STATUSES, STATUS_INFO, statusOf, type Option } from "../guidance";
 
-/** Shared with every widget through rjsf's formContext. */
-export interface EditorContext {
-  formData: Manifest;
-}
-
-const ctxOf = (props: WidgetProps) => (props.registry.formContext ?? { formData: {} }) as EditorContext;
 const hasErrors = (props: WidgetProps) => (props.rawErrors?.length ?? 0) > 0;
 
 /** Lifecycle status as a clickable stepper (Standard §4, Figure 1). */
@@ -74,8 +68,8 @@ export function StatusWidget({ id, value, onChange, disabled, readonly }: Widget
 
 /** Catalogue ID with a "suggest from title" helper. */
 export function IdWidget(props: WidgetProps) {
-  const { id, value, onChange, label, required, disabled, readonly, placeholder } = props;
-  const title: unknown = ctxOf(props).formData?.dataset?.name;
+  const { id, value, onChange, label, required, disabled, readonly, placeholder, options } = props;
+  const title: unknown = options.suggestFrom;
   const suggestion = typeof title === "string" ? slugify(title) : "";
   return (
     <Stack direction="row" spacing={1} alignItems="flex-start">
@@ -139,7 +133,7 @@ export function PersonWidget(props: WidgetProps) {
   };
 
   const copyFrom = options.copyFrom as string | undefined;
-  const source: string | undefined = copyFrom ? ctxOf(props).formData?.roles?.[copyFrom] : undefined;
+  const source = options.copySource as string | undefined;
 
   // A fixed list of people to choose from (the approved Data Owners)
   const choices = (options.choices as string[] | undefined) ?? [];
@@ -214,7 +208,7 @@ export function TbdWidget(props: WidgetProps) {
   // Only a complete placeholder: typing "TBD" in the box must not turn it into a date picker
   const due = typeof value === "string" ? (TBD_RE.exec(value)?.[1] ?? "") : "";
   const isTbd = due !== "";
-  const archived = ctxOf(props).formData?.status === "archived";
+  const archived = options.archived === true;
 
   const toggle = (on: boolean) => onChange(on ? `TBD by ${addDays(30)}` : undefined);
 
