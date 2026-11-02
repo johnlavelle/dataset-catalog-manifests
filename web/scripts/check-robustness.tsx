@@ -18,7 +18,8 @@ import ManifestForm from "../src/components/ManifestForm";
 import ChecklistPanel from "../src/components/ChecklistPanel";
 import StepsPanel from "../src/components/StepsPanel";
 import YamlPreview from "../src/components/YamlPreview";
-import { checklist, customValidate, hasContent, missingCount, normalise, placeholders, schema, type Manifest } from "../src/compliance";
+import { checklist, customValidate, hasContent, isMapping, missingCount, normalise, placeholders, schema, type Manifest } from "../src/compliance";
+import { applyBulk, bulkPlan, sharedValues } from "../src/productBulk";
 import transformErrors from "../src/transformErrors";
 import { buildPrompt } from "../src/llmPrompt";
 import { parseYaml, toYaml } from "../src/yamlExport";
@@ -90,6 +91,12 @@ function exercise(input: Manifest): boolean {
   placeholders(data);
   const { status: _, ...rest } = data;
   Object.values(rest).some(hasContent);
+  // Setting a field on all products, and adding one, must cope with whatever the products hold
+  if (isMapping(data.products)) {
+    sharedValues(data.products);
+    const keys = new Set(Object.keys(data.products));
+    applyBulk(data.products, "type", "diagnostic", bulkPlan(data.products, "type", "diagnostic", "all", keys));
+  }
   const text = toYaml(data);
   buildPrompt(text, data);
   // What the editor writes can be opened again (unless the input was refused to begin with)
@@ -143,6 +150,37 @@ for (const [i, { label, doc }] of cases.entries()) {
 console.error = consoleError;
 console.warn = consoleWarn;
 
+/** The rules that keep a bulk change from losing a value nobody meant to lose. */
+function bulkRuleFailures(): string[] {
+  const products = {
+    a: { name: "A", dir: "a", type: "raw output", category: "Ice" },
+    b: { name: "B", dir: "b", category: "Ice" },
+    c: { name: "C", dir: "c", type: " ", category: "Ice" },
+    d: { name: "D", dir: "d", type: "diagnostic" },
+    broken: "plain text",
+  };
+  const none = new Set<string>();
+  const same = (label: string, got: unknown, want: unknown) =>
+    JSON.stringify(got) === JSON.stringify(want) ? [] : [`${label}: got ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`];
+  const empty = bulkPlan(products, "type", " diagnostic ", "empty", none);
+  const all = bulkPlan(products, "type", "diagnostic", "all", none);
+  const ticked = bulkPlan(products, "type", "diagnostic", "ticked", new Set(["a", "b"]));
+  const applied = applyBulk(products, "type", " diagnostic ", empty) as Record<string, any>;
+  return [
+    ...same("Empty only leaves values alone", empty, { fill: ["b", "c"], replace: [] }),
+    ...same("All counts different values, not equal ones", all, { fill: ["b", "c"], replace: ["a"] }),
+    ...same("Ticked reaches only ticked products", ticked, { fill: ["b"], replace: ["a"] }),
+    ...same("A value is trimmed", applied.b.type, "diagnostic"),
+    ...same("Other values survive", [applied.a.type, applied.b.category], ["raw output", "Ice"]),
+    ...same("Order is kept", Object.keys(applied), Object.keys(products)),
+    ...same("A product that is not a mapping is left alone", applied.broken, "plain text"),
+    ...same("A new product takes only what all agree on", sharedValues(products), {}),
+    ...same("Type is not passed on", sharedValues({ a: products.a, b: products.b, x: { type: "raw output", category: "Ice" } }), { category: "Ice" }),
+  ];
+}
+const ruleFailures = bulkRuleFailures();
+for (const message of ruleFailures) console.log(`FAIL  ${message}`);
+
 for (const [message, labels] of failures) {
   console.log(`FAIL  ${message}\n      ${labels.length} case(s), e.g.\n      ${labels.slice(0, 6).join("\n      ")}`);
 }
@@ -150,4 +188,4 @@ const failed = [...failures.values()].reduce((n, l) => n + l.length, 0);
 console.log(
   `\n${cases.length} malformed variant(s) of the example: ${refused} refused on import with a message, ${failed} crashed the editor.`
 );
-process.exit(failed ? 1 : 0);
+process.exit(failed || ruleFailures.length ? 1 : 0);

@@ -8,6 +8,7 @@ import {
   Card,
   CardContent,
   CardActions,
+  Checkbox,
   Chip,
   Collapse,
   IconButton,
@@ -31,6 +32,8 @@ import { PRODUCT_CATEGORIES, PRODUCT_TYPE_OPTIONS } from "../guidance";
 import type { EditorContext } from "./widgets";
 import { asText, isMapping } from "../compliance";
 import { COLLAPSE_ALL_EVENT, REVEAL_FIELD_EVENT, pathParts } from "../navigation";
+import { sharedValues, type BulkScope } from "../productBulk";
+import ProductBulkBar from "./ProductBulkBar";
 
 interface Product {
   name?: string;
@@ -98,11 +101,25 @@ export default function ProductsField(props: FieldProps) {
   const products: ProductsMap = isMapping(props.formData) ? (props.formData as ProductsMap) : {};
   const entries = Object.entries(products).map(([k, p]) => [k, isMapping(p) ? p : {}] as [string, Product]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const status = (props.registry.formContext as EditorContext | undefined)?.formData?.status;
+  const [ticked, setTicked] = useState<Set<string>>(new Set());
+  const [scope, setScope] = useState<BulkScope>("empty");
+  const manifest = (props.registry.formContext as EditorContext | undefined)?.formData;
+  const status = manifest?.status;
   const errorSchema = props.errorSchema as ErrorSchema | undefined;
 
   const update = (newProducts: ProductsMap) => {
     props.onChange(newProducts);
+  };
+
+  // This field stays mounted when another manifest is opened, and ticks belong to the one they were made in
+  useEffect(() => setTicked(new Set()), [manifest?.id]);
+
+  const toggleTick = (key: string, on: boolean) => {
+    const next = new Set(ticked);
+    if (on) next.add(key);
+    else next.delete(key);
+    setTicked(next);
+    if (on) setScope("ticked");
   };
 
   // A jump from the checklist to a field inside a product opens its card; "Collapse all" closes them all
@@ -127,13 +144,14 @@ export default function ProductsField(props: FieldProps) {
     let n = entries.length + 1;
     while (`product_${n}` in products) n++;
     const key = `product_${n}`;
-    update({ ...products, [key]: { name: "", dir: "" } });
+    update({ ...products, [key]: { name: "", dir: "", ...sharedValues(products) } });
     setExpanded((prev) => ({ ...prev, [key]: true }));
   };
 
   const removeProduct = (key: string) => {
     const { [key]: _, ...rest } = products;
     update(rest);
+    toggleTick(key, false);
   };
 
   const renameKey = (oldKey: string, newKey: string) => {
@@ -148,6 +166,7 @@ export default function ProductsField(props: FieldProps) {
       const { [oldKey]: wasOpen, ...rest } = prev;
       return { ...rest, [newKey]: wasOpen ?? true };
     });
+    if (ticked.has(oldKey)) setTicked(new Set([...ticked].map((k) => (k === oldKey ? newKey : k))));
   };
 
   const updateProduct = (key: string, field: string, value: string) => {
@@ -188,6 +207,9 @@ export default function ProductsField(props: FieldProps) {
           No products yet. Add one per sub-directory (or family of sub-directories) of the dataset path.
         </Typography>
       )}
+      {entries.length > 1 && (
+        <ProductBulkBar products={products} ticked={ticked} scope={scope} onScope={setScope} onChange={(p) => update(p as ProductsMap)} />
+      )}
       <Stack spacing={1.5}>
         {entries.map(([key, product]) => {
           const isOpen = expanded[key] ?? false;
@@ -213,6 +235,16 @@ export default function ProductsField(props: FieldProps) {
                 }}
                 onClick={() => toggleExpand(key)}
               >
+                {entries.length > 1 && (
+                  <Checkbox
+                    size="small"
+                    sx={{ p: 0.25 }}
+                    checked={ticked.has(key)}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => toggleTick(key, e.target.checked)}
+                    inputProps={{ "aria-label": `Tick ${asText(product.name) || key}` }}
+                  />
+                )}
                 <IconButton
                   size="small"
                   sx={{

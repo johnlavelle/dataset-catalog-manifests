@@ -204,6 +204,8 @@ Bad input never leaves a blank page:
 - **Field values:** wrong values, such as an unknown status or a number where text belongs, load and are listed as errors in the checklist.
 - **Recovery:** if the form still cannot show a draft, it offers to download the draft or start a new one; the draft stays under *Recent*.
 
-`check:robustness` (CI job `editor-robustness`) replaces each field of the example with values of the wrong type and renders the editor with every variant.
+Fields that products share need not be filled in one card at a time. With two or more products, a bar above the list sets Type, Category, Model component or Domain on the products that have no value yet, on all of them, or on those ticked in the list; replacing values says how many and can be undone until the next edit. The value is written to each product, so the YAML stays the same as if it had been typed in each card. A new product starts with the Category, Model component and Domain all the others share; Type is left to choose.
+
+`check:robustness` (CI job `editor-robustness`) replaces each field of the example with values of the wrong type and renders the editor with every variant, and checks the rules of the bulk change above.
 
 It is deployed from `main`: to GitHub Pages by [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml), and to GitLab Pages by the `pages` job in [`.gitlab-ci.yml`](.gitlab-ci.yml) (default branch only). Both rebuild when `web/`, `schemas/`, `examples/` or `registry/` change.
