@@ -1,0 +1,719 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dataset Manifest",
+  "description": "Catalogue entry for one dataset: identity, lifecycle status, roles, retention, licence, archiving record and parts. Aligned with a Storage and Archiving Standard (v1.0), except that the Standard's 'archived' state is not a status: whether the dataset is on tape is recorded in dataset.on_tape, read with the status (will go to tape, is on tape, was on tape). Which fields are mandatory depends on `status` and that switch (allOf rules at the bottom): (1) active/deprecated — every REQ-CAT-004 field that applies; 'TBD by YYYY-MM-DD' is accepted for facts and links not yet known (Procedure A.5), while roles, retention and licence are decisions that must be made; (2) active/deprecated and on tape — also an Owner-approved appraisal, WIS2 discipline, format, compression, quality check and archiving date, with no TBD left (REQ-ARC-001, REQ-APP-001–003, REQ-NAME-004, Procedure C.7); (3) deleted — deletion date and approver (REQ-CAT-007, REQ-RET-002); (4) third-party storage — the contract is linked (REQ-TPY-003).",
+  "type": "object",
+  "required": ["id", "status", "dataset", "parts"],
+  "additionalProperties": false,
+  "definitions": {
+    "person": {
+      "type": "string",
+      "pattern": "^[^<>@\\s][^<>@]* <[^<>@\\s]+@[^<>@\\s]+>$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "dateOrTbd": {
+      "type": "string",
+      "pattern": "^(\\d{4}-\\d{2}-\\d{2}|TBD by \\d{4}-\\d{2}-\\d{2})$"
+    },
+    "urlOrTbd": {
+      "type": "string",
+      "pattern": "^(https?://\\S+|TBD by \\d{4}-\\d{2}-\\d{2})$"
+    },
+    "textOrTbd": {
+      "type": "string",
+      "pattern": "^((?!TBD)\\S[\\s\\S]*|TBD by \\d{4}-\\d{2}-\\d{2})$"
+    },
+    "location": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A directory: an absolute path (/data/…), a path on another server (host:/path), or a URL (scheme://…) for a database or external store. No trailing slash, no empty, '.' or '..' segments, no spaces at either end.",
+      "pattern": "^(?:[A-Za-z][A-Za-z0-9+.-]*://\\S+|(?:[A-Za-z0-9][A-Za-z0-9.-]*:)?(?!.*//)(?!(?:.*/)?\\.\\.?(?:/|$))/(?:\\S(?:.*[^\\s/])?)?)$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A path relative to dataset.path (or, while an entry has none, to dataset.legacy_path): no slash at the start or end, no spaces at either end.",
+      "pattern": "^[^\\s/](?:.*[^\\s/])?$"
+    }
+  },
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "Catalogue ID",
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "description": "Unique, stable identifier of this entry (REQ-CAT-003). Lower-case letters, digits, '-' and '_'. Must equal the manifest file name (<id>.yaml) and never change once registered."
+    },
+    "status": {
+      "type": "string",
+      "title": "Lifecycle status",
+      "enum": ["proposed", "active", "deprecated", "deleted"],
+      "description": "Current state in the dataset lifecycle (Standard §4, Figure 1). Being on tape (the Standard's 'archived') is not a status: it is dataset.on_tape. The status decides which fields are mandatory."
+    },
+    "dataset": {
+      "type": "object",
+      "title": "Dataset",
+      "required": ["name", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Title",
+          "minLength": 1,
+          "description": "Short, human-readable name (REQ-CAT-004). Prefer names that survive reorganisation: 'Operational WAM', not 'John's wave model output'."
+        },
+        "path": {
+          "$ref": "#/definitions/location",
+          "title": "Location (primary path)",
+          "description": "The directory where the authoritative copy lives, e.g. /data/projects/… (REQ-CAT-004): an absolute path without a trailing slash, host:/path on another server, or for database or third-party storage a URL (scheme://…). While the entry is proposed, this is the proposed path: where the dataset will live once registered, never legacy storage, which data is to leave (Policy §7); where the data is now goes in legacy_path. Mandatory once registered; until then it may be left out while that is not decided, as long as legacy_path says where the data is. When the dataset is on tape (on_tape), this is the archive directory."
+        },
+        "legacy_path": {
+          "$ref": "#/definitions/location",
+          "title": "Legacy location",
+          "description": "Where the data was before it moved to the primary path, or, while the entry is proposed, where it still is. Keeps the trail from the old path to the new one (Guidelines §9.3). Leave empty if the data does not move. A proposed entry whose destination is not decided yet has this and no path."
+        },
+        "on_tape": {
+          "type": "boolean",
+          "title": "On tape",
+          "description": "The dataset is in the archive, on tape. Read with the status: while proposed it will go to tape, while active or deprecated it is there, once deleted it was. Once an active or deprecated dataset is on tape, the appraisal, storage and archiving fields are mandatory, and the tier, if given, is archive."
+        },
+        "description": {
+          "type": "string",
+          "title": "Description",
+          "minLength": 1,
+          "description": "What the dataset contains, why it exists and how to interpret it — a few sentences (REQ-CAT-004). Detail belongs on the metadata page."
+        },
+        "model": {
+          "type": "string",
+          "title": "Model / source",
+          "description": "Model system, instrument or source (e.g. NEMO, HARMONIE-AROME, EC-Earth3)."
+        },
+        "domain": {
+          "type": "string",
+          "title": "Domain",
+          "description": "Geographic domain (e.g. North Sea - Baltic Sea, Global)."
+        }
+      }
+    },
+    "roles": {
+      "type": "object",
+      "title": "Roles",
+      "description": "Every dataset has a named Data Owner, Data Steward and Data Custodian with reachable contacts (Standard §3). One person may hold all three — then say so explicitly.",
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "$ref": "#/definitions/person",
+          "title": "Data Owner",
+          "description": "Accountable: decides purpose, permitted use, retention and sharing; approves retention, archiving and deletion (REQ-OWN-001–003). When registry/owners.yaml lists approved Data Owners, the Owner must be one of them."
+        },
+        "steward": {
+          "$ref": "#/definitions/person",
+          "title": "Data Steward",
+          "description": "Responsible for this entry, documentation and quality; defines how the dataset is prepared for archiving (REQ-STW-001–004)."
+        },
+        "custodian": {
+          "$ref": "#/definitions/person",
+          "title": "Data Custodian",
+          "description": "Responsible for storage, permissions, quotas, write-protection and integrity (REQ-CUS-001–003). A team mailbox is fine."
+        },
+        "single_person": {
+          "type": "boolean",
+          "title": "One person holds all three roles",
+          "description": "Must be ticked when Owner, Steward and Custodian are the same person (Standard §3)."
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "title": "Retention",
+      "description": "How long the dataset is kept, and why (REQ-RET-001, approved by the Owner: REQ-OWN-002).",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "title": "Retain until",
+          "enum": ["date", "condition", "indefinite"],
+          "description": "A fixed date, a condition, or indefinitely (only with a written rationale)."
+        },
+        "until": {
+          "$ref": "#/definitions/date",
+          "title": "Retain until (date)",
+          "description": "ISO 8601 date, YYYY-MM-DD."
+        },
+        "condition": {
+          "type": "string",
+          "title": "Retain until (condition)",
+          "minLength": 1,
+          "description": "e.g. 'until superseded by the next reanalysis version, plus 2 years'."
+        },
+        "rationale": {
+          "type": "string",
+          "title": "Rationale",
+          "description": "Why this retention: 'We keep X until Y because Z'. Mandatory for 'indefinite'."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "date" } }, "required": ["kind"] },
+          "then": { "required": ["until"] },
+          "else": { "not": { "required": ["until"] } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "condition" } }, "required": ["kind"] },
+          "then": { "required": ["condition"] },
+          "else": { "not": { "required": ["condition"] } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "indefinite" } }, "required": ["kind"] },
+          "then": { "required": ["rationale"], "properties": { "rationale": { "minLength": 1 } } }
+        }
+      ]
+    },
+    "license": {
+      "type": "object",
+      "title": "Licence",
+      "description": "The terms under which the dataset may be used (REQ-LIC-001, REQ-LIC-002).",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Licence",
+          "enum": ["CC-BY-4.0", "CC0-1.0", "WMO-UDP-core", "WMO-UDP-recommended", "internal", "restricted"],
+          "description": "When in doubt, pick CC-BY 4.0."
+        },
+        "reason": {
+          "type": "string",
+          "title": "Reason",
+          "description": "Why access is limited. Mandatory for 'restricted'; recommended for 'Internal use only'."
+        },
+        "decided_by": {
+          "$ref": "#/definitions/person",
+          "title": "Restriction decided by",
+          "description": "The decision-maker for a restricted licence (REQ-LIC-002)."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "id": { "const": "restricted" } }, "required": ["id"] },
+          "then": { "required": ["reason", "decided_by"], "properties": { "reason": { "minLength": 1 } } },
+          "else": { "not": { "required": ["decided_by"] } }
+        },
+        {
+          "if": { "properties": { "id": { "enum": ["restricted", "internal"] } }, "required": ["id"] },
+          "else": { "not": { "required": ["reason"] } }
+        }
+      ]
+    },
+    "identifiers": {
+      "type": "object",
+      "title": "Persistent identifiers",
+      "additionalProperties": false,
+      "properties": {
+        "pid": {
+          "$ref": "#/definitions/textOrTbd",
+          "title": "Local persistent identifier (PID)",
+          "description": "Stable identifier that resolves to the dataset and survives moves and renames (REQ-CAT-008). Ask the Data Custodian how your organisation assigns them."
+        },
+        "doi": {
+          "type": "string",
+          "title": "DOI of this dataset",
+          "pattern": "^(10\\.\\d{4,9}/\\S+|TBD by \\d{4}-\\d{2}-\\d{2})$",
+          "description": "This dataset's own DOI, registered via DataCite (REQ-CAT-009). Recommended for datasets that are cited, published or meant for long-term reuse. Bare DOI, without https://doi.org/. A DOI of something else — a product published from this data, a paper — goes under Related DOIs."
+        },
+        "related": {
+          "type": "array",
+          "title": "Related DOIs",
+          "description": "DOIs of related works: products published from this data (e.g. a Copernicus Marine product), papers or reports describing it, or the data it was made from.",
+          "items": {
+            "type": "object",
+            "required": ["doi"],
+            "additionalProperties": false,
+            "properties": {
+              "doi": {
+                "type": "string",
+                "title": "DOI",
+                "pattern": "^10\\.\\d{4,9}/\\S+$",
+                "description": "Bare DOI, e.g. 10.48670/moi-00013."
+              },
+              "title": {
+                "type": "string",
+                "title": "What it is",
+                "description": "Short name or product code, e.g. 'BALTICSEA_MULTIYEAR_PHY_003_011' or 'Larsen et al. (2024)'."
+              },
+              "relation": {
+                "type": "string",
+                "title": "Relation",
+                "enum": ["IsSourceOf", "IsVariantFormOf", "IsDescribedBy", "IsDerivedFrom", "IsCitedBy"],
+                "description": "How this dataset relates to the DOI, in DataCite terms."
+              }
+            }
+          }
+        }
+      }
+    },
+    "links": {
+      "type": "object",
+      "title": "Supporting pages",
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/urlOrTbd",
+          "title": "Metadata page",
+          "description": "Fuller description: what the dataset is, how it was produced, what the variables mean, known limitations (REQ-CAT-004, REQ-ARC-003)."
+        },
+        "archiving_guide": {
+          "$ref": "#/definitions/urlOrTbd",
+          "title": "Archiving guide",
+          "description": "Step-by-step description of how this dataset is prepared and written to the archive: filtering, aggregation, format, size, compression (REQ-STW-002, REQ-ARC-002)."
+        },
+        "contract": {
+          "$ref": "#/definitions/urlOrTbd",
+          "title": "Contract / agreement",
+          "description": "Written agreement covering security, access, retention and exit. Mandatory for third-party storage (REQ-TPY-002, REQ-TPY-003)."
+        }
+      }
+    },
+    "dates": {
+      "type": "object",
+      "title": "Dates",
+      "description": "ISO 8601 dates (YYYY-MM-DD). Quote them in YAML.",
+      "additionalProperties": false,
+      "properties": {
+        "released": {
+          "$ref": "#/definitions/dateOrTbd",
+          "title": "Release date",
+          "description": "When the dataset (or its current version) was published or put into use."
+        },
+        "archived": {
+          "$ref": "#/definitions/date",
+          "title": "Archiving date",
+          "description": "When the data was written to the archive. Mandatory once an active dataset's location is in the archive."
+        },
+        "deletion_planned": {
+          "$ref": "#/definitions/date",
+          "title": "Planned deletion date",
+          "description": "When defined. Deletion still needs the Owner's approval at the time (Procedure G)."
+        },
+        "reviewed": {
+          "$ref": "#/definitions/date",
+          "title": "Last reviewed",
+          "description": "When the Steward last reviewed this entry. Recommended at least yearly (REQ-CAT-006, REQ-STW-004)."
+        },
+        "updated": {
+          "$ref": "#/definitions/date",
+          "title": "Last updated",
+          "description": "Optional: when the data or this entry last changed."
+        }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "title": "Storage",
+      "additionalProperties": false,
+      "properties": {
+        "tier": {
+          "type": "string",
+          "title": "Storage tier",
+          "enum": ["project_space", "archive", "database", "third_party", "legacy"],
+          "description": "Where the authoritative copy lives (Standard §5): archive when the dataset is on tape, legacy for old areas awaiting triage. Scratch is never the only home of a dataset (REQ-TIER-001)."
+        },
+        "wis2_discipline": {
+          "type": "string",
+          "title": "WIS2 discipline",
+          "enum": ["atmospheric-composition", "climate", "cryosphere", "hydrology", "ocean", "space-weather", "weather"],
+          "description": "Top-level folder in the archive (REQ-NAME-004). One discipline per archive folder (REQ-NAME-005). Mandatory once an active dataset is on tape."
+        },
+        "formats": {
+          "type": "array",
+          "title": "File formats",
+          "description": "Every format of the files in the dataset, inside any containers. Open, documented formats only in the archive (REQ-FMT-001). Mandatory once an active dataset is in the archive.",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["netCDF", "GRIB", "BUFR", "Zarr", "HDF5", "GeoTIFF", "Parquet", "CSV", "text", "shapefile", "image", "scripts", "binary", "other"]
+          }
+        },
+        "format_notes": {
+          "type": "string",
+          "title": "Format details",
+          "description": "What the list does not say: edition, conventions, proportions, or the name of an 'other' format, e.g. 'GRIB2', 'GHRSST L2P', 'mostly netCDF'. Mandatory when 'other' is chosen."
+        },
+        "containers": {
+          "type": "array",
+          "title": "Containers",
+          "description": "How files are packed together, if at all. squashfs is the container for mixed file types and when names and structure must be kept (REQ-CMP-002). Leave empty for plain files.",
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["squashfs", "tar", "zip"] }
+        },
+        "compression": {
+          "type": "array",
+          "title": "Compression",
+          "description": "The algorithms used, inside files or containers; 'none' if uncompressed. zstd or zlib for netCDF, zstd for squashfs, xz case by case, gzip avoided (REQ-CMP-001–003). Mandatory once an active dataset is in the archive.",
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["none", "zstd", "xz", "zlib", "gzip", "ccsds", "other"] }
+        },
+        "compression_settings": {
+          "type": "string",
+          "title": "Compression settings",
+          "description": "Tool and settings, e.g. 'mksquashfs -comp zstd -b 1M' or 'netCDF zlib level 1'. Mandatory when 'other' is chosen."
+        },
+        "lossy": {
+          "type": "boolean",
+          "title": "Lossy compression or precision reduction used",
+          "description": "Only with the Owner's explicit approval and documented settings (REQ-FMT-003)."
+        },
+        "lossy_settings": {
+          "type": "string",
+          "title": "Lossy settings",
+          "description": "The documented precision setting, e.g. 'bit-rounding, 7 keep-bits for t, u, v'."
+        },
+        "lossy_approved_by": {
+          "$ref": "#/definitions/person",
+          "title": "Lossy compression approved by (Owner)"
+        },
+        "secondary_locations": {
+          "type": "array",
+          "title": "Secondary locations",
+          "description": "Other places the dataset is duplicated, if any (REQ-CAT-004), written like the primary location.",
+          "items": { "$ref": "#/definitions/location" }
+        },
+        "checksums": {
+          "type": "string",
+          "title": "Integrity checksums",
+          "description": "Where the checksums recorded at archiving are kept, e.g. 'sha256 files next to each archive file' (REQ-PRT-003)."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "lossy": { "const": true } }, "required": ["lossy"] },
+          "then": { "required": ["lossy_settings", "lossy_approved_by"] },
+          "else": { "allOf": [{ "not": { "required": ["lossy_settings"] } }, { "not": { "required": ["lossy_approved_by"] } }] }
+        },
+        {
+          "if": { "properties": { "formats": { "contains": { "const": "other" } } }, "required": ["formats"] },
+          "then": { "required": ["format_notes"], "properties": { "format_notes": { "minLength": 1 } } }
+        },
+        {
+          "if": { "properties": { "compression": { "contains": { "const": "other" } } }, "required": ["compression"] },
+          "then": { "required": ["compression_settings"], "properties": { "compression_settings": { "minLength": 1 } } }
+        }
+      ]
+    },
+    "appraisal": {
+      "type": "object",
+      "title": "Appraisal",
+      "description": "The recorded decision that the dataset is worth preserving at all. Written by the Steward and approved by the Owner before the dataset is prepared for archiving (REQ-APP-001–004).",
+      "additionalProperties": false,
+      "properties": {
+        "lasting_value": {
+          "type": "string",
+          "title": "Why does it have lasting value?",
+          "minLength": 1,
+          "description": "One or two sentences: what would be lost if this dataset disappeared?"
+        },
+        "users": {
+          "type": "array",
+          "title": "Who will use it?",
+          "description": "The part of the Designated Community expected to use it.",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["staff", "wmo_nmhs", "copernicus", "national_researchers", "public"]
+          }
+        },
+        "regenerable": {
+          "type": "string",
+          "title": "Could it be regenerated if lost?",
+          "enum": ["impossible", "expensive", "cheap"],
+          "description": "impossible (observations, changed inputs), expensive, or cheap — if cheap, keep the code and configuration rather than the data."
+        },
+        "regeneration_notes": {
+          "type": "string",
+          "title": "Regeneration notes",
+          "description": "What regeneration would need (code, configuration, inputs) and roughly what it would cost."
+        },
+        "obligations": {
+          "type": "string",
+          "title": "Obligations and references",
+          "description": "Recommended: archive law and the national archives' rules, GDPR, contracts, citations or derived products, operational dependencies (REQ-APP-004)."
+        },
+        "approved_by": {
+          "$ref": "#/definitions/person",
+          "title": "Approved by (Data Owner)"
+        },
+        "approved_on": {
+          "$ref": "#/definitions/date",
+          "title": "Approved on"
+        }
+      }
+    },
+    "archiving": {
+      "type": "object",
+      "title": "Archiving process",
+      "additionalProperties": false,
+      "properties": {
+        "quality_verified_on": {
+          "$ref": "#/definitions/date",
+          "title": "Quality verified on",
+          "description": "When the Steward verified completeness and quality: expected files present, no truncation, values in range, metadata accurate (REQ-STW-003, REQ-ARC-004). Mandatory once an active dataset is in the archive."
+        },
+        "aggregation": {
+          "type": "string",
+          "title": "Aggregation",
+          "description": "How files are aggregated to land in 5 GiB–5 TiB (preferred 10 GiB–2 TiB), e.g. 'monthly netCDF' (REQ-SIZE-001–003)."
+        },
+        "automated": {
+          "type": "boolean",
+          "title": "Archived automatically (scheduled production)",
+          "description": "Scheduled production data kept long-term is archived by an automated process (REQ-OPS-001)."
+        },
+        "pipeline": {
+          "$ref": "#/definitions/urlOrTbd",
+          "title": "Archiving job configuration",
+          "description": "Link to the documented, version-controlled job (REQ-OPS-002), normally in the organisation's archive tool."
+        },
+        "owning_team": {
+          "type": "string",
+          "title": "Owning team",
+          "minLength": 1,
+          "description": "Named team that owns the automated process and receives its alerts (REQ-OPS-002, Procedure D.4)."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "automated": { "const": true } }, "required": ["automated"] },
+          "then": { "required": ["pipeline", "owning_team"] },
+          "else": { "allOf": [{ "not": { "required": ["pipeline"] } }, { "not": { "required": ["owning_team"] } }] }
+        }
+      ]
+    },
+    "deletion": {
+      "type": "object",
+      "title": "Deletion record",
+      "description": "Deleted datasets keep their entry, marked as deleted (REQ-CAT-007, Procedure G.4).",
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "$ref": "#/definitions/date",
+          "title": "Deleted on"
+        },
+        "approved_by": {
+          "$ref": "#/definitions/person",
+          "title": "Approved by (Data Owner)",
+          "description": "Deletion is approved by the Owner and carried out by the Custodian (REQ-RET-002)."
+        },
+        "reference": {
+          "type": "string",
+          "title": "Approval reference",
+          "description": "Ticket, e-mail or note recording the request and its execution."
+        },
+        "archives_authorisation": {
+          "type": "string",
+          "title": "National archives authorisation",
+          "description": "Needed in advance when the data has lasting value (REQ-RIG-002)."
+        }
+      }
+    },
+    "designated_community_notes": {
+      "type": "string",
+      "title": "Notes for the Designated Community",
+      "description": "Optional. Anything a future user would need to interpret the data: unusual conventions, provenance quirks, known limitations (Standard §4.2)."
+    },
+    "exceptions": {
+      "type": "array",
+      "title": "Registered exceptions",
+      "description": "Deviations from SHALL requirements that are registered in the exception register, max. 12 months each (Standard §9).",
+      "items": {
+        "type": "object",
+        "required": ["id", "requirement", "expires"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Exception ID",
+            "pattern": "^EXC-\\S+$",
+            "description": "e.g. EXC-STOR-2026-014."
+          },
+          "requirement": {
+            "type": "string",
+            "title": "Requirement",
+            "pattern": "^REQ-[A-Z]+-\\d{3}$",
+            "description": "e.g. REQ-TIER-002."
+          },
+          "expires": {
+            "$ref": "#/definitions/date",
+            "title": "Expires on"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        }
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "title": "Other information",
+      "description": "Free-form information that has no field of its own (any keys and values). Not checked. Use the defined fields, a part's notes or designated_community_notes where they fit.",
+      "additionalProperties": true
+    },
+    "parts": {
+      "type": "object",
+      "title": "Parts",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["name"],
+        "anyOf": [
+          { "required": ["dir"] },
+          { "required": ["dir_pattern"] }
+        ],
+        "not": {
+          "required": ["dir", "dir_pattern"]
+        },
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable name of the part."
+          },
+          "dir": {
+            "$ref": "#/definitions/relativePath",
+            "description": "Path relative to dataset.path (or, while an entry has none, to dataset.legacy_path) holding this part: usually a sub-directory, but a nested path (v0.6.0/analysis.zarr) or a single file or container (.sqfs image, Zarr store) also works."
+          },
+          "dir_pattern": {
+            "$ref": "#/definitions/relativePath",
+            "description": "Shell glob pattern matching multiple subdirectories under dataset.path (e.g. 'n[0-9][0-9][0-4]'). Use instead of dir when a part spans many directories with a naming convention."
+          },
+          "category": {
+            "type": "string",
+            "description": "Grouping category. Common values: Physics, Biogeochemistry, Ice, Observations, Assimilation, Waves, Atmospheric. Climate datasets may use activity names (DECK, CMIP, ScenarioMIP, DCPP)."
+          },
+          "model_component": {
+            "type": "string",
+            "description": "Model component (e.g. NEMO, ERGOM, SI3)."
+          },
+          "domain": {
+            "type": "string",
+            "description": "Geographic domain for this part."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "final product",
+              "original output",
+              "raw output",
+              "intermediate file",
+              "production file",
+              "project file",
+              "project archive",
+              "restart file",
+              "diagnostic"
+            ],
+            "description": "Role of this data in the processing chain. Intermediate and reproducible outputs should be filtered out before archiving (REQ-ARC-005)."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes about this part."
+          }
+        }
+      },
+      "description": "Map of part key to part metadata: the directories, files or directory families that make up the dataset. Each part lives in its own subdirectory or file (dir) or matches multiple directories (dir_pattern). Extra keys (e.g. experiment_id) are allowed."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "dataset": { "not": { "required": ["legacy_path"] } } }, "required": ["dataset"] },
+      "then": { "properties": { "dataset": { "required": ["path"] } } }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["active", "deprecated"] } }, "required": ["status"] },
+      "then": {
+        "required": ["roles", "retention", "license", "identifiers", "links", "dates"],
+        "properties": {
+          "dataset": { "required": ["path"] },
+          "roles": { "required": ["owner", "steward", "custodian"] },
+          "retention": { "required": ["kind"] },
+          "license": { "required": ["id"] },
+          "identifiers": { "required": ["pid"] },
+          "links": { "required": ["metadata", "archiving_guide"] },
+          "dates": { "required": ["released"] }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": { "enum": ["active", "deprecated"] },
+          "dataset": { "properties": { "on_tape": { "const": true } }, "required": ["on_tape"] }
+        },
+        "required": ["status", "dataset"]
+      },
+      "then": {
+        "required": ["appraisal", "storage", "archiving"],
+        "properties": {
+          "appraisal": {
+            "required": ["lasting_value", "users", "regenerable", "approved_by", "approved_on"],
+            "properties": { "users": { "minItems": 1 } }
+          },
+          "storage": {
+            "required": ["wis2_discipline", "formats", "compression"],
+            "properties": {
+              "formats": { "minItems": 1 },
+              "compression": { "minItems": 1 }
+            }
+          },
+          "archiving": {
+            "required": ["quality_verified_on"],
+            "properties": { "pipeline": { "not": { "pattern": "^TBD" } } }
+          },
+          "dates": {
+            "required": ["archived"],
+            "properties": { "released": { "not": { "pattern": "^TBD" } } }
+          },
+          "identifiers": {
+            "properties": {
+              "pid": { "not": { "pattern": "^TBD" } },
+              "doi": { "not": { "pattern": "^TBD" } }
+            }
+          },
+          "links": {
+            "properties": {
+              "metadata": { "not": { "pattern": "^TBD" } },
+              "archiving_guide": { "not": { "pattern": "^TBD" } },
+              "contract": { "not": { "pattern": "^TBD" } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "dataset": { "properties": { "on_tape": { "const": true } }, "required": ["on_tape"] } },
+        "required": ["dataset"]
+      },
+      "then": {
+        "properties": { "storage": { "properties": { "tier": { "enum": ["archive"] } } } }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "deleted" } }, "required": ["status"] },
+      "then": {
+        "required": ["deletion"],
+        "properties": { "deletion": { "required": ["date", "approved_by"] } }
+      }
+    },
+    {
+      "if": {
+        "properties": { "storage": { "properties": { "tier": { "const": "third_party" } }, "required": ["tier"] } },
+        "required": ["storage"]
+      },
+      "then": {
+        "required": ["links"],
+        "properties": { "links": { "required": ["contract"] } }
+      }
+    }
+  ]
+}

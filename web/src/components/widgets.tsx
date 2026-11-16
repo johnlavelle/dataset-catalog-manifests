@@ -1,0 +1,361 @@
+import { useEffect, useState } from "react";
+import type { WidgetProps } from "@rjsf/utils";
+import {
+  Alert,
+  Autocomplete,
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  InputAdornment,
+  ListItemText,
+  MenuItem,
+  Stack,
+  Step,
+  StepButton,
+  Stepper,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import { TBD_RE, addDays, asText, slugify, today } from "../compliance";
+import { STATUSES, STATUS_INFO, statusOf, type Option } from "../guidance";
+
+const hasErrors = (props: WidgetProps) => (props.rawErrors?.length ?? 0) > 0;
+
+/** Lifecycle status as a clickable stepper (Standard §4, Figure 1). */
+export function StatusWidget({ id, value, onChange, disabled, readonly }: WidgetProps) {
+  const status = statusOf(value);
+  const unknown = value !== undefined && value !== status;
+  const index = STATUSES.indexOf(status);
+  return (
+    // The id lets the checklist jump here, e.g. for the archiving date, which the status reveals
+    <Box id={id}>
+      <Typography variant="subtitle2" gutterBottom>
+        Lifecycle status
+      </Typography>
+      <Stepper nonLinear alternativeLabel activeStep={index} sx={{ mb: 1.5 }}>
+        {STATUSES.map((s, i) => (
+          <Step key={s} completed={status !== "deleted" && i < index}>
+            <StepButton
+              onClick={() => onChange(s)}
+              disabled={disabled || readonly}
+              optional={
+                <Typography variant="caption" color="text.secondary" component="div" sx={{ textAlign: "center" }}>
+                  {STATUS_INFO[s].short}
+                </Typography>
+              }
+            >
+              {STATUS_INFO[s].label}
+            </StepButton>
+          </Step>
+        ))}
+      </Stepper>
+      {unknown ? (
+        <Alert severity="error" variant="outlined" sx={{ py: 0 }}>
+          <strong>"{String(value)}"</strong> is not a lifecycle status. Pick one above; until then the form treats the
+          entry as Proposed.
+        </Alert>
+      ) : (
+        <Alert severity="info" variant="outlined" sx={{ py: 0 }}>
+          <strong>{STATUS_INFO[status].label}:</strong> {STATUS_INFO[status].detail}
+        </Alert>
+      )}
+    </Box>
+  );
+}
+
+/** Catalogue ID with a "suggest from title" helper. */
+export function IdWidget(props: WidgetProps) {
+  const { id, value, onChange, label, required, disabled, readonly, placeholder, options } = props;
+  const title: unknown = options.suggestFrom;
+  const suggestion = typeof title === "string" ? slugify(title) : "";
+  return (
+    <Stack direction="row" spacing={1} alignItems="flex-start">
+      <TextField
+        id={id}
+        label={label}
+        required={required}
+        value={asText(value)}
+        onChange={(e) => onChange(e.target.value || undefined)}
+        disabled={disabled || readonly}
+        placeholder={placeholder || "e.g. ocean-reanalysis"}
+        // Suggested, not filled in: the ID must not follow later title edits. As helper text, since a
+        // suggestion inside the box looks like a value
+        helperText={!asText(value) && suggestion ? `Suggested from the title: ${suggestion}` : undefined}
+        error={hasErrors(props)}
+        fullWidth
+      />
+      <Tooltip title={suggestion ? `Use "${suggestion}"` : "Fill in the dataset title first"}>
+        <span>
+          <Button
+            variant="outlined"
+            sx={{ whiteSpace: "nowrap", height: 56 }}
+            disabled={!suggestion || disabled || readonly}
+            onClick={() => onChange(suggestion)}
+          >
+            From title
+          </Button>
+        </span>
+      </Tooltip>
+    </Stack>
+  );
+}
+
+const PERSON_PARTS = /^(.*?)\s*<([^<>]*)>\s*$/;
+
+function splitPerson(value: unknown): { name: string; email: string } {
+  if (typeof value !== "string" || !value) return { name: "", email: "" };
+  const m = PERSON_PARTS.exec(value);
+  return m ? { name: m[1], email: m[2] } : { name: value, email: "" };
+}
+
+function joinPerson(name: string, email: string): string | undefined {
+  const n = name.trim();
+  const e = email.trim();
+  return n || e ? `${n} <${e}>` : undefined;
+}
+
+/** "Full Name <email@example.com>" edited as two inputs. ui:options.copyFrom copies another role. */
+export function PersonWidget(props: WidgetProps) {
+  const { id, value, onChange, label, required, disabled, readonly, options } = props;
+  const [parts, setParts] = useState(() => splitPerson(value));
+
+  // Re-sync when the value changes from outside (YAML import, "copy from Owner").
+  useEffect(() => {
+    if (joinPerson(parts.name, parts.email) !== (value || undefined)) setParts(splitPerson(value));
+  }, [value]);
+
+  const update = (next: { name: string; email: string }) => {
+    setParts(next);
+    onChange(joinPerson(next.name, next.email));
+  };
+
+  const copyFrom = options.copyFrom as string | undefined;
+  const source = options.copySource as string | undefined;
+
+  // A fixed list of people to choose from (the approved Data Owners)
+  const choices = (options.choices as string[] | undefined) ?? [];
+  if (choices.length) {
+    return (
+      <Autocomplete
+        freeSolo
+        options={choices}
+        value={asText(value)}
+        onChange={(_, v) => onChange(v || undefined)}
+        onInputChange={(_, v, reason) => reason === "input" && onChange(v || undefined)}
+        disabled={disabled || readonly}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            id={id}
+            label={label}
+            required={required}
+            error={hasErrors(props)}
+            placeholder="Type to search the approved Data Owners"
+          />
+        )}
+      />
+    );
+  }
+
+  return (
+    <Box>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+        <TextField
+          id={id}
+          label={label}
+          required={required}
+          value={parts.name}
+          placeholder="Full name or team"
+          onChange={(e) => update({ ...parts, name: e.target.value })}
+          disabled={disabled || readonly}
+          error={hasErrors(props)}
+          sx={{ flex: 3 }}
+        />
+        <TextField
+          id={`${id}_email`}
+          label="E-mail"
+          type="email"
+          required={required}
+          value={parts.email}
+          placeholder="name@example.com"
+          onChange={(e) => update({ ...parts, email: e.target.value })}
+          disabled={disabled || readonly}
+          error={hasErrors(props)}
+          sx={{ flex: 2 }}
+        />
+      </Stack>
+      {copyFrom && source && source !== value && (
+        <Button size="small" sx={{ mt: 0.5 }} onClick={() => onChange(source)} disabled={disabled || readonly}>
+          Same person as the {copyFrom}
+        </Button>
+      )}
+    </Box>
+  );
+}
+
+/**
+ * A text, URL or date input that can instead hold a "TBD by YYYY-MM-DD" placeholder
+ * (Procedure A.5). Placeholders are refused once a registered dataset is archived to tape. While it holds one,
+ * the input asks for the date by which the value will be known, so it says so plainly: a date
+ * appearing where a link was is otherwise easily read as part of the link.
+ */
+export function TbdWidget(props: WidgetProps) {
+  const { id, value, onChange, label, required, disabled, readonly, options, placeholder } = props;
+  const inputType = (options.inputType as string) || "text";
+  // Only a complete placeholder: typing "TBD" in the box must not turn it into a date picker
+  const due = typeof value === "string" ? (TBD_RE.exec(value)?.[1] ?? "") : "";
+  const isTbd = due !== "";
+  const noTbd = options.noTbd === true;
+
+  const toggle = (on: boolean) => onChange(on ? `TBD by ${addDays(30)}` : undefined);
+
+  return (
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
+      {isTbd ? (
+        <TextField
+          id={id}
+          type="date"
+          label={`${label} — not known yet`}
+          required={required}
+          value={due}
+          // Clearing the date keeps the previous one: a placeholder needs a date
+          onChange={(e) => e.target.value && onChange(`TBD by ${e.target.value}`)}
+          disabled={disabled || readonly}
+          error={hasErrors(props)}
+          InputLabelProps={{ shrink: true }}
+          InputProps={{ startAdornment: <InputAdornment position="start">Decide by</InputAdornment> }}
+          helperText={
+            <>
+              {due < today() ? `Overdue since ${due}: fill it in, or set a new date. ` : ""}The date by which it will be
+              known (Procedure A.5). Saved as <span style={{ whiteSpace: "nowrap" }}>&ldquo;TBD by {due}&rdquo;</span> and
+              listed in the checklist until filled in.
+            </>
+          }
+          fullWidth
+        />
+      ) : (
+        <TextField
+          id={id}
+          type={inputType}
+          label={label}
+          required={required}
+          value={asText(value)}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value || undefined)}
+          disabled={disabled || readonly}
+          error={hasErrors(props)}
+          InputLabelProps={inputType === "date" ? { shrink: true } : undefined}
+          fullWidth
+        />
+      )}
+      <Tooltip
+        title={
+          noTbd && !isTbd
+            ? "Placeholders are not allowed once a dataset is archived to tape (REQ-ARC-001)"
+            : "Not known yet? Record a placeholder with the date by which it will be known (Procedure A.5); 30 days ahead is suggested"
+        }
+      >
+        <FormControlLabel
+          sx={{ whiteSpace: "nowrap", mr: 0 }}
+          control={
+            <Switch
+              size="small"
+              checked={isTbd}
+              onChange={(e) => toggle(e.target.checked)}
+              disabled={disabled || readonly || (noTbd && !isTbd)}
+            />
+          }
+          label={<Typography variant="body2">Not known yet</Typography>}
+        />
+      </Tooltip>
+    </Stack>
+  );
+}
+
+/** A select whose options carry a label and an explanation (ui:options.choices). */
+export function DescribedSelectWidget(props: WidgetProps) {
+  const { id, value, onChange, label, required, disabled, readonly, options } = props;
+  const choices = (options.choices ?? {}) as Record<string, Option>;
+  const values = (options.enumOptions ?? []).map((o) => String(o.value));
+  return (
+    <TextField
+      id={id}
+      select
+      fullWidth
+      label={label}
+      required={required}
+      value={asText(value)}
+      onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
+      disabled={disabled || readonly}
+      error={hasErrors(props)}
+      helperText={value ? choices[value]?.description : undefined}
+      SelectProps={{ renderValue: (v) => choices[v as string]?.label ?? String(v) }}
+    >
+      <MenuItem value="">
+        <em>Not set</em>
+      </MenuItem>
+      {values.map((v) => (
+        <MenuItem key={v} value={v} sx={{ whiteSpace: "normal" }}>
+          <ListItemText
+            primary={choices[v]?.label ?? v}
+            secondary={choices[v]?.description}
+            secondaryTypographyProps={{ sx: { whiteSpace: "normal", maxWidth: 520 } }}
+          />
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+}
+
+/** Several values from a list (an array of enum values), each with a label and an explanation (ui:options.choices). */
+export function MultiSelectWidget(props: WidgetProps) {
+  const { id, value, onChange, label, required, disabled, readonly, options } = props;
+  const choices = (options.choices ?? {}) as Record<string, Option>;
+  const values = (options.enumOptions ?? []).map((o) => String(o.value));
+  // Values outside the list stay visible as chips, so the schema error can be seen and fixed
+  const selected = Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
+  return (
+    <Autocomplete
+      // On the Autocomplete, not the TextField: it sets the input's id (the checklist jumps to it)
+      id={id}
+      multiple
+      disableCloseOnSelect
+      options={values}
+      value={selected}
+      onChange={(_, next) => onChange(next.length ? next : undefined)}
+      getOptionLabel={(v) => choices[v]?.label ?? v}
+      disabled={disabled || readonly}
+      renderOption={(optionProps, v, { selected: isSelected }) => (
+        <li {...optionProps}>
+          <Checkbox size="small" checked={isSelected} sx={{ mr: 1 }} />
+          <ListItemText
+            primary={choices[v]?.label ?? v}
+            secondary={choices[v]?.description}
+            secondaryTypographyProps={{ sx: { whiteSpace: "normal" } }}
+          />
+        </li>
+      )}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={label}
+          required={required}
+          error={hasErrors(props)}
+          placeholder={selected.length ? undefined : "Choose one or more"}
+        />
+      )}
+    />
+  );
+}
+
+export const widgets = {
+  StatusWidget,
+  IdWidget,
+  PersonWidget,
+  TbdWidget,
+  DescribedSelectWidget,
+  MultiSelectWidget,
+};
