@@ -179,7 +179,8 @@ export default function Tour({ steps, onStep, onClose }: TourProps) {
             left: spot?.left ?? "50%",
             width: spot?.width ?? 0,
             height: spot?.height ?? 0,
-            boxShadow: `${spot ? "0 0 0 3px rgba(11, 92, 173, 0.6), " : ""}0 0 0 9999px rgba(15, 23, 42, 0.55)`,
+            boxShadow: (t) =>
+              `${spot ? `0 0 0 3px ${t.palette.surface.tourRing}, ` : ""}0 0 0 9999px ${t.palette.surface.tourScrim}`,
             ...motion(["top", "left", "width", "height"]),
           }}
         />

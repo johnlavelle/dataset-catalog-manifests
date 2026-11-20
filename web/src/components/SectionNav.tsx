@@ -28,7 +28,7 @@ export default function SectionNav({ formData, errors }: SectionNavProps) {
         position: "sticky",
         top: 0,
         zIndex: 2,
-        bgcolor: "rgba(242, 245, 249, 0.92)",
+        bgcolor: "surface.nav",
         backdropFilter: "blur(6px)",
         borderBottom: 1,
         borderColor: "divider",
@@ -60,7 +60,7 @@ export default function SectionNav({ formData, errors }: SectionNavProps) {
                     borderColor: "divider",
                     bgcolor: "background.paper",
                     flex: "none",
-                    "&:hover, &.Mui-focusVisible": { borderColor: "primary.main", bgcolor: "primary.light" },
+                    "&:hover, &.Mui-focusVisible": { borderColor: "primary.main", bgcolor: "primary.tint" },
                   }}
                 >
                   <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: TONE_COLOR[tone], flex: "none" }} />

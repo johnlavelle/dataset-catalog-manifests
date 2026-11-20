@@ -23,8 +23,6 @@ import { stageLabel } from "../guidance";
 import { goTo } from "../navigation";
 import { stagesFor, stepDone, stepTarget, type Command, type FieldError, type Stage, type Step } from "../steps";
 
-const ROLE_COLOUR = { Owner: "secondary", Steward: "primary", Custodian: "success" } as const;
-
 /** A shell snippet with a copy button. */
 function CommandBlock({ command }: { command: Command }) {
   const [copied, setCopied] = useState(false);
@@ -51,8 +49,10 @@ function CommandBlock({ command }: { command: Command }) {
             m: 0,
             p: 1,
             pr: 4.5,
-            bgcolor: "#0f172a",
-            color: "#e2e8f0",
+            bgcolor: "surface.code",
+            border: 1,
+            borderColor: "surface.codeBorder",
+            color: "surface.codeText",
             borderRadius: 1.5,
             fontSize: 12,
             lineHeight: 1.5,
@@ -67,7 +67,7 @@ function CommandBlock({ command }: { command: Command }) {
             size="small"
             onClick={copy}
             aria-label="Copy command"
-            sx={{ position: "absolute", top: 4, right: 4, color: "#cbd5e1" }}
+            sx={{ position: "absolute", top: 4, right: 4, color: "surface.codeIcon" }}
           >
             {copied ? <CheckIcon fontSize="inherit" /> : <ContentCopyIcon fontSize="inherit" />}
           </IconButton>
@@ -98,7 +98,7 @@ function StepItem({ step, index, data, errors }: { step: Step; index: number; da
             {step.title}
           </Typography>
           {step.who?.map((role) => (
-            <Chip key={role} label={role} size="small" variant="outlined" color={ROLE_COLOUR[role]} sx={{ height: 20 }} />
+            <Chip key={role} label={role} size="small" variant="outlined" sx={{ height: 20 }} />
           ))}
         </Stack>
         {step.text && (

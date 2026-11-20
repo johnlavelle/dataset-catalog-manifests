@@ -64,7 +64,7 @@ export const TONE_COLOR: Record<SectionTone, string> = {
   error: "error.main",
   done: "success.main",
   required: "primary.main",
-  idle: "grey.400",
+  idle: "idle",
 };
 
 /** Sections shown for the data: Deletion only once the dataset is on its way out, or already filled in. */
@@ -83,7 +83,7 @@ function GuidanceBox({ guidance }: { guidance: Guidance }) {
         {open ? "Hide guidance" : "How to fill this in"}
       </Button>
       <Collapse in={open}>
-        <Paper variant="outlined" sx={{ p: 2, mt: 1, bgcolor: "#f5f9fe", borderColor: "#cfe0f3" }}>
+        <Paper variant="outlined" sx={{ p: 2, mt: 1, bgcolor: "surface.guidance", borderColor: "surface.guidanceBorder" }}>
           {guidance.intro && (
             <Typography variant="body2" sx={{ fontStyle: "italic", mb: 1 }}>
               {guidance.intro}
@@ -165,8 +165,8 @@ function SectionCard({ section, number, props, formData, errorSchema }: SectionC
             alignSelf: "flex-start",
             fontSize: "0.85rem",
             fontWeight: 600,
-            bgcolor: tone === "idle" ? "grey.100" : TONE_COLOR[tone],
-            color: tone === "idle" ? "text.secondary" : "common.white",
+            bgcolor: tone === "idle" ? "action.selected" : TONE_COLOR[tone],
+            color: tone === "idle" ? "text.secondary" : TONE_COLOR[tone].replace(".main", ".contrastText"),
           }}
         >
           {tone === "done" ? <CheckIcon fontSize="small" /> : tone === "error" ? <PriorityHighIcon fontSize="small" /> : number}

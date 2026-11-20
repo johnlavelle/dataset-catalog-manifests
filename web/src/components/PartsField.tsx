@@ -149,7 +149,7 @@ export const PartCard = memo(function PartCard({
           px: 2,
           py: 1,
           cursor: "pointer",
-          bgcolor: "grey.50",
+          bgcolor: "background.panel",
           gap: 1,
         }}
         onClick={() => actions.toggleOpen(key)}

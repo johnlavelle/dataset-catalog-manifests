@@ -41,6 +41,7 @@ import InfoPage from "./components/InfoPage";
 import LlmDialog from "./components/LlmDialog";
 import RecentDialog, { manifestTitle } from "./components/RecentDialog";
 import Tour from "./components/Tour";
+import ColorModeButton from "./components/ColorModeButton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import SplitHandle, { FORM_MIN, PANEL_DEFAULT, PANEL_MIN, clampPanel } from "./components/SplitHandle";
 import type { IChangeEvent } from "@rjsf/core";
@@ -219,7 +220,12 @@ export default function App() {
       <AppBar
         position="static"
         elevation={0}
-        sx={{ background: "linear-gradient(90deg, #083f78 0%, #0b5cad 100%)" }}
+        sx={{
+          background: (t) => t.palette.surface.appBar,
+          color: "common.white",
+          borderBottom: 1,
+          borderColor: "surface.appBarBorder",
+        }}
       >
         <Toolbar variant="dense" sx={{ gap: 0.5, minHeight: 56 }}>
           <Inventory2Outlined sx={{ mr: 1, opacity: 0.9 }} />
@@ -293,6 +299,7 @@ export default function App() {
               e.target.value = "";
             }}
           />
+          <ColorModeButton />
           <Tooltip title="Take the guided tour">
             <IconButton color="inherit" data-tour="help" onClick={startTour}>
               <TourOutlined />
@@ -330,7 +337,7 @@ export default function App() {
                 maxWidth: `calc(100% - ${FORM_MIN}px)`,
                 display: "flex",
                 flexDirection: "column",
-                bgcolor: "#f8fafc",
+                bgcolor: "background.panel",
                 borderLeft: 1,
                 borderColor: "divider",
               }}

@@ -16,13 +16,13 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useTheme,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import TourOutlinedIcon from "@mui/icons-material/TourOutlined";
 import mermaid from "mermaid";
+import { useColorMode } from "../colorMode";
 import { GETTING_STARTED, REQUIRED_BY_STATUS } from "../guidance";
-
-mermaid.initialize({ startOnLoad: false, theme: "default" });
 
 const REPOSITORY = "https://github.com/johnlavelle/dataset-catalog-manifests";
 
@@ -47,15 +47,34 @@ graph LR
 
 function Mermaid({ id, chart }: { id: string; chart: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const { scheme } = useColorMode();
+  const { palette, typography } = useTheme();
   useEffect(() => {
     let cancelled = false;
-    mermaid.render(id, chart).then(({ svg }) => {
+    // In the app's colours, drawn again when the reader switches scheme
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "base",
+      themeVariables: {
+        darkMode: scheme === "dark",
+        fontFamily: typography.fontFamily,
+        background: palette.background.paper,
+        primaryColor: palette.primary.tint,
+        primaryBorderColor: palette.primary.main,
+        primaryTextColor: palette.text.primary,
+        textColor: palette.text.primary,
+        lineColor: palette.text.secondary,
+        edgeLabelBackground: palette.background.paper,
+        labelBackgroundColor: palette.background.paper,
+      },
+    });
+    mermaid.render(`${id}-${scheme}`, chart).then(({ svg }) => {
       if (!cancelled && ref.current) ref.current.innerHTML = svg;
     });
     return () => {
       cancelled = true;
     };
-  }, [id, chart]);
+  }, [id, chart, scheme, palette, typography]);
   return (
     <Box
       ref={ref}

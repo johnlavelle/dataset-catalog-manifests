@@ -3,7 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>Dataset Manifest Editor</title>
+    <script>
+      // Paint the chosen scheme before React starts, so a dark page does not flash white. Same key as colorMode.tsx.
+      (function () {
+        var mode = null;
+        try {
+          mode = localStorage.getItem("dataset-manifest-editor:color-mode");
+        } catch (e) {}
+        var dark = mode === "dark" || (mode !== "light" && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.scheme = dark ? "dark" : "light";
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        document.documentElement.style.backgroundColor = dark ? "#0f141b" : "#f2f5f9";
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

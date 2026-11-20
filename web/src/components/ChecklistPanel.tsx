@@ -29,17 +29,17 @@ import { goTo, pathParts } from "../navigation";
 const ICONS: Record<CheckState, { icon: JSX.Element; hint: string }> = {
   ok: { icon: <CheckCircleIcon color="success" fontSize="small" />, hint: "Done" },
   missing: { icon: <ErrorIcon color="error" fontSize="small" />, hint: "Mandatory now" },
-  todo: { icon: <RadioButtonUncheckedIcon color="disabled" fontSize="small" />, hint: "Needed for the next step" },
+  todo: { icon: <RadioButtonUncheckedIcon fontSize="small" sx={{ color: "idle" }} />, hint: "Needed for the next step" },
   tbd: { icon: <ScheduleIcon color="warning" fontSize="small" />, hint: "Placeholder — resolve before archiving" },
   warn: { icon: <WarningAmberIcon color="warning" fontSize="small" />, hint: "Recommended (SHOULD)" },
-  optional: { icon: <RemoveIcon color="disabled" fontSize="small" />, hint: "Only where it applies" },
+  optional: { icon: <RemoveIcon fontSize="small" sx={{ color: "idle" }} />, hint: "Only where it applies" },
   manual: { icon: <HandymanOutlinedIcon color="action" fontSize="small" />, hint: "Outside the manifest — check yourself" },
 };
 
 const RELATION_LABEL = { now: "Required now", next: "Next step", later: "Later" } as const;
 
 /** Rows needing attention get a faint tint in their state's colour. */
-const ROW_TINT: Partial<Record<CheckState, string>> = { missing: "error.light", warn: "warning.light", tbd: "warning.light" };
+const ROW_TINT: Partial<Record<CheckState, string>> = { missing: "error.tint", warn: "warning.tint", tbd: "warning.tint" };
 
 type SchemaNode = { title?: string; $ref?: string; properties?: Record<string, SchemaNode>; items?: SchemaNode; additionalProperties?: unknown };
 
@@ -168,7 +168,7 @@ export default function ChecklistPanel({ formData, errors }: ChecklistPanelProps
           mb: 2,
           borderRadius: "10px",
           borderColor: complete ? "success.main" : "divider",
-          bgcolor: complete ? "success.light" : "background.paper",
+          bgcolor: complete ? "success.tint" : "background.paper",
         }}
       >
         <Stack direction="row" spacing={1.5} alignItems="center">
@@ -255,7 +255,7 @@ export default function ChecklistPanel({ formData, errors }: ChecklistPanelProps
               icon={<ErrorIcon color="error" fontSize="small" />}
               primary={fieldTitle(e.property, status)}
               secondary={e.message}
-              tint="error.light"
+              tint="error.tint"
               target={e.property || undefined}
             />
           ))}
