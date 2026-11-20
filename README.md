@@ -14,6 +14,10 @@ Dataset stewards add and update manifests through pull or merge requests. `examp
 3. Run validation locally (see below).
 4. Submit a pull request; the Data Owner approves it (Procedure A.7).
 
+### Schema versions
+
+The schema has a version (`version` in [`schemas/dataset_manifest.schema.json`](schemas/dataset_manifest.schema.json)); each release is tagged `schema-v<version>`, and [`schemas/CHANGELOG.md`](schemas/CHANGELOG.md) lists what changed and how to migrate. A manifest has no version field: every manifest in a catalogue is migrated together with the schema and validated against the current version. The validator prints the version it checked against, and the editor shows it on its About page.
+
 ### Minimal Example
 
 A new entry starts as `proposed` and only needs the basics:
@@ -189,7 +193,7 @@ It also reports comments (which the editor drops) and formatting that differs fr
 |------|----------|
 | `manifests/` | The catalogue: one entry per dataset, `<id>.yaml` (create it with your first entry) |
 | `examples/` | A complete, fictional entry on tape, loaded by the editor's *Example* button (validated by CI, exempt from the Owner check) |
-| `schemas/` | The JSON Schema for manifests |
+| `schemas/` | The JSON Schema for manifests, with its `version`, and [`CHANGELOG.md`](schemas/CHANGELOG.md) |
 | `registry/` | `owners.yaml` — the approved Data Owners |
 | `scripts/` | `validate_manifests.py` — the CI validator |
 | `web/` | The web editor (React, TypeScript, [react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/)); `web/scripts/check-manifests.ts` is the editor compatibility check |

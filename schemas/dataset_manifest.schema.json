@@ -1,6 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Dataset Manifest",
+  "version": "2.0.0",
+  "$comment": "version: semantic version of this schema, explained in schemas/CHANGELOG.md; each release is tagged schema-v<version>.",
   "description": "Catalogue entry for one dataset: identity, lifecycle status, roles, retention, licence, archiving record and parts. Aligned with a Storage and Archiving Standard (v1.0), except that the Standard's 'archived' state is not a status: whether the dataset is on tape is recorded in dataset.on_tape, read with the status (will go to tape, is on tape, was on tape). Which fields are mandatory depends on `status` and that switch (allOf rules at the bottom): (1) active/deprecated — every REQ-CAT-004 field that applies; 'TBD by YYYY-MM-DD' is accepted for facts and links not yet known (Procedure A.5), while roles, retention and licence are decisions that must be made; (2) active/deprecated and on tape — also an Owner-approved appraisal, format, compression, quality check and archiving date, with no TBD left (REQ-ARC-001, REQ-APP-001–003, REQ-NAME-004, Procedure C.7); (3) deleted — deletion date and approver (REQ-CAT-007, REQ-RET-002); (4) third-party storage — the contract is linked (REQ-TPY-003).",
   "type": "object",
   "required": ["id", "status", "dataset", "parts"],

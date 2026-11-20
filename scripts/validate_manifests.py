@@ -370,7 +370,7 @@ def main():
         n_errors += 1
 
     total = len(manifest_files) + len(example_files)
-    print(f"\n{total} file(s): {n_errors} error(s), {n_warnings} warning(s).")
+    print(f"\n{total} file(s) against schema {schema.get('version', '(no version)')}: {n_errors} error(s), {n_warnings} warning(s).")
     if not owners and not args.quiet:
         print(f"Owner check off: {OWNERS_PATH.relative_to(REPO_ROOT)} lists no approved Data Owners.")
     if n_errors or (args.strict and n_warnings):

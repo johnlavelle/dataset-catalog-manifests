@@ -23,6 +23,7 @@ import TourOutlinedIcon from "@mui/icons-material/TourOutlined";
 import mermaid from "mermaid";
 import { useColorMode } from "../colorMode";
 import { GETTING_STARTED, REQUIRED_BY_STATUS } from "../guidance";
+import { schema } from "../compliance";
 
 const REPOSITORY = "https://github.com/johnlavelle/dataset-catalog-manifests";
 
@@ -418,7 +419,11 @@ export default function InfoPage({ onTour }: { onTour: () => void }) {
             catalogue repository
           </Link>{" "}
           as <code>manifests/&lt;id&gt;.yaml</code>, are reviewed in merge requests and are checked by CI against the
-          same rules as this form.
+          same rules as this form: schema version {String(schema.version ?? "")} (changes in{" "}
+          <Link href={`${REPOSITORY}/blob/main/schemas/CHANGELOG.md`} target="_blank" rel="noopener">
+            schemas/CHANGELOG.md
+          </Link>
+          ).
         </Typography>
         <Mermaid id="workflow-diagram" chart={WORKFLOW_DIAGRAM} />
         <Typography component="div">
