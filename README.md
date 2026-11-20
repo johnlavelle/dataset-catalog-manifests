@@ -55,7 +55,7 @@ Legacy storage is never a proposed path: data there is to be kept elsewhere or d
 |--------|------------------|
 | any | `id`, `status`, `dataset.name`, `dataset.path` (while `proposed` or `deleted`, `dataset.legacy_path` may stand in for it), `dataset.description`, `parts` (at least one) |
 | `active`, `deprecated` | `dataset.path`, `roles.owner`, `roles.steward`, `roles.custodian`, `retention.kind` (+ `until` / `condition` / `rationale`), `license.id`, `identifiers.pid`, `links.metadata`, `links.archiving_guide`, `dates.released` |
-| `active`, `deprecated` with `dataset.on_tape: true` | additionally `appraisal` (`lasting_value`, `users`, `regenerable`, `approved_by`, `approved_on`), `storage.wis2_discipline`, `storage.formats`, `storage.compression` (each at least one value; `none` for uncompressed data), `archiving.quality_verified_on`, `dates.archived`; **no `TBD` placeholders** (REQ-ARC-001) |
+| `active`, `deprecated` with `dataset.on_tape: true` | additionally `appraisal` (`lasting_value`, `users`, `regenerable`, `approved_by`, `approved_on`), `storage.formats`, `storage.compression` (each at least one value; `none` for uncompressed data), `archiving.quality_verified_on`, `dates.archived`; **no `TBD` placeholders** (REQ-ARC-001) |
 | `deleted` | `deletion.date`, `deletion.approved_by` — the entry is kept, never removed (REQ-CAT-007) |
 
 Conditional rules that apply at any status:
@@ -87,7 +87,7 @@ Facts and links that are not known yet (`identifiers.pid`, `identifiers.doi`, `l
 - **Older manifests** with a status `archived`, a `tape` section or a `products` section still open in the editor: `status: archived` becomes `status: active` with `dataset.on_tape: true`, a `tape` section with `archived: true` becomes the switch, and `products` becomes `parts`. CI refuses the old forms and says what to change.
 - **DOIs**: `identifiers.doi` is this dataset's own DOI (DataCite, REQ-CAT-009). DOIs of other things — a Copernicus Marine product published from the data, a paper describing it, its input data — go in `identifiers.related` as `doi`, `title` (what it is) and optionally `relation`. Files and drafts with the former `stac` section still open in the editor: its `dois` become related DOIs titled with their product codes, `model_system` fills an empty `dataset.model`, and anything else moves to `extensions.stac`.
 - **No comments**: the web editor does not keep YAML comments, so put notes in fields — `designated_community_notes`, a part's `notes`, or `extensions`.
-- **Enumerations**: `license.id` — `CC-BY-4.0`, `CC0-1.0`, `WMO-UDP-core`, `WMO-UDP-recommended`, `internal`, `restricted`; `identifiers.related[].relation` (DataCite relation types) — `IsSourceOf`, `IsVariantFormOf`, `IsDescribedBy`, `IsDerivedFrom`, `IsCitedBy`; `storage.tier` — `project_space`, `archive`, `database`, `third_party`, `legacy`; `storage.wis2_discipline` — `atmospheric-composition`, `climate`, `cryosphere`, `hydrology`, `ocean`, `space-weather`, `weather`; `storage.formats` (list) — `netCDF`, `GRIB`, `BUFR`, `Zarr`, `HDF5`, `GeoTIFF`, `Parquet`, `CSV`, `text`, `shapefile`, `image`, `scripts`, `binary`, `other`; `storage.containers` (list) — `squashfs`, `tar`, `zip`; `storage.compression` (list) — `none`, `zstd`, `xz`, `zlib`, `gzip`, `ccsds`, `other`; `appraisal.users` — `staff`, `wmo_nmhs`, `copernicus`, `national_researchers`, `public`; `appraisal.regenerable` — `impossible`, `expensive`, `cheap`.
+- **Enumerations**: `license.id` — `CC-BY-4.0`, `CC0-1.0`, `WMO-UDP-core`, `WMO-UDP-recommended`, `internal`, `restricted`; `identifiers.related[].relation` (DataCite relation types) — `IsSourceOf`, `IsVariantFormOf`, `IsDescribedBy`, `IsDerivedFrom`, `IsCitedBy`; `storage.tier` — `project_space`, `archive`, `database`, `third_party`, `legacy`; `storage.formats` (list) — `netCDF`, `GRIB`, `BUFR`, `Zarr`, `HDF5`, `GeoTIFF`, `Parquet`, `CSV`, `text`, `shapefile`, `image`, `scripts`, `binary`, `other`; `storage.containers` (list) — `squashfs`, `tar`, `zip`; `storage.compression` (list) — `none`, `zstd`, `xz`, `zlib`, `gzip`, `ccsds`, `other`; `appraisal.users` — `staff`, `wmo_nmhs`, `copernicus`, `national_researchers`, `public`; `appraisal.regenerable` — `impossible`, `expensive`, `cheap`.
 
 ### Sections
 
@@ -100,7 +100,7 @@ Facts and links that are not known yet (`identifiers.pid`, `identifiers.doi`, `l
 | `identifiers` | Local PID (REQ-CAT-008), the dataset's own DOI (REQ-CAT-009), DOIs of related works |
 | `links` | Metadata page, archiving guide, supplier contract |
 | `dates` | Release, archiving, planned deletion, last review, last update |
-| `storage` | Tier, WIS2 discipline (one per archive folder, REQ-NAME-005), file formats, containers, compression and its settings, lossy settings, secondary locations, checksums |
+| `storage` | Tier, file formats, containers, compression and its settings, lossy settings, secondary locations, checksums |
 | `appraisal` | Why it has lasting value, who will use it, whether it can be regenerated, obligations, Owner's approval (REQ-APP-001–004) |
 | `archiving` | Quality check date, aggregation, automated archiving job and owning team |
 | `deletion` | Deletion date, approver, reference, national archives authorisation |
@@ -136,7 +136,7 @@ A manifest holds what only people know. A STAC catalogue can be generated from i
 | `id`, `title`, `description` | `id`, `dataset.name`, `dataset.description` |
 | `license` | `license.id` — `CC-BY-4.0` and `CC0-1.0` are SPDX ids; anything else is `other`, with a link to the metadata page |
 | `providers` | your organisation as producer and host |
-| `keywords` | `storage.wis2_discipline`, `dataset.model`, `dataset.domain` |
+| `keywords` | `dataset.model`, `dataset.domain` |
 | `sci:doi`, `sci:citation`, `cite-as` link | `identifiers.doi` |
 | `sci:publications`, `related` links | `identifiers.related` |
 | `describedby` link | `links.metadata` |

@@ -107,6 +107,13 @@ def schema_message(error, schema):
         return "'products' is now called 'parts'"
     if error.validator == "additionalProperties" and not error.absolute_path and isinstance(error.instance, dict) and "tape" in error.instance:
         return "'tape' is no longer recorded: being in the archive follows from dataset.path — remove it"
+    if (
+        error.validator == "additionalProperties"
+        and list(error.absolute_path) == ["storage"]
+        and isinstance(error.instance, dict)
+        and "wis2_discipline" in error.instance
+    ):
+        return "storage.wis2_discipline is no longer recorded: the discipline is the archive folder — remove it"
     if error.validator == "not" and isinstance(error.validator_value, dict):
         fields = error.validator_value.get("required", [])
         if set(fields) == {"dir", "dir_pattern"}:

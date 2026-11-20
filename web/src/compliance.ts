@@ -189,6 +189,8 @@ export function upgradeLegacy(data: Manifest): Manifest {
   }
   if (isMapping(out.storage)) {
     const storage: Manifest = { ...out.storage };
+    // November 2026: the WIS2 discipline is the archive folder, not a field of its own
+    delete storage.wis2_discipline;
     if (typeof storage.format === "string") {
       storage.format_notes = joinText(storage.format_notes, storage.format);
       delete storage.format;
@@ -539,7 +541,6 @@ export function checklist(data: Manifest): CheckGroup[] {
     { label: "Owner approves the entry, e.g. by approving the merge request", ref: "Procedure A.7", level: "manual" },
   ];
 
-  const discipline = storage.wis2_discipline;
   const tbdLeft = placeholders(data);
   const archive: Rule[] = [
     {
@@ -551,7 +552,6 @@ export function checklist(data: Manifest): CheckGroup[] {
     },
     { label: "Appraisal approved by the Owner, with date", ref: "REQ-APP-003", level: "shall", ok: person(appraisal.approved_by) && has(appraisal.approved_on), fields: ["appraisal.approved_by", "appraisal.approved_on"] },
     { label: "Data quality verified", ref: "REQ-ARC-004", level: "shall", value: archiving.quality_verified_on, fields: ["archiving.quality_verified_on"] },
-    { label: "WIS2 discipline chosen", ref: "REQ-NAME-004", level: "shall", value: discipline, fields: ["storage.wis2_discipline"] },
     { label: "File formats recorded", ref: "REQ-FMT-001", level: "shall", value: storage.formats, fields: ["storage.formats"] },
     { label: "Compression recorded ('None' if uncompressed)", ref: "Procedure C.7", level: "shall", value: storage.compression, fields: ["storage.compression"] },
     ...(storage.lossy

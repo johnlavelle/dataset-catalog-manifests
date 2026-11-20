@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Dataset Manifest",
-  "description": "Catalogue entry for one dataset: identity, lifecycle status, roles, retention, licence, archiving record and parts. Aligned with a Storage and Archiving Standard (v1.0), except that the Standard's 'archived' state is not a status: whether the dataset is on tape is recorded in dataset.on_tape, read with the status (will go to tape, is on tape, was on tape). Which fields are mandatory depends on `status` and that switch (allOf rules at the bottom): (1) active/deprecated — every REQ-CAT-004 field that applies; 'TBD by YYYY-MM-DD' is accepted for facts and links not yet known (Procedure A.5), while roles, retention and licence are decisions that must be made; (2) active/deprecated and on tape — also an Owner-approved appraisal, WIS2 discipline, format, compression, quality check and archiving date, with no TBD left (REQ-ARC-001, REQ-APP-001–003, REQ-NAME-004, Procedure C.7); (3) deleted — deletion date and approver (REQ-CAT-007, REQ-RET-002); (4) third-party storage — the contract is linked (REQ-TPY-003).",
+  "description": "Catalogue entry for one dataset: identity, lifecycle status, roles, retention, licence, archiving record and parts. Aligned with a Storage and Archiving Standard (v1.0), except that the Standard's 'archived' state is not a status: whether the dataset is on tape is recorded in dataset.on_tape, read with the status (will go to tape, is on tape, was on tape). Which fields are mandatory depends on `status` and that switch (allOf rules at the bottom): (1) active/deprecated — every REQ-CAT-004 field that applies; 'TBD by YYYY-MM-DD' is accepted for facts and links not yet known (Procedure A.5), while roles, retention and licence are decisions that must be made; (2) active/deprecated and on tape — also an Owner-approved appraisal, format, compression, quality check and archiving date, with no TBD left (REQ-ARC-001, REQ-APP-001–003, REQ-NAME-004, Procedure C.7); (3) deleted — deletion date and approver (REQ-CAT-007, REQ-RET-002); (4) third-party storage — the contract is linked (REQ-TPY-003).",
   "type": "object",
   "required": ["id", "status", "dataset", "parts"],
   "additionalProperties": false,
@@ -318,12 +318,6 @@
           "title": "Storage tier",
           "enum": ["project_space", "archive", "database", "third_party", "legacy"],
           "description": "Where the authoritative copy lives (Standard §5): archive when the dataset is on tape, legacy for old areas awaiting triage. Scratch is never the only home of a dataset (REQ-TIER-001)."
-        },
-        "wis2_discipline": {
-          "type": "string",
-          "title": "WIS2 discipline",
-          "enum": ["atmospheric-composition", "climate", "cryosphere", "hydrology", "ocean", "space-weather", "weather"],
-          "description": "Top-level folder in the archive (REQ-NAME-004). One discipline per archive folder (REQ-NAME-005). Mandatory once an active dataset is on tape."
         },
         "formats": {
           "type": "array",
@@ -659,7 +653,7 @@
             "properties": { "users": { "minItems": 1 } }
           },
           "storage": {
-            "required": ["wis2_discipline", "formats", "compression"],
+            "required": ["formats", "compression"],
             "properties": {
               "formats": { "minItems": 1 },
               "compression": { "minItems": 1 }

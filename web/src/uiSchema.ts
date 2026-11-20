@@ -11,7 +11,6 @@ import {
   RETENTION_OPTIONS,
   TIER_OPTIONS,
   USER_OPTIONS,
-  WIS2_OPTIONS,
   archiveRulesApply,
   inArchive,
   locationLabels,
@@ -156,7 +155,6 @@ export default function buildUiSchema(data: Manifest): UiSchema {
     storage: {
       "ui:order": [
         "tier",
-        "wis2_discipline",
         "formats",
         "format_notes",
         "containers",
@@ -169,7 +167,6 @@ export default function buildUiSchema(data: Manifest): UiSchema {
         "checksums",
       ],
       tier: select(TIER_OPTIONS),
-      wis2_discipline: select(WIS2_OPTIONS),
       formats: multiSelect(FORMAT_OPTIONS),
       format_notes: { "ui:placeholder": "e.g. GRIB2; CF-1.8; mostly netCDF" },
       containers: multiSelect(CONTAINER_OPTIONS),

@@ -236,7 +236,8 @@ const CONVENTIONS: [string, ReactNode][] = [
   ],
   [
     "WIS2 discipline",
-    "One per entry: archive folders do not mix disciplines (REQ-NAME-005), so a dataset that spans two is split into two entries.",
+    "One per entry: archive folders do not mix disciplines (REQ-NAME-005), so a dataset that spans two is split into two entries. " +
+      "It is not a field: it is the top-level archive folder the data goes in.",
   ],
   [
     "Anything else",

@@ -96,7 +96,6 @@ const sh = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`;
 function packaging(data: Manifest) {
   const path = asText(data.dataset?.path).replace(/\/+$/, "");
   const old = asText(data.dataset?.legacy_path).replace(/\/+$/, "");
-  const discipline = asText(data.storage?.wis2_discipline);
   const archived = inArchive(data);
   // REQ-NAME-001: letters, digits and underscores; REQ-NAME-003: a period as start--end
   const stem = (asText(data.id) || "dataset").replace(/[^A-Za-z0-9]+/g, "_");
@@ -104,7 +103,7 @@ function packaging(data: Manifest) {
   const source = archived ? old : path || old;
   return {
     source: source || "/data/projects/<project>/<source folder>",
-    folder: archived && path ? path : `${ARCHIVE}${discipline || "<discipline>"}/<folder from the Custodian>`,
+    folder: archived && path ? path : `${ARCHIVE}<discipline>/<folder from the Custodian>`,
     image: `${stem}_<YYYY-MM-DD>--<YYYY-MM-DD>.sqfs`,
     unpacked: `/data/scratch/<your folder>/${stem}_unpacked`,
   };
@@ -314,7 +313,6 @@ function folderStage(data: Manifest, later: boolean): Stage {
         who: ["Steward"],
         text: "The top-level folder in the archive. One discipline per folder.",
         ref: "Procedure F.1, REQ-NAME-004/005",
-        fields: ["storage.wis2_discipline"],
       },
       {
         title: "Request the folder",

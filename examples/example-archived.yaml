@@ -43,7 +43,6 @@ dates:
 
 storage:
   tier: archive
-  wis2_discipline: cryosphere
   formats:
     - netCDF
     - CSV

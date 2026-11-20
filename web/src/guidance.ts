@@ -175,7 +175,7 @@ export const STATUS_INFO: Record<Status, { label: string; short: string; detail:
       "Registered. Every catalogue field in Standard §4.2 is mandatory. Facts and links not known yet may be " +
       "written as 'TBD by YYYY-MM-DD' (Procedure A.5); roles, retention and licence are decisions and must be made. " +
       "Once it is on tape, it also needs an Owner-approved appraisal, " +
-      "WIS2 discipline, format, compression, quality check and archiving date, and no 'TBD' may remain (REQ-ARC-001).",
+      "format, compression, quality check and archiving date, and no 'TBD' may remain (REQ-ARC-001).",
   },
   deprecated: {
     label: "Deprecated",
@@ -205,7 +205,7 @@ export const REQUIRED_BY_STATUS: [string, string][] = [
   ],
   [
     "Active or Deprecated, on tape",
-    "Appraisal approved by the Owner; WIS2 discipline; file formats; compression; quality check date; archiving date. No TBD placeholders.",
+    "Appraisal approved by the Owner; file formats; compression; quality check date; archiving date. No TBD placeholders.",
   ],
   ["Deleted", "Deletion date and the Owner's approval. The entry is never removed."],
   [
@@ -268,16 +268,6 @@ export const TIER_OPTIONS: Record<string, Option> = {
     label: "Legacy storage",
     description: "Existing data awaiting triage and migration (Policy §7). Not to be used for new data (REQ-TIER-002).",
   },
-};
-
-export const WIS2_OPTIONS: Record<string, Option> = {
-  "atmospheric-composition": { label: "atmospheric-composition" },
-  climate: { label: "climate" },
-  cryosphere: { label: "cryosphere" },
-  hydrology: { label: "hydrology" },
-  ocean: { label: "ocean" },
-  "space-weather": { label: "space-weather" },
-  weather: { label: "weather" },
 };
 
 /** File formats (storage.formats); the archive takes only open, documented ones (REQ-FMT-001). */

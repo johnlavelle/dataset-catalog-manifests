@@ -283,6 +283,8 @@ function archiveRuleFailures(): string[] {
     ...check("Archived becomes active, on tape", [once.status, "tape" in once, once.dataset.on_tape], ["active", false, true]),
     ...check("Products become parts", [once.parts, "products" in once], [old.products, false]),
     ...check("The upgrade changes nothing twice", upgradeLegacy(once), once),
+    // The WIS2 discipline is the archive folder, no longer a field
+    ...check("storage.wis2_discipline is dropped", upgradeLegacy({ storage: { tier: "archive", wis2_discipline: "ocean" } }).storage, { tier: "archive" }),
     ...check("With both keys, products stays for the schema to flag", Object.keys(upgradeLegacy({ products: {}, parts: {} })), ["products", "parts"]),
     ...check("A tape section becomes the switch", [("tape" in normalise(draft)), normalise(draft).dataset.on_tape], [false, true]),
     ...check("A switch set by hand is kept", upgradeLegacy({ status: "archived", dataset: { on_tape: false } }).dataset.on_tape, false),
