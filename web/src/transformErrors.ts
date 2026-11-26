@@ -63,6 +63,12 @@ export default function transformErrors(errors: RJSFValidationError[]): RJSFVali
         error.message = "Choose a tier from the list";
       }
 
+      // A value in a list of choices that is not one of them, e.g. from an earlier version of the list:
+      // the field shows it marked, so it can be removed
+      if (error.name === "enum" && /\.\d+$/.test(error.property ?? "")) {
+        error.message = "Not one of the choices: remove it";
+      }
+
       if (error.name === "minItems" && error.property === ".appraisal.users") {
         error.message = "Select at least one group";
       }

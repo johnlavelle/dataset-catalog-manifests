@@ -189,7 +189,7 @@ export default function buildUiSchema(data: Manifest): UiSchema {
       ],
       lasting_value: textarea(2, "What would be lost if this dataset disappeared?"),
       users: {
-        "ui:widget": "checkboxes",
+        "ui:widget": "ChecklistWidget",
         "ui:enumNames": Object.values(USER_OPTIONS).map((o) => o.label),
       },
       regenerable: select(REGENERABLE_OPTIONS),

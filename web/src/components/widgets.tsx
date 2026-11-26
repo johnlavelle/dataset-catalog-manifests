@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { WidgetProps } from "@rjsf/utils";
+import { ariaDescribedByIds, optionId, type WidgetProps } from "@rjsf/utils";
 import {
   Alert,
   Autocomplete,
@@ -7,6 +7,8 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
+  FormGroup,
+  FormLabel,
   InputAdornment,
   ListItemText,
   MenuItem,
@@ -317,6 +319,7 @@ export function MultiSelectWidget(props: WidgetProps) {
   const values = (options.enumOptions ?? []).map((o) => String(o.value));
   // Values outside the list stay visible as chips, so the schema error can be seen and fixed
   const selected = Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
+  const unknown = selected.filter((v) => !values.includes(v));
   return (
     <Autocomplete
       // On the Autocomplete, not the TextField: it sets the input's id (the checklist jumps to it)
@@ -343,11 +346,78 @@ export function MultiSelectWidget(props: WidgetProps) {
           {...params}
           label={label}
           required={required}
-          error={hasErrors(props)}
+          error={hasErrors(props) || unknown.length > 0}
+          helperText={unknown.length ? `Not among the choices, remove: ${unknown.join(", ")}` : undefined}
           placeholder={selected.length ? undefined : "Choose one or more"}
         />
       )}
     />
+  );
+}
+
+/**
+ * Several values from a short list, as checkboxes (an array of enum values). A value outside the
+ * list, e.g. in a file written for an earlier version of the list, is shown ticked and marked, so it
+ * can be unticked: hidden, its schema error could not be fixed in the form.
+ */
+export function ChecklistWidget(props: WidgetProps) {
+  const { id, value, onChange, onBlur, onFocus, label, hideLabel, required, disabled, readonly, options } = props;
+  const enumOptions = options.enumOptions ?? [];
+  const known = enumOptions.map((o) => o.value);
+  const selected: unknown[] = Array.isArray(value) ? value : [];
+  const unknown = selected.filter((v) => !known.includes(v));
+  const toggle = (v: unknown, on: boolean) =>
+    // Ticked values keep the order of the list, with values outside it after them
+    onChange(on ? [...known.filter((k) => k === v || selected.includes(k)), ...unknown] : selected.filter((s) => s !== v));
+  const off = disabled || readonly;
+  return (
+    <>
+      {!hideLabel && label && (
+        <FormLabel required={required} htmlFor={id} error={unknown.length > 0}>
+          {label}
+        </FormLabel>
+      )}
+      <FormGroup id={id}>
+        {enumOptions.map((o, i) => (
+          <FormControlLabel
+            key={String(o.value)}
+            label={o.label}
+            control={
+              <Checkbox
+                id={optionId(id, i)}
+                name={id}
+                checked={selected.includes(o.value)}
+                disabled={off}
+                onChange={(e) => toggle(o.value, e.target.checked)}
+                onBlur={() => onBlur(id, value)}
+                onFocus={() => onFocus(id, value)}
+                aria-describedby={ariaDescribedByIds(id)}
+              />
+            }
+          />
+        ))}
+        {unknown.map((v, i) => (
+          <FormControlLabel
+            key={`unknown-${i}`}
+            label={
+              <Typography variant="body1" color="error">
+                <code>{typeof v === "string" ? v : JSON.stringify(v)}</code> is not one of the choices: untick it
+              </Typography>
+            }
+            control={
+              <Checkbox
+                id={optionId(id, enumOptions.length + i)}
+                name={id}
+                color="error"
+                checked
+                disabled={off}
+                onChange={() => toggle(v, false)}
+              />
+            }
+          />
+        ))}
+      </FormGroup>
+    </>
   );
 }
 
@@ -358,4 +428,5 @@ export const widgets = {
   TbdWidget,
   DescribedSelectWidget,
   MultiSelectWidget,
+  ChecklistWidget,
 };
